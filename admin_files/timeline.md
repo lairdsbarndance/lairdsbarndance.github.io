@@ -240,5 +240,21 @@
 
     - ### Time Spent: 1 hour
 
+- ## 26/04/2026
+    - Implemented real quotes into home page.
+    - Replaced flipped version of Keith with a different image.
+    - Continued redesigning Meet The Band Page
+    - ### Time Spent: 45 minutes
+
+- ## 30/04/2026
+    - Added Otis' card to Meet The Band mockup, made final adjustments. Suggested a refactoring of the layout, since the page was starting to feel vertically disproportionate with the added introductory text.
+    
+    - <img style="max-width: 40em" src="../assets/temp/meet_the_band_draft_5_variant.png"/>
+
+        - The band members scroll horizontally like a carousel (with a subtle 3D wheel effect if desired), which just adds a bit more life into the page. The option to view as grid is also present for accessibility reasons.
+    - Updated [Mockups Showcase](https://docs.google.com/presentation/d/1-tm2mFM2LmII1lwuN4BDSVMF9b_fLrK8glRqFbXG51w/edit?usp=sharing)
+
+    - ### Time Spent: 2 hours
+
 
 
