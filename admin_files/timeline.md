@@ -256,5 +256,38 @@
 
     - ### Time Spent: 2 hours
 
+- ## 03/04/2026
+    - (Sans/Serif) Font Comparisons, side by side. Viewport scale check etc.
+        - Decided on PT Sans as a potential sans-serif improved-readability replacement to Lusitania
+    - Responded to feedback from two new people.
+        * 
+        ```
+        Enhance user flow - I'm not so keen on the buttons / coloured hands idea as this risks overcomplicating the user flow. I appreciate you want to prescribe a particular journey through the website, so let's think about slightly more dynamic ways we can do this.
+        ```
+        * 
+        ```
+        Change the background / add more contrasts to the pages - I have been thinking for a while that something needs to be incorporated into the background to avoid each page looking flat. I think the blue theme works well - it just needs subtle geometric contrast in the background. If they think it's "too blue", then maybe we should consider desaturating the blues present on the website, but I would prefer another opinion on this before we make that change. About the geometric contrast idea - a lot of minimalist websites include thematic vector-style images in the inline space of the background (area left and right of the content). Therefore, should I create a mockup using the History page, incorporating barn dance instruments as minimalist silhouettes?
+        ```
 
+    - ### Time Spent: 1 hour 30 minutes
 
+- ## 05/05/2026
+    - Agreed upon PT Sans as new font for body text.
+    - Designed and incorporated new "peripheral ornaments" concept to History Page.
+
+    - <img style="max-height: 10em" src="../assets/temp/barn_dance_vectors.png"/>
+
+    ```
+    After a lot of iterations, I think I've landed on something tasteful, that quietly fills in the peripheral margins. The vectors are arranged randomly, with their opacity tied to the gradient that was there originally. I've tried to find the right balance of abstraction with each vector, but if you want them to be more or less detailed, just let me know. The instruments will employ a parallax scroll, where they scroll slower compared to the main content on the page. This makes each page feel slightly more dynamic and three dimensional, whilst also reducing perceived repetition in the arrangement of the vectors.
+    ```
+
+    - <img style="max-width: 40em" src="../assets/temp/history_draft_2.png"/>
+
+    - Breakdown of changes:
+        - Updated Text and captions
+        - Updated body text to the website's new sans-serif font: PT Sans - much better!
+        - Changed alignment of text - left and right alignment respectively instead of justified, to complement the visual flow and prevent the page from looking too rigid. 
+        - Adjusted postcard rotation - ±1° instead of 2. Feels slightly more stable and professional 
+        - Added barn dance vectors as described in first message
+
+    - ### Time Spent: 2 hours
