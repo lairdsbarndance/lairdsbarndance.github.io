@@ -337,3 +337,29 @@
         - Buttons added to pages to guide the user through the process
     
     - ### Time Spent: 3 hours
+
+- ## 11/05/2026
+    - Prepared all pages for the Mockups Showcase, viewable with this link: [bit.ly/lairdsbarndance](https://bit.ly/lairdsbarndance)
+        - **General**
+            - Updated Navigation Menu, separating "About" into "History" and "Meet the Band".
+            - Updated fonts (Lusitania => PT Serif / PT Serif Condensed), standardising Cantora One as heading font
+            - Added instrument motifs to background, vignetting / masking according to content
+        - **Homepage**  
+            - Updated Text and Fonts
+            - Added stitching to bottom of main section to mirror navigation menu
+            - Increased font size of call to action
+            - Added background musical instruments
+            - Normalised quote font size
+        - **FAQs**
+            - Suggested design variant replacing PT Serif with more characterful Caveat, adhering to visual logic as handwritten notes
+            - Replaced watermarked paper texture for free alternative, improved texture visibility and mask precision
+        - **Meet the Band**
+            - Recfactored visual hierachy, moving band carousel to top and transformed text columns into cards, using the FAQs paper note motif.
+            - Reduced biography max-height to 4em
+    - Created Website Mockup Prototype, linking all pages together to function as a website.
+        ```
+        I'm trying something new here - you should be able to interact with the mockups as a website. Apart from page-specific interactions, where clicking anywhere on the page will queue the predetermined example interaction, navigation menu and buttons should work to help you go between pages.
+        I think this is a more effective way of showcasing the mockups, as it displays them fullscreen in a web browser, rather than contained in a slide powerpoint. Also, the accompanying text was a bit pointless, as the mockups should be able to speak for themselves.
+        ```
+
+    - ### Time Spent: 3 hours 30 minutes
