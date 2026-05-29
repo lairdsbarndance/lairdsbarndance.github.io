@@ -400,6 +400,38 @@
     - ### Time Spent: 1 hour 20 minutes
 
 - ## 27/05/2026
-    - Lots of discussion surrounding reconfiguration of pages and some additions to improve user experience. After lots of back and forth, and my justification of the current designs, we had agreed to stick with the current designs but bringing forth a few additions.
-    - Third photo added to fullscreen homepage carousel
+    - Lots of discussion surrounding reconfiguration of pages and some additions to improve user experience (Many temporary mockup variations were created to realise Richard's suggestions). After lots of back and forth and my justification of the current designs, we had agreed to stick with the current designs but bring forth a few additions.
+        - Third photo added to fullscreen homepage carousel
+        - Contact Prompt at the bottom of the Hompage
+    - ### Time Spent: 1 hour 30 minutes (45 minutes of consultation)
+
+- ## 28/05/2026
+    - Reverted Biographies to suitable, longer length, preserving the shortened biographies in a separate column in the table
+    - Initialised Backend
+        - Established Google Cloud Console account for the website
+            - Google Sheets API
+            - Relevant Credentials
+        - Wrote code to fetch and parse a customised json object
+            - parse_table()
+                - receives table as defined named range and outputs javascript object, using keys from top row of table
+                    - True booleans
+                    - Parsed GB dates (including all variations of incomplete digits, i.e. dd/m/yy)
+                    - Comma Separated entries as arrays
+            - parse_document()
+                - follows the document structure, where entries are written with a heading and content beneath, and separated by a blank cell
+                - object includes tags, that will be linked to a data attribute to allow for seamless html integration
+
+    - ### Time Spent: 1 hour 30 minutes
+
+- ## 29/05/2026
+    - Continued integrating quasi-backend
+        - Images are stored in a public Google Drive directory and synchronised to a Google Sheet via an Apps Script crawler. The script recursively scans the Drive folder structure, appending new file metadata — including folder path, filename, MIME type, and Drive ID — into a read-only spreadsheet tab used as a lightweight CMS/database layer. The GitHub Pages frontend fetches this sheet data via the Google Sheets API and renders images directly from Google’s CDN endpoint (lh3.googleusercontent.com) using the stored file IDs. Synchronisation can be triggered manually from within the spreadsheet or automatically via scheduled Apps Script triggers.
+        - This approach keeps the entire system lightweight, serverless, and inexpensive by relying solely on Google Drive, Google Sheets, Apps Script, and GitHub Pages. No Node.js server, database infrastructure, or paid backend hosting is required.
+    - Designed frontend integration, html is written in the following manner. 
+        ```html
+        <div class="dyn-container" data-dyn-tag="socials" data-dyn-heading="h1" data-dyn-content="h3"></div>
+        ```
+        Content is automatically populated in the parent container, using content from the spreadsheet.
+    - One consideration: generating html of fairly up-to-date copy of website as backup + improved web crawling and SEO
+    - ### Time Spent: 2 hours 30 minutes
     
