@@ -198,11 +198,11 @@ function generate_leather(els) {
     els.forEach(el => {
         const is_rough_border = el.classList.contains("rough-border");
         const bg_struct = `
-        <div class="leather-background">
-            <div class="shine"></div>
-            <div class="glow"></div>
-            <div class="dimples"></div>
+            <div class="leather-background">
             <div class="displacement"></div>
+            <div class="dimples"></div>
+            <div class="glow"></div>
+            <div class="shine"></div>
         </div>
         `;
         const borders_struct = `
@@ -213,13 +213,23 @@ function generate_leather(els) {
             <div class="left"></div>
         </div>
         `;
-        if(!is_rough_border) el.insertAdjacentHTML("afterbegin", borders_struct);
-        el.insertAdjacentHTML("beforeend", bg_struct);
+        if(!is_rough_border) el.insertAdjacentHTML("beforeend", borders_struct);
+        el.insertAdjacentHTML("afterbegin", bg_struct);
     })
 }
 
 async function main() { 
-    const pages = await fetch_sheet_names();
+    // const pages = await fetch_sheet_names();
+    const pages = [
+    "Home",
+    "Meet the Band",
+    "History",
+    "Packages",
+    "FAQs",
+    "Events",
+    "Contact",
+    "Gallery Metadata (readonly)"
+];
     // const res = await fetch_data(PAGE);
     // const res = await fetch_data("contact_prompt");
     // const data = parse_document(res, pages);

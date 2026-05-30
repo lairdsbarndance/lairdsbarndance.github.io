@@ -1,0 +1,71 @@
+.leather {
+    --border-padding: 1rem;
+    --stitch-width: 5px;
+    position: relative;
+    background: var(--blue);
+}
+
+.leather-background, .leather-borders {
+    position: absolute;
+    inset: 0;
+}
+
+.leather-borders {
+    position: absolute;
+}
+
+.leather-borders > * {
+    background-image: url(../assets/sewing.png);
+    background-repeat: repeat-x;
+    background-size: cover;
+    background-position: center;
+    position: absolute;
+}
+
+.leather-borders > .top {
+    top: calc(var(--border-padding) - var(--stitch-width));
+    left: var(--border-padding);
+    height: var(--stitch-width);
+    width: calc(100% - 2 * var(--border-padding));
+}
+  
+.leather-borders > .right {
+    top: var(--border-padding);
+    right: calc(var(--border-padding) - var(--stitch-width));
+    width: var(--stitch-width);
+    height: calc(100% - 2 * var(--border-padding));
+
+    background-image: url(../assets/sewing_y.png);
+}
+  
+.leather-borders > .bottom {
+    bottom: calc(var(--border-padding) - var(--stitch-width));
+    left: var(--border-padding);
+    height: var(--stitch-width);
+    width: calc(100% - 2 * var(--border-padding));
+}
+  
+.leather-borders > .left {
+    top: var(--border-padding);
+    left: calc(var(--border-padding) - var(--stitch-width));
+    width: var(--stitch-width);
+    height: calc(100% - 2 * var(--border-padding));
+
+    background-image: url(../assets/sewing_y.png);
+}
+
+.leather:not(.rough-border) > .leather-background {
+    background: var(--blue);
+    box-shadow: inset 0 0 3vw -1vw rgba(0,0,0,0.75),
+                inset 0 -5vw 20vw -5vw rgba(0,0,0,0.5);
+    inset: calc(var(--border-padding) - var(--stitch-width) / 2)
+}
+
+.leather-background > * {
+    position: absolute;
+    inset: 0;
+    background-size: 250vw;
+}
+
+.leather-background > .displacement {background-image: url(../assets/leather_displacement.png);}
+.leather-background > .dimples {background-image: url(../assets/leather_dimples.png);}
