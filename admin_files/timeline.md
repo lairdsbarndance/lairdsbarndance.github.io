@@ -434,4 +434,12 @@
         Content is automatically populated in the parent container, using content from the spreadsheet.
     - One consideration: generating html of fairly up-to-date copy of website as backup + improved web crawling and SEO
     - ### Time Spent: 2 hours 30 minutes
+
+- ## 30/05/2026
+    - Created dynamically loading navigation bar, considering all SEO crawlability concerns
+    - To do: Blue Leather
+        - used in the following manner
+        - <div class="... leather" data-sides="all"></div>
+
+    - ### Time Spent (So far): 40 minutes
     

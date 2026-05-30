@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Cantora+One&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --blue: #1D2F5C;
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    font-family: "PT Sans", sans-serif;
+}
+
+header * {text-decoration: none; color: white; cursor: pointer}
+
+header {
+    display: flex;
+    padding: 1.5rem 3.5rem;
+    background: var(--blue);
+    width: 100%;
+    justify-content: space-between;
+}
+
+header > h3 {font-size: 1.125rem}
+
+header > nav > ul {
+    display: flex;
+    font-size: 1.125rem;
+    gap: 2rem;
+}
+
+.test {
+    margin: 100px;
+    width: 400px;
+    height: 300px;
+}
+
