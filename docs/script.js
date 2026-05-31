@@ -57,6 +57,8 @@ const svg_defs = `
 </svg>
 `
 
+const header = $("header")[0];
+
 document.body.insertAdjacentHTML("afterbegin", svg_defs);
 
 async function fetch_data(named_range) {
@@ -225,11 +227,11 @@ function populate_dyn_containers(data) {
 }
 
 function generate_nav(pages) {
-    const header = $("header")[0];
     const f_pages = pages.filter(page => !page.includes("readonly"));
 
     let nav_struct = `            
-    <h3><a href="./index.html">lairdsbarndance.band</a></h3>
+    <h3><a href="/index.html">lairdsbarndance.band</a></h3>
+    <div class="spacer"></div>
     <nav>
         <ul></ul>
     </nav>
@@ -238,8 +240,6 @@ function generate_nav(pages) {
     header.innerHTML = nav_struct;
 
     const ul = header.querySelector("ul");
-    const is_homepage = (window.location.href.split("/").pop()) === "index.html";
-
     f_pages.forEach(page => {
         let url = `/pages/${page.toLowerCase().split(" ").join("_")}.html`;
         if(page === "Home") url = "/index.html"; // since all pages bar index are stored in subdir
@@ -249,6 +249,26 @@ function generate_nav(pages) {
         anchor.textContent = page;
         ul.appendChild(anchor);
     })
+
+    const is_mobile = $("header > .spacer")[0].offsetWidth < 32;
+    const menu_btn = $el("button.menu-btn");
+    const close_btn = $el("button.close-btn");
+    const nav = $("nav")[0];
+    menu_btn.onclick = () => nav.classList.toggle("open");
+    close_btn.onclick = () => nav.classList.remove("open");
+    menu_btn.textContent = "menu" ;
+    close_btn.textContent = "close";
+
+    if(is_mobile) {
+        header.classList.add("mobile-view"); 
+        nav.classList.add("mobile-view"); nav.classList.add("leather");
+        nav.appendChild(close_btn)
+        header.appendChild(menu_btn);
+
+        close_btn.style.setProperty("--menu-btn-height", menu_btn.offsetHeight + "px");
+        close_btn.style.setProperty("--top", menu_btn.offsetTop + "px");
+        close_btn.style.setProperty("--left", menu_btn.offsetLeft + "px");
+    }
 }
 
 function generate_leather(els) {
@@ -265,7 +285,6 @@ function generate_leather(els) {
         el.insertAdjacentHTML("afterbegin", bg_struct);
 
         if(!is_rough_border) {
-            console.log("hello")
             const borders = $el(".leather-borders");
             const div_arr = ["top", "right", "bottom", "left"];
             div_arr.forEach(div => {borders.innerHTML += `
@@ -278,14 +297,121 @@ function generate_leather(els) {
     })
 }
 
+async function load_font_buffer(url) {
+    const response = await fetch(url);
+    return await response.arrayBuffer();
+}
+
+async function create_tight_svg_title(text, small_cap_ratio = 0.7) {
+    const buffer = await load_font_buffer("/assets/GoudyHan.ttf");
+    const font = opentype.parse(buffer);
+
+    const svg_ns = "http://www.w3.org/2000/svg";
+
+    const svg = document.createElementNS(svg_ns, "svg");
+    const defs = document.createElementNS(svg_ns, "defs");
+    const group = document.createElementNS(svg_ns, "g");
+    const all_caps = text === "FAQs";
+
+    const gradient_id = `title_gradient_${Math.random().toString(36).slice(2)}`;
+
+    defs.innerHTML = `
+        <linearGradient id="${gradient_id}" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0.0142528" stop-color="#F39544"/>
+            <stop offset="0.0416382" stop-color="#DD6045"/>
+            <stop offset="0.0702075" stop-color="#AD423D"/>
+            <stop offset="0.365385" stop-color="#BE322E"/>
+            <stop offset="1" stop-color="#A64243"/>
+        </linearGradient>
+    `;
+
+    if(!all_caps) text = text.toUpperCase();
+
+    let x = 0;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const scale = i === 0 && !all_caps ? 1 : small_cap_ratio;
+        const size = 120 * scale;
+
+        const glyph = font.getPath(char, x, 0, size);
+
+        const path_el = document.createElementNS(svg_ns, "path");
+        path_el.setAttribute("d", glyph.toPathData(2));
+        path_el.setAttribute("fill", `url(#${gradient_id})`);
+
+        group.appendChild(path_el);
+
+        x += font.getAdvanceWidth(char, size);
+    }
+
+    svg.appendChild(defs);
+    svg.appendChild(group);
+
+    // temporary DOM insertion ONLY for bbox calculation
+    document.body.appendChild(svg);
+    svg.getBoundingClientRect();
+
+    const bbox = group.getBBox();
+
+    svg.setAttribute(
+        "viewBox",
+        `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`
+    );
+
+    svg.remove();
+
+    return svg;
+}
+
+async function generate_header(this_page, pages) {
+    generate_nav(pages); // 1rem padding between title and nav
+
+    const is_home = this_page === "Home";
+
+    const banner = $(".banner")[0];
+    banner.style.setProperty("--header-height", header.offsetHeight + "px");
+    if(this_page.length > 9) banner.classList.add("smaller")
+
+    const logo = $el("img.logo");
+    logo.src = "/assets/logo_small.svg";
+
+    let title;
+
+    if(is_home) {
+        logo.src = "/assets/logo.svg";
+        logo.classList.add("large")
+    } else {
+        title = await create_tight_svg_title(this_page, 0.8);
+        title.classList.add("title");
+    }
+
+    const border = $el(".border");
+    ["left", "join", "right"].forEach(child => {
+        const el = $el("." + child);
+        el.style.setProperty("--mask-url", `url("/assets/header/${child}.svg")`);
+        border.appendChild(el);
+    });
+
+    if(is_home) {
+        banner.appendChildren(logo, border);
+    } else {
+        banner.appendChildren(logo, title, border);
+    }
+
+    banner.style.setProperty("--banner-height", banner.offsetHeight + "px");
+    $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px")
+}
+
 async function main() { 
+    const this_page = document.title.split("- ").pop();
     const pages = await fetch_sheet_names();
     // const res = await fetch_data(PAGE);
     // const res = await fetch_data("contact_prompt");
     // const data = parse_document(res, pages);
     // populate_dyn_containers(data);
-    generate_nav(pages);
-    generate_leather($(".leather"))
+    generate_header(this_page, pages);
+    generate_leather($(".leather"));
 }
 
 main();

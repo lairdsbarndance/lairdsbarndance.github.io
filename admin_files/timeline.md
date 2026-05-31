@@ -449,5 +449,32 @@
     - <img style="max-height: 20em" src="../assets/temp/coding_screenshots/30-05-2026.png"/> 
     - Resizable container to demonstrate fully automated, responsive setup
 
-    - ### Time Spent (So far): 2 hours 40 minutes
+    - ### Time Spent: 2 hours 40 minutes
     
+- ## 31/05/2026
+    AI Generated Summary, using git DIFF HEAD~1
+    ### Header & Navigation System
+    Redesigned the site header into a fixed-position navigation bar with improved spacing and shadowing. Added a responsive mobile navigation system with animated slide-in behaviour, dedicated menu/close buttons, and adaptive layout handling based on available header space.
+
+    ### Dynamic Banner & Title Rendering
+    Implemented a new dynamic banner component positioned beneath the fixed header. The banner now supports responsive scaling, adaptive padding, and decorative SVG border rendering for a more stylised presentation.
+
+    Added procedural SVG title generation using `opentype.js`, including:
+    - dynamic font parsing from custom font assets
+    - automatically calculated SVG viewboxes using glyph bounding boxes
+    - gradient-filled text rendering
+    - small-cap handling for mixed-case titles
+    - responsive title sizing for longer page names
+
+    The homepage banner now conditionally renders an enlarged logo variant, while all other pages render generated SVG titles automatically.
+
+    ### General Front-End Improvements
+    - Added mobile tap highlight suppression
+    - Introduced new global colour and shadow variables
+    - Updated homepage structure and placeholder content
+    - Normalised helper function usage (`$el` migration)
+    - Added dynamic header height and banner height calculations
+    - Introduced responsive behaviour for smaller viewport widths
+    - Updated page title handling and naming consistency
+
+- ### Time Spent: 4 hours

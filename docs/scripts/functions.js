@@ -8,3 +8,10 @@ function $el(str) {
     if(split.length > 1) split[1].split(",").forEach(class_name => dom_el.classList.add(class_name))
     return dom_el;
 }
+
+Element.prototype.appendChildren = function (...children) {
+    children.forEach(child => {
+        this.appendChild(child);
+    });
+    return this;
+};
