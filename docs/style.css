@@ -12,8 +12,10 @@
     --blue: #1D2F5C;
     --light-blue: #3F70A9;
     --white: #F8F8F8;
+    --background: #0E172A;
+    --glow-col: #182746;
 
-    --title-height: 6rem;
+    --title-height: 5rem;
     
     --subtle-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.2);
     --harsh-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.75);
@@ -23,8 +25,10 @@ body {
     width: 100%;
     font-family: "PT Sans", sans-serif;
     overflow-x: hidden;
-    background: #1E1E1E;
+    background: var(--background);
 }
+
+body, html {min-height: 100%;}
 
 header * {text-decoration: none; color: white; cursor: pointer}
 
@@ -37,6 +41,12 @@ header {
     width: 100%;
     justify-content: space-between;
     z-index: 100;
+}
+
+h2 {font-size: 2rem; text-align: center;}
+
+.scroll-wrapper {
+    position: relative;
 }
 
 header.leather {
@@ -57,6 +67,68 @@ header > .spacer {
     flex-grow: 1;
 }
 
+.bg-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 125%;
+}
+
+.glow-svg {
+    position: absolute;
+    top: 500px;
+    left: 500px;
+    width: 200px;
+    aspect-ratio: 1;
+    background: red;
+}
+
+.instrument-container {
+    --instruments-bleed: 0rem;
+    position: fixed;
+    top: 0; left: 50%; transform: translateX(-50%);
+    height: 100vh;
+    overflow-y: auto;
+    width: calc(100% + var(--instruments-bleed));
+    display: flex;
+    justify-content: space-between;
+    z-index: -100;
+    pointer-events: none;
+}
+
+.instrument-container::-webkit-scrollbar {
+    opacity: 0;
+}
+
+.instrument-container > .instrument {
+    width: 12.5rem;
+    height: 300%;
+    background-image: url(./assets/instruments.svg);
+    background-repeat: repeat-y;
+    background-size: 100% auto;
+    background-position-y: var(--offset-top);
+    opacity: 0.15;
+    mix-blend-mode: plus-lighter;
+}
+
+.instrument.right {
+    background-position-y: calc(var(--offset-top) + 50vh);
+}
+
+.bg-glow {
+    position: relative;
+}
+
+.glow {
+    position: absolute;
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--glow-col);
+    border-radius: 50%;
+    filter: blur(7.5rem);
+    z-index: -105;
+}
+
 .banner {
     --border-radius-proportion: 0.729;
     --banner-inline-padding: 7.5rem;
@@ -64,7 +136,7 @@ header > .spacer {
     max-width: 90vw;
     top: var(--header-height);
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(-105%);
     padding: 2rem var(--banner-inline-padding);
     display: flex;
     flex-direction: column;
@@ -76,7 +148,12 @@ header > .spacer {
     height: fit-content;
     border-radius: 0 0 calc(var(--border-radius-proportion) * var(--banner-height)) calc(var(--border-radius-proportion) * var(--banner-height));
     box-shadow: 0 0.375rem 0.5rem rgba(0,0,0,0.25);
-    z-index: -1;
+
+    transition: 500ms ease transform;
+}
+
+.banner.active {
+    transform: translateX(-50%) translateY(0%);
 }
 
 .banner.smaller {
@@ -96,7 +173,7 @@ img.logo {
 }
 
 .logo.large {
-    height: calc(var(--title-height) * 1.25);
+    height: calc(var(--title-height) * 1.125);
     width: auto;
     filter: drop-shadow(var(--subtle-shadow))
 }
@@ -111,6 +188,27 @@ img.logo {
     resize: both;
     overflow: auto;
 }
+
+.test-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    color: white;
+    text-justify:distribute;
+    text-align: justify;
+}
+
+main {
+    display: grid;
+    padding-inline: 17.5rem;
+}
+
+main > section {
+    display: grid;
+    gap: 5rem;
+}
+
+section p {font-size: 1.25rem; line-height: 1.5em;}
 
 .banner > .border {
     position: absolute;
@@ -170,8 +268,10 @@ header.mobile-view > nav {
     transform: translateX(105%);
     z-index: 50;
 
-    transition: 500ms ease transform,
-                500ms ease filter;
+    /* transition: 500ms ease transform,
+                500ms ease filter; 
+    injected with javascript after nav load. 
+    */
 }
 
 nav.mobile-view > ul {

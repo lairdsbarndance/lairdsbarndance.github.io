@@ -58,6 +58,7 @@ const svg_defs = `
 `
 
 const header = $("header")[0];
+const dom_main = $("main")[0]
 
 document.body.insertAdjacentHTML("afterbegin", svg_defs);
 
@@ -188,8 +189,10 @@ async function fetch_sheet_names() {
     );
 
     const data = await res.json();
+    const sheets = data.sheets.map(sheet => sheet.properties.title);
+    localStorage.setItem("sheet_names", JSON.stringify(sheets));
 
-    return data.sheets.map(sheet => sheet.properties.title);
+    return sheets;
 }
 
 async function fetch_events() {
@@ -370,7 +373,7 @@ async function generate_header(this_page, pages) {
     const is_home = this_page === "Home";
 
     const banner = $(".banner")[0];
-    banner.style.setProperty("--header-height", header.offsetHeight + "px");
+    document.body.style.setProperty("--header-height", header.offsetHeight + "px");
     if(this_page.length > 9) banner.classList.add("smaller")
 
     const logo = $el("img.logo");
@@ -393,25 +396,182 @@ async function generate_header(this_page, pages) {
         border.appendChild(el);
     });
 
-    if(is_home) {
-        banner.appendChildren(logo, border);
-    } else {
-        banner.appendChildren(logo, title, border);
+    const children = is_home ? [logo, border] : [logo, title, border];
+    banner.appendChildren(...children);
+
+    setTimeout(() => {
+        document.body.style.setProperty("--banner-height", banner.offsetHeight + "px");    
+        $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px");
+        banner.classList.add("active")
+    }, 25);
+        
+    if(header.classList.contains("mobile-view")) $("nav")[0].style.transition = "500ms ease transform, 500ms ease filter";
+
+    dom_main.style.setProperty("padding-block", `${header.offsetHeight + banner.offsetHeight + 40}px`);
+}
+
+function build_svg_mask(els) {
+    const svg_ns = "http://www.w3.org/2000/svg";
+
+    const doc_width = document.documentElement.scrollWidth;
+    const doc_height = document.documentElement.scrollHeight;
+
+    // Create SVG container
+    const svg = document.createElementNS(svg_ns, "svg");
+    svg.setAttribute("width", doc_width);
+    svg.setAttribute("height", doc_height);
+    svg.setAttribute("viewBox", `0 0 ${doc_width} ${doc_height}`);
+    svg.style.position = "absolute";
+    svg.style.top = "0";
+    svg.style.left = "0";
+    svg.style.pointerEvents = "none";
+    svg.style.overflow = "visible";
+
+    // ---------- FILTER (blur) ----------
+    const defs = document.createElementNS(svg_ns, "defs");
+
+    const filter = document.createElementNS(svg_ns, "filter");
+    const filter_id = `blur_${Date.now()}`;
+
+    filter.setAttribute("id", filter_id);
+
+    // IMPORTANT: large blur radius (SVG uses user units, not rem)
+    const blur = document.createElementNS(svg_ns, "feGaussianBlur");
+    blur.setAttribute("stdDeviation", "60"); 
+    // ~ approximation of 7.5rem depending on root font size
+
+    filter.appendChild(blur);
+    defs.appendChild(filter);
+
+    // ---------- MASK ----------
+    const mask = document.createElementNS(svg_ns, "mask");
+    const mask_id = `mask_${Date.now()}`;
+    mask.setAttribute("id", mask_id);
+
+    els.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        const x = rect.left + window.scrollX;
+        const y = rect.top + window.scrollY;
+
+        const svg_rect = document.createElementNS(svg_ns, "rect");
+
+        svg_rect.setAttribute("x", x);
+        svg_rect.setAttribute("y", y);
+        svg_rect.setAttribute("width", rect.width);
+        svg_rect.setAttribute("height", rect.height);
+
+        // Rounded corners (50%)
+        const radius = Math.min(rect.width, rect.height) / 2;
+        svg_rect.setAttribute("rx", radius);
+        svg_rect.setAttribute("ry", radius);
+
+        svg_rect.setAttribute("fill", "white");
+
+        mask.appendChild(svg_rect);
+    });
+
+    // Apply blur to mask content via group wrapper
+    const g = document.createElementNS(svg_ns, "g");
+    g.setAttribute("filter", `url(#${filter_id})`);
+
+    // Move mask children into filtered group
+    while (mask.firstChild) {
+        g.appendChild(mask.firstChild);
+    }
+    mask.appendChild(g);
+
+    defs.appendChild(mask);
+    svg.appendChild(defs);
+
+    document.body.appendChild(svg);
+
+    return mask_id;
+}
+
+function generate_background(glow_els, parallax = 0.3) {
+    const background_container = $el(".bg-container");
+    const instrument_container = $el(".instrument-container");
+    let rand = Math.random();
+
+    for(let i = 0; i < 2; i++) {
+        const dom_el = $el(`.instrument,${["left", "right"][i]}`);
+        const body_height = document.body.offsetHeight;
+        console.log(body_height)
+        dom_el.style.setProperty("--offset-top", `${rand * body_height}px`); // ensure right instrument has 50% extra offset; backgrounds appear different
+        instrument_container.appendChild(dom_el)
     }
 
-    banner.style.setProperty("--banner-height", banner.offsetHeight + "px");
-    $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px")
+    background_container.appendChild(instrument_container);
+    $(".scroll-wrapper")[0].insertBefore(background_container, $("main")[0]);
+
+    window.onscroll = () => instrument_container.scrollTop = document.documentElement.scrollTop * parallax;
+
+    const glows = $(".bg-glow");
+    generate_glows(glows);
+    const mask_id = build_svg_mask($(".glow"));
+    background_container.style.mask = `url(#${mask_id})`;
+}
+
+function generate_glows(glows) {
+    const rules = {
+        left:   { left: 0,   tx: -50 },
+        right:  { right: 0,  tx:  50 },
+        top:    { top: 0,    ty: -50 },
+        bottom: { bottom: 0, ty:  50 }
+    };
+
+    glows.forEach(glow_container => {
+        const glow_el = $el(".glow");
+        const positions = glow_container.dataset.glowPos.split(" ");
+
+        let tx = 0;
+        let ty = 0;
+
+        if (positions.length === 1 && positions[0] === "center") {
+            glow_el.style.left = "50%";
+            glow_el.style.top = "50%";
+            glow_el.style.width = "100%"; glow_el.style.height = "100%"; glow_el.style.aspectRatio = "unset";
+            tx = ty = -50;
+        }
+        else {
+            positions.forEach(position => {
+                if (position === "center") {
+                    if (positions.some(p => p === "top" || p === "bottom")) {
+                        glow_el.style.left = "50%";
+                        tx = -50;
+                    } else {
+                        glow_el.style.top = "50%";
+                        ty = -50;
+                    }
+                    return;
+                }
+
+                const rule = rules[position];
+                Object.assign(glow_el.style, rule);
+
+                tx = rule.tx ?? tx;
+                ty = rule.ty ?? ty;
+            });
+        }
+
+        glow_el.style.transform = `translate(${tx}%, ${ty}%) scale(${glow_container.dataset.glowSize})`;
+        glow_container.prepend(glow_el);
+    });
 }
 
 async function main() { 
     const this_page = document.title.split("- ").pop();
-    const pages = await fetch_sheet_names();
+    let pages = JSON.parse(localStorage.getItem("sheet_names"));
+    if(!pages) pages = await fetch_sheet_names();
     // const res = await fetch_data(PAGE);
     // const res = await fetch_data("contact_prompt");
     // const data = parse_document(res, pages);
     // populate_dyn_containers(data);
     generate_header(this_page, pages);
     generate_leather($(".leather"));
+    window.addEventListener("DOMContentLoaded", () => {
+        generate_background();
+    })
 }
 
 main();

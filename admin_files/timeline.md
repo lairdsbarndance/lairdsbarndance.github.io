@@ -478,3 +478,29 @@
     - Updated page title handling and naming consistency
 
 - ### Time Spent: 4 hours
+
+- ## 06/06/2026
+    - Added LocalStorage cache functionality for fetched data to ensure instant loading of unchanging elements
+    - Designed mobile homepage mockup in figma, as many elements needed to be shuffled around. 
+
+    - <img style="max-width: 20em" src="../assets/temp/homepage_mobile.png"> 
+    - Tried to fix banner offsetHeight issue due to inconsistent calculation on page load. After experimentation, I decided a short timeout, then a slide in animation would be the most reliable solution to ensure the rounded banner is displayed correctly
+    - Designed dynamically rendered parallax background, masked by custom positioned glowing elements attached to sections / divs.
+    - Created bg-glow to be used in the following manner
+    ```html
+    <div class="... bg-glow" data-bg-glow="top left"></div>
+    ```
+    - The following structure took hours to end up at; it required continuous expansion of the layering structure and an unintuitive implementation of the position: fixed property for the parallax effect.
+        - scroll-wrapper: relatively positioned to ensure bg-container spans full height of content
+            - bg-container: absolutely positioned to ensure mask is applied in the global context
+                - instrument-container: fixed position with overflow; scrollTop from window is transferred to this container * parallax amount
+                    - instrument left / right: background-position-y: random variable, right container + 50% viewport height to maximise percieved instrument diversity.
+            - main: padding-block applied to show content beneath banner - applied in javascript so padding can be accessed immediately during svg bounding box calculation
+                - section
+                    - div.test-content.bg-glow
+                        .glow - script.js uses each glow element to generate the mask dynamically
+
+    - Demonstration
+    - <video src="../assets/temp/coding_screenshots/glow-pos.mp4" autoplay style="max-width: 50em" loop="true" controls> 
+
+    - ### Time Spent: 4 hours
