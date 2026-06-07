@@ -22,13 +22,21 @@
 }
 
 body {
-    width: 100%;
+    width: 100vw;
+    min-height: 100%;
     font-family: "PT Sans", sans-serif;
     overflow-x: hidden;
     background: var(--background);
 }
 
-body, html {min-height: 100%;}
+html {
+    min-height: 100%;
+    scrollbar-gutter: stable;
+}
+
+@view-transition {
+    navgiation: auto;
+}
 
 header * {text-decoration: none; color: white; cursor: pointer}
 
@@ -38,7 +46,7 @@ header {
     display: flex;
     padding: 1.5rem 3.5rem;
     background: var(--blue);
-    width: 100%;
+    width: 100vw;
     justify-content: space-between;
     z-index: 100;
 }

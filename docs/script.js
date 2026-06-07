@@ -516,8 +516,8 @@ function generate_glows(glows) {
     const rules = {
         left:   { left: 0,   tx: -50 },
         right:  { right: 0,  tx:  50 },
-        top:    { top: 0,    ty: -50 },
-        bottom: { bottom: 0, ty:  50 }
+        top:    { top: 0,    ty: -7.5 },
+        bottom: { bottom: 0, ty:  7.5 }
     };
 
     glows.forEach(glow_container => {
