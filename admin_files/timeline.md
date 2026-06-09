@@ -504,3 +504,13 @@
     - <video src="../assets/temp/coding_screenshots/glow-pos.mp4" autoplay style="max-width: 50em" loop="true" controls> 
 
     - ### Time Spent: 4 hours
+
+- ## 09/06/2026
+    - Created Github account for laird@lairdsbarndance.band 
+    - Migrated Repository to new GIthub account and set up Github pages to be accessible from link [http://lairdsbarndance.github.io](http://lairdsbarndance.github.io)
+    - Added a records to Namecheap Custom DNS to connect custom domain
+    - Added domain to Cloudflare and set up secure https connection and SSL certification
+    - A Cloudflare URL Rewrite Rule was created to intercept extensionless requests (such as /pages/page) and internally append .html, allowing GitHub Pages to serve the correct file (/pages/page.html) without changing visible URLs.
+        - The rule was configured via Transform Rules → URL Rewrite Rules, using a filter to exclude / and files with extensions, and a dynamic rewrite expression concat(http.request.uri.path, ".html") to perform the mapping.
+
+    - ### Time Spent: 40 minutes

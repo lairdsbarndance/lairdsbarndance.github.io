@@ -233,7 +233,7 @@ function generate_nav(pages) {
     const f_pages = pages.filter(page => !page.includes("readonly"));
 
     let nav_struct = `            
-    <h3><a href="/index.html">lairdsbarndance.band</a></h3>
+    <h3><a href="/">lairdsbarndance.band</a></h3>
     <div class="spacer"></div>
     <nav>
         <ul></ul>
@@ -244,8 +244,8 @@ function generate_nav(pages) {
 
     const ul = header.querySelector("ul");
     f_pages.forEach(page => {
-        let url = `/pages/${page.toLowerCase().split(" ").join("_")}.html`;
-        if(page === "Home") url = "/index.html"; // since all pages bar index are stored in subdir
+        let url = `/pages/${page.toLowerCase().split(" ").join("_")}`;
+        if(page === "Home") url = "/"; // since all pages bar index are stored in subdir
 
         const anchor = $el("a");
         anchor.href = url;
