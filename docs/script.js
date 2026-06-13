@@ -280,7 +280,7 @@ function generate_leather(els) {
         const bg_struct = `
             <div class="leather-background">
                 <div class="sheen"></div>
-                <div class="glow" id="sheen-mask"></div>
+                <div class="glow-layer" id="sheen-mask"></div>
                 <div class="dimples"></div>
                 <div class="displacement"></div>
             </div>
@@ -407,85 +407,158 @@ async function generate_header(this_page, pages) {
         
     if(header.classList.contains("mobile-view")) $("nav")[0].style.transition = "500ms ease transform, 500ms ease filter";
 
-    dom_main.style.setProperty("padding-block", `${header.offsetHeight + banner.offsetHeight + 40}px`);
+    // dom_main.style.setProperty("padding-block", `${header.offsetHeight + banner.offsetHeight + 40}px`);
 }
 
-function build_svg_mask(els) {
+function build_svg_mask(
+    els,
+    glow_blur = 60,
+    subtract_blur = 20
+) {
     const svg_ns = "http://www.w3.org/2000/svg";
 
-    const doc_width = document.documentElement.scrollWidth;
+    const doc_width = document.documentElement.offsetWidth;
     const doc_height = document.documentElement.scrollHeight;
 
-    // Create SVG container
-    const svg = document.createElementNS(svg_ns, "svg");
-    svg.setAttribute("width", doc_width);
-    svg.setAttribute("height", doc_height);
-    svg.setAttribute("viewBox", `0 0 ${doc_width} ${doc_height}`);
-    svg.style.position = "absolute";
-    svg.style.top = "0";
-    svg.style.left = "0";
-    svg.style.pointerEvents = "none";
-    svg.style.overflow = "visible";
+    function create_svg_element(tag, attributes = {}) {
+        const el = document.createElementNS(svg_ns, tag);
 
-    // ---------- FILTER (blur) ----------
-    const defs = document.createElementNS(svg_ns, "defs");
+        Object.entries(attributes).forEach(([k, v]) => {
+            el.setAttribute(k, v);
+        });
 
-    const filter = document.createElementNS(svg_ns, "filter");
-    const filter_id = `blur_${Date.now()}`;
+        return el;
+    }
 
-    filter.setAttribute("id", filter_id);
+    function create_blur_filter(id, std_dev) {
+        const filter = create_svg_element("filter", {
+            id,
+            x: "-50%",
+            y: "-50%",
+            width: "200%",
+            height: "200%"
+        });
 
-    // IMPORTANT: large blur radius (SVG uses user units, not rem)
-    const blur = document.createElementNS(svg_ns, "feGaussianBlur");
-    blur.setAttribute("stdDeviation", "60"); 
-    // ~ approximation of 7.5rem depending on root font size
+        filter.appendChild(
+            create_svg_element("feGaussianBlur", {
+                stdDeviation: std_dev
+            })
+        );
 
-    filter.appendChild(blur);
-    defs.appendChild(filter);
+        return filter;
+    }
 
-    // ---------- MASK ----------
-    const mask = document.createElementNS(svg_ns, "mask");
-    const mask_id = `mask_${Date.now()}`;
-    mask.setAttribute("id", mask_id);
+    function get_rect(el) {
+        const r = el.getBoundingClientRect();
 
-    els.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        const x = rect.left + window.scrollX;
-        const y = rect.top + window.scrollY;
+        return {
+            x: r.left + window.scrollX,
+            y: r.top + window.scrollY,
+            width: r.width,
+            height: r.height
+        };
+    }
 
-        const svg_rect = document.createElementNS(svg_ns, "rect");
+    function create_glow_rect(el) {
+        const { x, y, width, height } = get_rect(el);
 
-        svg_rect.setAttribute("x", x);
-        svg_rect.setAttribute("y", y);
-        svg_rect.setAttribute("width", rect.width);
-        svg_rect.setAttribute("height", rect.height);
+        const radius = Math.min(width, height) / 2;
 
-        // Rounded corners (50%)
-        const radius = Math.min(rect.width, rect.height) / 2;
-        svg_rect.setAttribute("rx", radius);
-        svg_rect.setAttribute("ry", radius);
+        return create_svg_element("rect", {
+            x,
+            y,
+            width,
+            height,
+            rx: radius,
+            ry: radius,
+            fill: "white"
+        });
+    }
 
-        svg_rect.setAttribute("fill", "white");
+    function create_subtract_rect(el) {
+        const bleed = 1.1;
+        let { x, y, width, height } = get_rect(el);
+        x -= (width * (bleed - 1)) / 2;
+        y -= (height * (bleed - 1)) / 2;
 
-        mask.appendChild(svg_rect);
+        width *= bleed;
+        height *= bleed;
+
+        // IMPORTANT: no rounding → true rectangle
+        return create_svg_element("rect", {
+            x,
+            y,
+            width,
+            height,
+            fill: "black"
+        });
+    }
+
+    const svg = create_svg_element("svg", {
+        width: doc_width,
+        height: doc_height,
+        viewBox: `0 0 ${doc_width} ${doc_height}`
     });
 
-    // Apply blur to mask content via group wrapper
-    const g = document.createElementNS(svg_ns, "g");
-    g.setAttribute("filter", `url(#${filter_id})`);
+    Object.assign(svg.style, {
+        position: "absolute",
+        top: "0",
+        left: "0",
+        pointerEvents: "none",
+        overflow: "visible"
+    });
 
-    // Move mask children into filtered group
-    while (mask.firstChild) {
-        g.appendChild(mask.firstChild);
-    }
-    mask.appendChild(g);
+    const defs = create_svg_element("defs");
+
+    const id = Date.now();
+
+    const glow_filter_id = `glow_${id}`;
+    const subtract_filter_id = `subtract_${id}`;
+
+    defs.appendChild(create_blur_filter(glow_filter_id, glow_blur));
+    defs.appendChild(create_blur_filter(subtract_filter_id, subtract_blur));
+
+    const mask = create_svg_element("mask", {
+        id: `mask_${id}`
+    });
+
+    // full black base
+    mask.appendChild(
+        create_svg_element("rect", {
+            x: 0,
+            y: 0,
+            width: doc_width,
+            height: doc_height,
+            fill: "black"
+        })
+    );
+
+    const glow_group = create_svg_element("g", {
+        filter: `url(#${glow_filter_id})`
+    });
+
+    const subtract_group = create_svg_element("g", {
+        filter: `url(#${subtract_filter_id})`
+    });
+
+    els.forEach(el => {
+        glow_group.appendChild(create_glow_rect(el));
+
+        const parent = el.parentElement;
+        if (parent) {
+            subtract_group.appendChild(create_subtract_rect(parent));
+        }
+    });
+
+    mask.appendChild(glow_group);
+    mask.appendChild(subtract_group);
 
     defs.appendChild(mask);
     svg.appendChild(defs);
 
     document.body.appendChild(svg);
 
-    return mask_id;
+    return mask.id;
 }
 
 function generate_background(glow_els, parallax = 0.3) {
@@ -496,8 +569,8 @@ function generate_background(glow_els, parallax = 0.3) {
     for(let i = 0; i < 2; i++) {
         const dom_el = $el(`.instrument,${["left", "right"][i]}`);
         const body_height = document.body.offsetHeight;
-        console.log(body_height)
         dom_el.style.setProperty("--offset-top", `${rand * body_height}px`); // ensure right instrument has 50% extra offset; backgrounds appear different
+        dom_el.style.height = ((1 / parallax) * 100 + 25) + "%"; // 25% bottom padding to ensure parallax is maintained at bottom of scroll container
         instrument_container.appendChild(dom_el)
     }
 
@@ -513,10 +586,11 @@ function generate_background(glow_els, parallax = 0.3) {
 }
 
 function generate_glows(glows) {
+    const viewport_width = document.documentElement.offsetWidth;
     const rules = {
-        left:   { left: 0,   tx: -50 },
-        right:  { right: 0,  tx:  50 },
-        top:    { top: 0,    ty: -7.5 },
+        left:   { left: 0,   tx: viewport_width < 1200 ? -100 : -50 },
+        right:  { right: 0,  tx:  viewport_width < 1200 ? 100 : 50 },
+        top:    { top: 0,    ty: -25 },
         bottom: { bottom: 0, ty:  7.5 }
     };
 
@@ -530,7 +604,7 @@ function generate_glows(glows) {
         if (positions.length === 1 && positions[0] === "center") {
             glow_el.style.left = "50%";
             glow_el.style.top = "50%";
-            glow_el.style.width = "100%"; glow_el.style.height = "100%"; glow_el.style.aspectRatio = "unset";
+            glow_el.style.width = "112.5%"; glow_el.style.height = "100%"; glow_el.style.aspectRatio = "unset";
             tx = ty = -50;
         }
         else {

@@ -106,7 +106,7 @@
     mix-blend-mode: multiply;
 }
 
-.leather-background > .glow {
+.leather-background > .glow-layer {
     top: -40%;
     left: 50%;
     transform: translateX(-50%);

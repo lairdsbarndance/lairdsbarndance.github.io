@@ -513,4 +513,17 @@
     - A Cloudflare URL Rewrite Rule was created to intercept extensionless requests (such as /pages/page) and internally append .html, allowing GitHub Pages to serve the correct file (/pages/page.html) without changing visible URLs.
         - The rule was configured via Transform Rules → URL Rewrite Rules, using a filter to exclude / and files with extensions, and a dynamic rewrite expression concat(http.request.uri.path, ".html") to perform the mapping.
 
-    - ### Time Spent: 40 minutes
+    - ### Time Spent: 45 minutes
+
+- ## 10/06/2026
+    - Added CSS to ensure bg-glow works all smaller screen widths
+    - Refactored the SVG mask to separate glow and subtraction layers with independent blur controls. Glow elements remain rounded and heavily blurred, while parent subtraction elements are rendered as sharp rectangles with a lighter blur. This improves control over masking and makes the cut-out behaviour more consistent.
+
+    - ### Time Spent: 1 hour
+
+- ## 13/06/2026
+    - Messaged Richard with general update regarding the creation of the website, expected weekly work input and when a deadline can be established.
+    - Fixed strange mobile navigation issues caused by multiple / undefined scroll contexts
+    - Improved instrument background for smaller screen widths
+
+    - ### Time Spent: 1 hour
