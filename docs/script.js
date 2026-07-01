@@ -1,6 +1,7 @@
 const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
+const DEV_MODE = window.location.href.includes("127.0.0.1");
 
 const svg_defs = `
 <svg style="position:absolute; width:0; height:0; overflow:hidden"
@@ -58,7 +59,7 @@ const svg_defs = `
 `
 
 const header = $("header")[0];
-const dom_main = $("main")[0]
+const dom_main = $("main")[0];
 
 document.body.insertAdjacentHTML("afterbegin", svg_defs);
 
@@ -105,23 +106,50 @@ async function fetch_data(named_range) {
 }
 
 function parse_table(json) {
-    let trunc = json.filter(arr => (arr.filter(el => el === '').length === 0 && arr.length > 0))
-    let parsed = [];
+    const rows = json
+        .filter(item => item.type === "row")
+        .map(item => item.cells.map(cell => cell.text));
+
+        
+    const trunc = rows.filter(
+        arr => arr.length > 0 && !arr.some(el => el === "") && !arr.includes('FALSE')
+    );
+
+    const parsed = [];
+
     trunc.forEach((arr, i) => {
-        let obj = Object();
+        const obj = {};
+
         arr.forEach((el, j) => {
             let formatted_el = el;
+
             const key = trunc[0][j];
-            const bool_map = {"TRUE": true, "FALSE": false};
-            if(Object.keys(bool_map).includes(el)) formatted_el = bool_map[el];
-            if(key === "Date" && el !== key) {
+
+            const bool_map = {
+                "TRUE": true,
+                "FALSE": false
+            };
+
+            if (el in bool_map) {
+                formatted_el = bool_map[el];
+            }
+
+            if (key === "Date" && el !== key) {
                 formatted_el = parse_gb_date(el);
             }
-            if(key.includes("comma-separated")) formatted_el = el.split(",")
+
+            if (key.includes("comma-separated")) {
+                formatted_el = el.split(",");
+            }
+
             obj[key] = formatted_el;
-        })
-        if(i > 0) parsed.push(obj)
-    })
+        });
+
+        if (i > 0) {
+            parsed.push(obj);
+        }
+    });
+
     return parsed;
 }
 
@@ -196,7 +224,8 @@ async function fetch_sheet_names() {
 }
 
 async function fetch_events() {
-    const events_res = await fetch_data("events"); const files_res = await fetch_data("files");
+    const events_res = await fetch_data("events");
+    const files_res = await fetch_data("files");
     const events = parse_table(events_res); const files = parse_table(files_res);
     const parsed_events = parse_events(events, files);
     return parsed_events;
@@ -233,7 +262,7 @@ function generate_nav(pages) {
     const f_pages = pages.filter(page => !page.includes("readonly"));
 
     let nav_struct = `            
-    <h3><a href="/">lairdsbarndance.band</a></h3>
+    <h3><a href="/${DEV_MODE ? "index.html": ""}">lairdsbarndance.band</a></h3>
     <div class="spacer"></div>
     <nav>
         <ul></ul>
@@ -245,10 +274,10 @@ function generate_nav(pages) {
     const ul = header.querySelector("ul");
     f_pages.forEach(page => {
         let url = `/pages/${page.toLowerCase().split(" ").join("_")}`;
-        if(page === "Home") url = "/"; // since all pages bar index are stored in subdir
+        if(page === "Home") url = DEV_MODE ? "/index.html" : "/";
 
         const anchor = $el("a");
-        anchor.href = url;
+        anchor.href = url + (DEV_MODE && page !== "Home" ? ".html" : "");
         anchor.textContent = page;
         ul.appendChild(anchor);
     })
@@ -633,6 +662,20 @@ function generate_glows(glows) {
     });
 }
 
+function generate_quotes(json) {
+    const quotes_sub_containers = $(".quotes > div");
+    const quotes = parse_table(json).slice(0, 4);
+    quotes.forEach((quote, index) => {
+        const quote_el = $el(".quote");
+        const heading = $el("h3");
+        const info_span = $el("span");
+        heading.textContent = quote["Review"];
+        info_span.textContent = quote["Source"];
+        quote_el.appendChildren(heading, info_span);
+        quotes_sub_containers[Math.floor(index / 2)].appendChild(quote_el);
+    })
+}
+
 async function main() { 
     const this_page = document.title.split("- ").pop();
     let pages = JSON.parse(localStorage.getItem("sheet_names"));
@@ -640,6 +683,7 @@ async function main() {
     // const res = await fetch_data(PAGE);
     // const res = await fetch_data("contact_prompt");
     // const data = parse_document(res, pages);
+    // console.log(data)
     // populate_dyn_containers(data);
     generate_header(this_page, pages);
     generate_leather($(".leather"));

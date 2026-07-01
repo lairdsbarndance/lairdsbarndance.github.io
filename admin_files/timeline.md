@@ -527,3 +527,11 @@
     - Improved instrument background for smaller screen widths
 
     - ### Time Spent: 1 hour
+
+- ## 01/07/2026
+    - Added DEV_MODE for correct anchor tags when working in local development environment
+    - Fixed error with fetch_table() that was caused by the overridden JSON formatting with parse_document()
+    - Added Quotes, ensuring they are displayed appropriately on all screen widths:
+        - Appearing either side of the banner at large widths
+        - Appearing beneath the banner at medium widths
+        - Appearing beneath the image at small widths (as demonstrated in mobile mockup)

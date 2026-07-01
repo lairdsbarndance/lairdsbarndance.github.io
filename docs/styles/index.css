@@ -1,0 +1,26 @@
+.landing-section.fullscreen {
+    width: 100vw;
+    height: 80vh;
+}
+
+.quotes {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.quotes > div {
+    width: var(--quotes-width);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 20rem;
+    color: white;
+    padding: 1rem;
+}
+
+.quotes > div:last-child {text-align: right;}
+
+.quotes > div > .quote > h3 {
+    font-size: 1.5rem;
+}
