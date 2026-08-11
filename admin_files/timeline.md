@@ -532,6 +532,16 @@
     - Added DEV_MODE for correct anchor tags when working in local development environment
     - Fixed error with fetch_table() that was caused by the overridden JSON formatting with parse_document()
     - Added Quotes, ensuring they are displayed appropriately on all screen widths:
-        - Appearing either side of the banner at large widths
-        - Appearing beneath the banner at medium widths
-        - Appearing beneath the image at small widths (as demonstrated in mobile mockup)
+        - [ x ] Appearing either side of the banner at large widths
+        - [ ] Appearing beneath the banner at medium widths
+        - [ ] Appearing beneath the image at small widths (as demonstrated in mobile mockup)
+
+    - ### Time Spent: 2 hours
+
+- ## 10/08/2026
+    - Altered quotes visibility in medium screen width state such that only two are visible at once (the quotes rotate). This allows sufficient room for the edges of the foreground (group portrait) to not be obscured by the quotes.
+        - The quotes are dynamically sorted to ensure a longer and shorter quote are shown at any given time.
+    - Created 4 layer fullscreen homepage composite
+        - To do: rough-border shows in front of images (tricky stacking contexts)
+    
+    - ### Time Spent: 2 hour 45 minutes

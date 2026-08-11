@@ -2,6 +2,7 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
+const CACHE = true;
 
 const svg_defs = `
 <svg style="position:absolute; width:0; height:0; overflow:hidden"
@@ -64,14 +65,23 @@ const dom_main = $("main")[0];
 document.body.insertAdjacentHTML("afterbegin", svg_defs);
 
 async function fetch_data(named_range) {
-    const res = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}` +
-        `?ranges=${encodeURIComponent(named_range)}` +
-        `&includeGridData=true` +
-        `&key=${κ}`
-    );
+    const cached = `cached_${named_range}`;
+    let data;
+    if(CACHE) {
+        try {
+            data = JSON.parse(localStorage.getItem(cached));
+        } catch (err) {
+            const res = await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}` +
+                `?ranges=${encodeURIComponent(named_range)}` +
+                `&includeGridData=true` +
+                `&key=${κ}`
+            );
+            let json = await res.json();
+            localStorage.setItem(cached, JSON.stringify(json))
+        }
+    }
 
-    const data = await res.json();
     const rows = data.sheets?.[0]?.data?.[0]?.rowData ?? [];
 
     let output = [];
@@ -230,6 +240,28 @@ async function fetch_events() {
     const parsed_events = parse_events(events, files);
     return parsed_events;
 }  
+
+function activate(els, delay) {
+    setTimeout(() => {
+            if(typeof els === Array) {
+        els.forEach(el => el.classList.add("active"))
+        } else {
+            try {els.classList.add("active")}
+            catch (err) {throw err}
+        }
+    }, delay);
+}
+
+function deactivate(els, delay) {
+    setTimeout(() => {
+        if(typeof els === Array) {
+            els.forEach(el => el.classList.remove("active"))
+        } else {
+            try {els.classList.remove("active")}
+            catch (err) {throw err}
+        }
+    }, delay);
+}
 
 function parse_gb_date(str) {
     const split = str.split("/");
