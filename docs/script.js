@@ -64,22 +64,40 @@ const dom_main = $("main")[0];
 
 document.body.insertAdjacentHTML("afterbegin", svg_defs);
 
+function cache_data(name, data) {
+    data["date_cached"] = Date.now();
+    localStorage.setItem(name, JSON.stringify(data))
+}
+
 async function fetch_data(named_range) {
     const cached = `cached_${named_range}`;
     let data;
-    if(CACHE) {
-        try {
-            data = JSON.parse(localStorage.getItem(cached));
-        } catch (err) {
-            const res = await fetch(
-                `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}` +
-                `?ranges=${encodeURIComponent(named_range)}` +
-                `&includeGridData=true` +
-                `&key=${κ}`
-            );
-            let json = await res.json();
-            localStorage.setItem(cached, JSON.stringify(json))
+
+    try {
+        data = JSON.parse(localStorage.getItem(cached));
+
+        if (!data?.date_cached) {
+            throw new Error("re_cache");
         }
+
+        const timeout = 6 * (60 * 60 * 1000); // recaches every 6 hours
+
+        if (Date.now() - data.date_cached > timeout) {
+            throw new Error("re_cache");
+        }
+
+    } catch (err) {
+        console.log("re_cache!");
+
+        const res = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}` +
+            `?ranges=${encodeURIComponent(named_range)}` +
+            `&includeGridData=true` +
+            `&key=${κ}`
+        );
+
+        data = await res.json();
+        cache_data(cached, data);
     }
 
     const rows = data.sheets?.[0]?.data?.[0]?.rowData ?? [];
@@ -252,12 +270,22 @@ function activate(els, delay) {
     }, delay);
 }
 
-function deactivate(els, delay) {
+function deactivate(els, delay, timeout = 1000) {
     setTimeout(() => {
         if(typeof els === Array) {
-            els.forEach(el => el.classList.remove("active"))
+            els.forEach(el => {
+                el.classList.remove("active");
+                el.classList.add("deactivating"); setTimeout(() => {
+                    el.classList.remove("deactivating")
+                }, timeout);
+            })
         } else {
-            try {els.classList.remove("active")}
+            try {
+                els.classList.remove("active");
+                els.classList.add("deactivating"); setTimeout(() => {
+                    els.classList.remove("deactivating")
+                }, timeout);
+            }
             catch (err) {throw err}
         }
     }, delay);
@@ -695,7 +723,8 @@ function generate_glows(glows) {
 }
 
 function generate_quotes(json) {
-    const quotes_sub_containers = $(".quotes > div");
+    const quotes_sub_containers = $(".quotes:not(.mobile-quotes) > div");
+    console.log(quotes_sub_containers)
     const quotes = parse_table(json).slice(0, 4);
     quotes.forEach((quote, index) => {
         const quote_el = $el(".quote");
@@ -705,6 +734,7 @@ function generate_quotes(json) {
         info_span.textContent = quote["Source"];
         quote_el.appendChildren(heading, info_span);
         quotes_sub_containers[Math.floor(index / 2)].appendChild(quote_el);
+        $(".mobile-quotes > div")[0].appendChild(quote_el.cloneNode(true));
     })
 }
 

@@ -545,3 +545,14 @@
         - To do: rough-border shows in front of images (tricky stacking contexts)
     
     - ### Time Spent: 2 hour 45 minutes
+
+- ## 11/08/2026
+    - Improved cache_mode
+        - If the cached data being fetched is more than 6 hours old, a new cache replaces it. This helps prevent the server from being overloaded or throwing a timeout
+    - Quote layout improvement for each width
+        - 1500px and higher: 4 quotes shown (2 either side of the banner)
+        - 1300-1500px: rotating quotes with a smaller banner
+        - 1150px-1300px: Smaller rotating quotes
+        - 1050px and lower: 1 rotating quote beneath image
+    
+    - ### Time Spent (so far): 3 hours

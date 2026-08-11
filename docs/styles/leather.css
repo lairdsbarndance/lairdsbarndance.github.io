@@ -132,7 +132,7 @@
     filter: drop-shadow(0 .125rem .5rem rgba(0,0,0,0.4));
 }
 
-.leather.rough-border::after {
+.leather.rough-border::after, .rough-border-no-leather::after {
     --border-height: 1rem;
     content: "";
     position: absolute;
@@ -145,7 +145,7 @@
     z-index: 9;
 }
 
-.leather.rough-border::before {
+.leather.rough-border::before, .rough-border-no-leather::before {
     --stitch-height: 5px;
     position: absolute;
     content: "";
