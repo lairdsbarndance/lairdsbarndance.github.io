@@ -345,11 +345,6 @@ nav.mobile-view:not(.open) {
         padding: 5vw 10vw; /* less padding due to longer text */
     }
 
-    .banner > .logo.large, .banner > .title {
-        width: 100vw;
-        max-height: unset;
-        height: 100%;
-    }
     .banner > .logo:not(.large) {
         width: 30vw;
     }

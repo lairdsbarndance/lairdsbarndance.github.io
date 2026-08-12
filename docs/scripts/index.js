@@ -4,13 +4,14 @@ fetch_data("quotes_table")
 const banner = $(".banner")[0];
 const quotes = $(".quotes")[0];
 const mobile_quotes = $(".mobile-quotes")[0];
+const carousel_extras = ["1.jpeg"]
+const band_types = ["english", "irish"]
 
 function quote_carousel(interval, alternate = false) {
     const mobile_quotes = $(".mobile-quotes > div > .quote");
     $(".quotes:not(.mobile-quotes) > div").forEach((side, i) => {
         let increment = 1;
         $(".quotes:not(.mobile-quotes) > div > .quote:first-child").forEach(initial_quote => activate(initial_quote))
-        console.log(interval + (alternate ? i * (interval / 2) : 0))
         setTimeout(() => {
             setInterval(() => {
                 Array.from(side.childNodes).forEach((quote, j) => {
@@ -64,5 +65,87 @@ window.addEventListener("DOMContentLoaded", () => {
 })
 
 const background_wrapper = $(".background-wrapper")[0];
-const band_type = background_wrapper.getAttribute("data-band-type");
-Array.from(background_wrapper.children).forEach(el => el.src = `/assets/homepage/${band_type}_fullscreen/${el.classList[0]}.png`);
+
+band_types.forEach((band_type, i) => {
+    background_wrapper.innerHTML += `
+    <div class="carousel-item ${band_type} ${(i === 0 ? "active" : "")}">
+        <img class="cleanplate" src="/assets/homepage/${band_type}_fullscreen/cleanplate.png"></img>
+        <img class="vignette"   src="/assets/homepage/${band_type}_fullscreen/vignette.png"></img>
+        <img class="portrait"   src="/assets/homepage/${band_type}_fullscreen/portrait.png"></img>
+    </div>
+    `
+})
+
+carousel_extras.forEach(extra => {
+    background_wrapper.innerHTML += `
+    <div class="carousel-item extra">
+        <img src="/assets/homepage/carousel_photos/${extra}">
+    </div>
+    `
+})
+
+function create_portrait_mask(portrait, banner) {
+
+    const rect = portrait.getBoundingClientRect();
+
+    const portrait_carousel = $el(".portrait-carousel,background-wrapper");
+
+    document.body.appendChild(portrait_carousel);
+
+    portrait_carousel.style.position = "absolute";
+    portrait_carousel.style.left = `${rect.left + window.scrollX}px`;
+    portrait_carousel.style.top = `${rect.top + window.scrollY}px`;
+    portrait_carousel.style.width = `${rect.width}px`;
+    portrait_carousel.style.height = `${rect.height}px`;
+
+    band_types.forEach((band_type, i) => {
+        portrait_carousel.innerHTML += `
+            <div class="carousel-item ${band_type} ${(i === 0 ? "active" : "")}">
+                <img class="portrait" src="/assets/homepage/${band_type}_fullscreen/portrait.png">
+            </div>
+        `;
+    });
+
+    carousel_extras.forEach(extra => {
+        portrait_carousel.innerHTML += `
+        <div class="carousel-item extra">
+            <img src="/assets/homepage/irish_fullscreen/portrait.png" style="opacity: 0;">
+        </div>
+        `
+    })
+}
+
+const carousel_indicator = $(".carousel-indicator")[0];
+const carousel_length = background_wrapper.children.length;
+for(let i = 0; i < carousel_length; i++) {
+    const dot = $el(".dot");
+    if(i === 0) activate(dot)
+    carousel_indicator.appendChild(dot);
+}
+
+setTimeout(() => {
+    document.body.style.setProperty("--fullscreen-img-height", background_wrapper.querySelector(".carousel-item").offsetHeight + "px");
+    create_portrait_mask($(".portrait")[0], banner);
+    $(".carousel-item.extra").forEach(extra => extra.style.display = "initial");
+    const dots = $(".carousel-indicator > .dot");
+
+    let carousel_increment = 0;
+    setInterval(() => {
+
+        const portrait_wrapper = $(".portrait-carousel")[0];
+
+        carousel_increment++;
+        if(carousel_increment > background_wrapper.children.length - 1) carousel_increment = 0;
+
+        activate(background_wrapper.children[carousel_increment]); activate(dots[carousel_increment]);
+        deactivate(background_wrapper.children[carousel_increment === 0 ? background_wrapper.children.length - 1 : carousel_increment - 1]); deactivate(dots[carousel_increment === 0 ? background_wrapper.children.length - 1 : carousel_increment - 1])
+
+        activate(portrait_wrapper.children[carousel_increment]);
+        deactivate(portrait_wrapper.children[carousel_increment === 0 ? portrait_wrapper.children.length - 1 : carousel_increment - 1]);
+
+    }, 3000);
+
+}, 100);
+
+
+    

@@ -1,6 +1,6 @@
 .landing-section.fullscreen {
     width: 100vw;
-    /* background: red; */
+    --portrait-padding: calc(var(--banner-height) - 4%);
 }
 
 .landing-section.fullscreen > * {grid-area: 1 / -1 / 1 / -1}
@@ -51,7 +51,7 @@
     justify-content: center;
     display: none;
     margin: auto;
-    height: calc(var(--max-height) + 2.5rem);
+    height: calc(var(--max-height) + 3rem);
 }
 
 .mobile-quotes > div:nth-child(1) {
@@ -80,7 +80,8 @@
     grid-column: 1 / -1;
     grid-row: 1 / -1;
     opacity: 0;
-    transition: 750ms ease all;
+    transition: 250ms ease-in-out opacity,
+                750ms ease transform;
 }
 
 .mobile-quotes > div > .quote {
@@ -105,12 +106,48 @@
 .background-wrapper {
     display: grid;
     grid-area: 1 / -1 / 1 / -1;
-    height: fit-content;
+    height: var(--fullscreen-img-height);
     width: 100%;
     position: relative;
 }
 
-.background-wrapper > img {
+.background-wrapper > * {
+    display: grid;
+    width: 100%;
+    height: var(--fullscreen-img-height);
+    overflow: hidden;
+    grid-area: 1 / -1 / 1 / -1;
+    transition: 1s ease transform;
+}
+
+.portrait-carousel {
+    z-index: 1;
+}
+
+.background-wrapper > *:not(.active, .deactivating) {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.background-wrapper > .extra {
+    display: none;
+}
+
+.background-wrapper > .extra > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+}
+
+.background-wrapper > .active {
+    transform: translateX(0%);
+}
+
+.background-wrapper > .deactivating {
+    transform: translateX(-100%);
+}
+
+.background-wrapper > .carousel-item > img {
     grid-area: 1 / -1 / 1 / -1;
     justify-self: center;
     width: 100%;
@@ -128,15 +165,36 @@
     background-position: center top;
 }
 
-.background-wrapper > .portrait {
-    z-index: 1;
+.background-wrapper:not(.portrait-carousel) > .carousel-item > .portrait {opacity: 0;}
+
+.background-wrapper > .carousel-item > .portrait {
     padding-top: calc(var(--banner-height) - 4%); /* hat intersection */
     width: 100%;
-    max-height: 85vh;
+    max-height: 95vh;
     object-fit: contain;
     align-self: flex-end;
     justify-self: center;
 }
+
+.carousel-indicator {
+    display: flex;
+    margin: auto;
+    gap: .5rem;
+    margin-top: 2rem; /* account for rough-border */
+}
+
+.carousel-indicator > .dot {
+    width: .5rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(rgba(255,255,255,0.3), rgba(141, 141, 141, 0.3));
+    transition: all 250ms ease;
+}
+
+.dot.active {
+    background: radial-gradient(rgba(255,255,255,1), rgba(141, 141, 141, 1))
+}
+
 
 @media (max-width: 1300px) {
     .banner {
@@ -169,7 +227,7 @@
     .quotes:not(.mobile-quotes) {display: none}
     .mobile-quotes {display:block}
     .mobile-quotes > div > .quote > h3 {
-        font-size: 1.65rem;
+        font-size: 1.45rem;
         max-width: 70vw;
         text-wrap: balance;
     }

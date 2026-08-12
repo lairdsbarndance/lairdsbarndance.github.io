@@ -549,10 +549,17 @@
 - ## 11/08/2026
     - Improved cache_mode
         - If the cached data being fetched is more than 6 hours old, a new cache replaces it. This helps prevent the server from being overloaded or throwing a timeout
-    - Quote layout improvement for each width
+    - Quote layout improvement for each width. 
         - 1500px and higher: 4 quotes shown (2 either side of the banner)
         - 1300-1500px: rotating quotes with a smaller banner
         - 1150px-1300px: Smaller rotating quotes
         - 1050px and lower: 1 rotating quote beneath image
+        - several minor padding / width changes to banner and image height, especially at smaller mobile widths
     
-    - ### Time Spent (so far): 3 hours
+    - ### Time Spent: 3 hours 30 minutes
+
+- ## 12/08/2026
+    - Added fullscreen image carousel to homepage (including extra images and carousel indicator)
+        - This task was what caused by far the most frustrating and time consuming problem. Since the images needed to be nested inside parent containers (.carousel-item), as well as having a transform, they were moved into a separate stacking context to the lairds banner. This meant the foreground portrait didn't show above the banner -- one of the key elements in portraying the skeuomorphic / layered aesthetic. I tried hard to rectify the situation using css tricks -- masking (although obtaining exact transferred positions in javascript was impossible due to the already complicated fixing of widths and heights, thus making obtained values too unreliable / inconsistent) and other techniques. Eventually, I realised I just needed to create a separate image carousel for the foreground layer; javascript positions and scales this carousel to occupy the same coordinates as the original carousel. After final fixes to the timing of calculations and rendering order, this task was finally complete.
+    
+    - ### Time Spent: 3 hours
