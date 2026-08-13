@@ -5,6 +5,7 @@ const banner = $(".banner")[0];
 const quotes = $(".quotes")[0];
 const mobile_quotes = $(".mobile-quotes")[0];
 const carousel_extras = ["1.jpeg"]
+const carousel_interval = get_website_variable("Carousel Interval") * 1000;
 const band_types = ["english", "irish"]
 
 function quote_carousel(interval, alternate = false) {
@@ -34,61 +35,68 @@ function quote_carousel(interval, alternate = false) {
     })
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => {
-        let quote_container_width = (document.body.offsetWidth - banner.offsetWidth) * 0.5;
-        let quotes_styles = getComputedStyle($(".quotes > div")[0])
-        quotes.style.setProperty("--quotes-width", quote_container_width + "px");
+function initialise_quote_widths() {
+    let quote_container_width = (document.body.offsetWidth - banner.offsetWidth) * 0.5;
+    let quotes_styles = getComputedStyle($(".quotes > div")[0])
+    quotes.style.setProperty("--quotes-width", quote_container_width + "px");
 
-        mobile_quotes.style.setProperty(
-            "--max-width",
-            `${Math.max(
-                ...Array.from($(".mobile-quotes > div > .quote"))
-                    .map(child => child.offsetWidth)
-            )}px`
-        );
-        
-        mobile_quotes.style.setProperty(
-            "--max-height",
-            `${Math.max(
-                ...Array.from($(".mobile-quotes > div > .quote"))
-                    .map(child => child.offsetHeight)
-            )}px`
-        );
+    mobile_quotes.style.setProperty(
+        "--max-width",
+        `${Math.max(
+            ...Array.from($(".mobile-quotes > div > .quote"))
+                .map(child => child.offsetWidth)
+        )}px`
+    );
+    
+    mobile_quotes.style.setProperty(
+        "--max-height",
+        `${Math.max(
+            ...Array.from($(".mobile-quotes > div > .quote"))
+                .map(child => child.offsetHeight)
+        )}px`
+    );
 
-        if(parseFloat(quotes_styles["min-width"].split("px")[0]) > quote_container_width) {
-            quotes.classList.add("beside-banner");
-            quotes.style.setProperty("--banner-height", banner.offsetHeight + "px");
-            quote_carousel(10000, true);
-        }
-    }, 1)
-})
+    if(parseFloat(quotes_styles["min-width"].split("px")[0]) > quote_container_width) {
+        quotes.classList.add("beside-banner");
+        quotes.style.setProperty("--banner-height", banner.offsetHeight + "px");
+        quote_carousel(get_website_variable("Quotes Interval") * 1000, true);
+    }
+}
 
 const background_wrapper = $(".background-wrapper")[0];
 
-band_types.forEach((band_type, i) => {
-    background_wrapper.innerHTML += `
-    <div class="carousel-item ${band_type} ${(i === 0 ? "active" : "")}">
-        <img class="cleanplate" src="/assets/homepage/${band_type}_fullscreen/cleanplate.png"></img>
-        <img class="vignette"   src="/assets/homepage/${band_type}_fullscreen/vignette.png"></img>
-        <img class="portrait"   src="/assets/homepage/${band_type}_fullscreen/portrait.png"></img>
-    </div>
-    `
-})
+async function generate_fullscreen_carousel() {
+    band_types.forEach((band_type, i) => {
+        background_wrapper.innerHTML += `
+        <div class="carousel-item ${band_type} ${(i === 0 ? "active" : "")}">
+            <img class="cleanplate" src="/assets/homepage/${band_type}_fullscreen/cleanplate.png">
+            <img class="vignette" src="/assets/homepage/${band_type}_fullscreen/vignette.png">
+            <img class="portrait" src="/assets/homepage/${band_type}_fullscreen/portrait.png">
+        </div>
+        `
+    })
 
-carousel_extras.forEach(extra => {
-    background_wrapper.innerHTML += `
-    <div class="carousel-item extra">
-        <img src="/assets/homepage/carousel_photos/${extra}">
-    </div>
-    `
-})
+    carousel_extras.forEach(extra => {
+        background_wrapper.innerHTML += `
+        <div class="carousel-item extra">
+            <img src="/assets/homepage/carousel_photos/${extra}">
+        </div>
+        `
+    })
+
+    await Promise.all(
+        [...background_wrapper.querySelectorAll("img")].map(img => {
+            if(img.complete) return;
+            return new Promise(resolve => img.onload = resolve);
+        })
+    );
+}
+
 
 function create_portrait_mask(portrait, banner) {
-
     const rect = portrait.getBoundingClientRect();
 
-    const portrait_carousel = $el(".portrait-carousel,background-wrapper");
+    const portrait_carousel = $el(".portrait-carousel,background-wrapper,pre-render");
 
     document.body.appendChild(portrait_carousel);
 
@@ -115,37 +123,53 @@ function create_portrait_mask(portrait, banner) {
     })
 }
 
-const carousel_indicator = $(".carousel-indicator")[0];
-const carousel_length = background_wrapper.children.length;
-for(let i = 0; i < carousel_length; i++) {
-    const dot = $el(".dot");
-    if(i === 0) activate(dot)
-    carousel_indicator.appendChild(dot);
+async function generate_carousel_indicators(carousel_indicators) {
+    const carousel_length = background_wrapper.children.length;
+    carousel_indicators.forEach(container => {
+        for(let i = 0; i < carousel_length; i++) {
+            const dot = $el(".dot");
+            if(i === 0) activate(dot)
+            container.appendChild(dot);
+        }
+    })
 }
 
-setTimeout(() => {
+async function index_main() {
+    console.log("Index Main Started!")
+
+    const carousel_indicators = $(".carousel-indicator");
+    
+    await generate_fullscreen_carousel();
+    await generate_carousel_indicators(carousel_indicators);
+    initialise_quote_widths();
+    
     document.body.style.setProperty("--fullscreen-img-height", background_wrapper.querySelector(".carousel-item").offsetHeight + "px");
+    document.body.style.setProperty("--carousel-interval", get_website_variable("Carousel Speed") + "s");
     create_portrait_mask($(".portrait")[0], banner);
     $(".carousel-item.extra").forEach(extra => extra.style.display = "initial");
-    const dots = $(".carousel-indicator > .dot");
-
+    
+    fade_in(background_wrapper);
+    const portrait_wrapper = $(".portrait-carousel")[0];
+    fade_in(portrait_wrapper);
+    
     let carousel_increment = 0;
     setInterval(() => {
-
-        const portrait_wrapper = $(".portrait-carousel")[0];
-
+        const previous_increment = carousel_increment;
         carousel_increment++;
         if(carousel_increment > background_wrapper.children.length - 1) carousel_increment = 0;
 
-        activate(background_wrapper.children[carousel_increment]); activate(dots[carousel_increment]);
-        deactivate(background_wrapper.children[carousel_increment === 0 ? background_wrapper.children.length - 1 : carousel_increment - 1]); deactivate(dots[carousel_increment === 0 ? background_wrapper.children.length - 1 : carousel_increment - 1])
+        activate(background_wrapper.children[carousel_increment]);
+        deactivate(background_wrapper.children[previous_increment], 0, carousel_interval)
+
+        carousel_indicators.forEach(container => {
+            activate(container.children[carousel_increment]);
+            deactivate(container.children[previous_increment], 0, carousel_interval)
+        })
 
         activate(portrait_wrapper.children[carousel_increment]);
-        deactivate(portrait_wrapper.children[carousel_increment === 0 ? portrait_wrapper.children.length - 1 : carousel_increment - 1]);
+        deactivate(portrait_wrapper.children[previous_increment], 0, carousel_interval);
+    }, carousel_interval);
+}
 
-    }, 3000);
-
-}, 100);
-
-
+main_promise.then(() => index_main())
     

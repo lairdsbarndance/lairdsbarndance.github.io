@@ -16,6 +16,7 @@
     --glow-col: #182746;
 
     --title-height: 5rem;
+    --border-height: 1rem;
     
     --subtle-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.2);
     --harsh-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.75);
@@ -25,8 +26,8 @@ body {
     font-family: "PT Sans", sans-serif;
     overflow-x: hidden;
     background: var(--background);
-    width: 100%;
-    height: 100vh;
+    width: 100vw;
+    min-height: 100vh;
 
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -41,6 +42,24 @@ html {
 
 @view-transition {
     navgiation: auto;
+}
+
+.pre-render {
+    opacity: 0;
+}
+
+.visible {
+    opacity: 1;
+    mask-image: radial-gradient(white 50%, black 80%);
+    mask-size: 100vw 100vw;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-mode: luminance;
+    animation: pre-render-fade-in forwards 2s ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation-duration: 0s;
+    }
 }
 
 header * {text-decoration: none; color: white; cursor: pointer}
@@ -163,6 +182,7 @@ header > .spacer {
     border-radius: 0 0 calc(var(--border-radius-proportion) * var(--banner-height)) calc(var(--border-radius-proportion) * var(--banner-height));
     box-shadow: 0 0.375rem 0.5rem rgba(0,0,0,0.25);
     z-index: 1;
+    opacity: 0;
 
     transition: 500ms ease transform;
 
@@ -172,6 +192,7 @@ header > .spacer {
 }
 
 .banner.active {
+    opacity: 1;
     transform: translateX(-50%) translateY(0%);
 }
 
@@ -213,6 +234,7 @@ main {
     display: grid;
     overflow: hidden;
     justify-content: center;
+    gap: 1rem;
 }
 
 main.nav-padding {
@@ -361,3 +383,12 @@ nav.mobile-view:not(.open) {
     }
 }
 
+@keyframes pre-render-fade-in {
+    0% {
+        mask-size: 0vw 0vw;
+    }
+
+    100% {
+        mask-size: 400vw 400vw;
+    }
+}

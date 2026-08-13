@@ -133,7 +133,6 @@
 }
 
 .leather.rough-border::after, .rough-border-no-leather::after {
-    --border-height: 1rem;
     content: "";
     position: absolute;
     inset: auto 0 calc(3px - var(--border-height)) 0;
@@ -141,8 +140,16 @@
     background: linear-gradient(var(--light-blue) 10%, black 200%);
     mask: url(../assets/line.svg);
     mask-repeat: repeat-x;
-    mask-position: top center;
+    mask-position: center calc(-1 * var(--border-height));
     z-index: 9;
+}
+
+.leather.rough-border:not(.pre-load, .visible)::after, .rough-border-no-leather:not(.pre-load, .visible)::after {
+    animation: border-slide-in forwards 1s ease;
+}
+
+.leather.rough-border:not(.pre-load, .visible)::before, .rough-border-no-leather:not(.pre-load, .visible)::before {
+    animation: stitch-slide-in forwards 2s ease;
 }
 
 .leather.rough-border::before, .rough-border-no-leather::before {
@@ -155,7 +162,29 @@
     background-size: 1000px;
     background-repeat: repeat-x;
     background-position: center;
-    opacity: 0.7;
+    mask-image: linear-gradient(90deg, white 50%, black 100%);
+    mask-position: 200% 0%;
+    mask-mode: luminance;
+    mask-size: 200% auto;
+    mask-repeat: no-repeat;
+    opacity: 0;
     z-index: 10;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .leather.rough-border:not(.pre-load, .visible)::after, 
+    .rough-border-no-leather:not(.pre-load, .visible)::after,
+    .leather.rough-border:not(.pre-load, .visible)::before, 
+    .rough-border-no-leather:not(.pre-load, .visible)::before {
+        animation-duration: 0s;
+    }
+}
+
+@keyframes border-slide-in {
+    to {mask-position: top center; opacity: 0.8;}
+}
+
+@keyframes stitch-slide-in {
+    to {mask-position: 0% 0%; opacity: 0.8;}
 }
 

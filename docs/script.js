@@ -2,7 +2,7 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
-const CACHE = true;
+const CACHE = !!DEV_MODE;
 
 const svg_defs = `
 <svg style="position:absolute; width:0; height:0; overflow:hidden"
@@ -82,12 +82,12 @@ async function fetch_data(named_range) {
 
         const timeout = 6 * (60 * 60 * 1000); // recaches every 6 hours
 
-        if (Date.now() - data.date_cached > timeout) {
+        if (Date.now() - data.date_cached > timeout || !CACHE) {
             throw new Error("re_cache");
         }
 
     } catch (err) {
-        console.log("re_cache!");
+        console.log("Recaching Data");
 
         const res = await fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}` +
@@ -261,8 +261,8 @@ async function fetch_events() {
 
 function activate(els, delay) {
     setTimeout(() => {
-            if(typeof els === Array) {
-        els.forEach(el => el.classList.add("active"))
+        if(typeof els === Array) {
+            els.forEach(el => el.classList.add("active"))
         } else {
             try {els.classList.add("active")}
             catch (err) {throw err}
@@ -299,27 +299,59 @@ function parse_gb_date(str) {
     return Date.parse([mm, dd, yyyy].join("/"));
 }
 
-function populate_dyn_containers(data) {
+function get_website_variable(var_name) {
+    const website_variables = JSON.parse(localStorage.getItem("website_variables"));
+    let val = website_variables.find(el => el["Variable Name"] === var_name)["Value"]
+    try { val = parseFloat(val) }
+    catch (err) { }
+    return val;
+}
+
+async function populate_dyn_containers(data) {
     const containers = $(".dyn-container");
     containers.forEach(container => {
-        const target_obj = data.find(entry => entry.tag === container.getAttribute("data-dyn-tag"))
-        const heading = $el(container.getAttribute("data-dyn-heading"));
-        container.appendChild(heading);
+        const target_obj = data.find(entry => entry.tag === container.dataset.dynTag);
+        if(container.dataset.dynAuto === "true") {
+            const heading = $el(container.dataset.dynHeading);
+            container.appendChild(heading);
 
-        heading.innerHTML = target_obj.heading;
-        target_obj.content.forEach(entry => {
-            const dom_type = container.getAttribute("data-dyn-content");
-            const content_el = $el(dom_type);
-            content_el.innerHTML = entry;
-            if(dom_type === "a") content_el.href = entry
-            container.appendChild(content_el)
-        })
-        
+            heading.innerHTML = target_obj.heading;
+            target_obj.content.forEach(entry => {
+                const dom_type = container.dataset.dynContent;
+                const content_el = $el(dom_type);
+                content_el.innerHTML = entry;
+                if(dom_type === "a") content_el.href = entry
+                container.appendChild(content_el)
+            })
+        } else {
+            try {
+                const heading = container.querySelector(".dyn-heading");
+                heading.innerHTML = target_obj.heading;
+            } catch (err) {
+                console.warn("Dynamic Content Generation: No Heading Found!")
+            }
+            
+            try {
+                const content = container.querySelector(".dyn-content");
+                if(content.children.length === 0) {
+                    content.innerHTML = target_obj.content
+                } else {
+                    target_obj.content.forEach((entry, i) => content.children[i].innerHTML = entry);
+                }
+            } catch (err) {
+                console.warn("Dynamic Content Generation: No Content DOM Element(s) Found!")
+            }
+            
+        }    
+
+        fade_in(container)
     })
+
+    console.log("Dynamic Content Generated Sucessfully!")
 }
 
 function generate_nav(pages) {
-    const f_pages = pages.filter(page => !page.includes("readonly"));
+    const f_pages = pages.filter(page => !page.includes("dataonly"));
 
     let nav_struct = `            
     <h3><a href="/${DEV_MODE ? "index.html": ""}">lairdsbarndance.band</a></h3>
@@ -387,6 +419,21 @@ function generate_leather(els) {
             el.appendChild(borders);
         }
     })
+}
+
+async function fade_in(el, timeout = 1000, visible_timeout = 1000) {
+    el.classList.add("visible");
+
+    setTimeout(() => {
+        el.classList.remove("visible")
+    }, visible_timeout);
+
+    return new Promise(resolve => {
+        setTimeout(() => {
+            el.classList.remove("pre-render");
+            resolve();
+        }, timeout);
+    });
 }
 
 async function load_font_buffer(url) {
@@ -488,15 +535,13 @@ async function generate_header(this_page, pages) {
     const children = is_home ? [logo, border] : [logo, title, border];
     banner.appendChildren(...children);
 
-    setTimeout(() => {
-        document.body.style.setProperty("--banner-height", banner.offsetHeight + "px");    
-        $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px");
-        banner.classList.add("active")
-    }, 25);
-        
-    if(header.classList.contains("mobile-view")) $("nav")[0].style.transition = "500ms ease transform, 500ms ease filter";
+    document.body.style.setProperty("--banner-height", banner.offsetHeight + "px");    
+    $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px");
 
-    // dom_main.style.setProperty("padding-block", `${header.offsetHeight + banner.offsetHeight + 40}px`);
+    
+    if(header.classList.contains("mobile-view")) $("nav")[0].style.transition = "500ms ease transform, 500ms ease filter";
+    
+    console.log("Header Generated Sucessfully!")
 }
 
 function build_svg_mask(
@@ -651,7 +696,7 @@ function build_svg_mask(
 }
 
 function generate_background(glow_els, parallax = 0.3) {
-    const background_container = $el(".bg-container");
+    const background_container = $el(".bg-container,pre-render");
     const instrument_container = $el(".instrument-container");
     let rand = Math.random();
 
@@ -672,6 +717,8 @@ function generate_background(glow_els, parallax = 0.3) {
     generate_glows(glows);
     const mask_id = build_svg_mask($(".glow"));
     background_container.style.mask = `url(#${mask_id})`;
+
+    fade_in(background_container)
 }
 
 function generate_glows(glows) {
@@ -724,7 +771,6 @@ function generate_glows(glows) {
 
 function generate_quotes(json) {
     const quotes_sub_containers = $(".quotes:not(.mobile-quotes) > div");
-    console.log(quotes_sub_containers)
     const quotes = parse_table(json).slice(0, 4);
     quotes.forEach((quote, index) => {
         const quote_el = $el(".quote");
@@ -739,19 +785,26 @@ function generate_quotes(json) {
 }
 
 async function main() { 
+
+    const variables_res = await fetch_data("Website Variables (dataonly)");
+    const variables = parse_table(variables_res);
+    localStorage.setItem("website_variables", JSON.stringify(variables));
     const this_page = document.title.split("- ").pop();
     let pages = JSON.parse(localStorage.getItem("sheet_names"));
     if(!pages) pages = await fetch_sheet_names();
-    // const res = await fetch_data(PAGE);
-    // const res = await fetch_data("contact_prompt");
-    // const data = parse_document(res, pages);
-    // console.log(data)
-    // populate_dyn_containers(data);
-    generate_header(this_page, pages);
+    const res = await fetch_data(PAGE);
+    const data = parse_document(res, pages);
+
+    await generate_header(this_page, pages);
+    const banner = $(".banner")[0];
+    const header_rendered = fade_in(header, 1000);
+    header_rendered.then(() => activate(banner))
+
+    await populate_dyn_containers(data);
     generate_leather($(".leather"));
     window.addEventListener("DOMContentLoaded", () => {
         generate_background();
     })
 }
 
-main();
+const main_promise = main();

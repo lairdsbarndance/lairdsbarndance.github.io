@@ -507,7 +507,7 @@
 
 - ## 09/06/2026
     - Created Github account for laird@lairdsbarndance.band 
-    - Migrated Repository to new GIthub account and set up Github pages to be accessible from link [http://lairdsbarndance.github.io](http://lairdsbarndance.github.io)
+    - Migrated Repository to new Github account and set up Github pages to be accessible from link [http://lairdsbarndance.github.io](http://lairdsbarndance.github.io)
     - Added a records to Namecheap Custom DNS to connect custom domain
     - Added domain to Cloudflare and set up secure https connection and SSL certification
     - A Cloudflare URL Rewrite Rule was created to intercept extensionless requests (such as /pages/page) and internally append .html, allowing GitHub Pages to serve the correct file (/pages/page.html) without changing visible URLs.
@@ -563,3 +563,48 @@
         - This task was what caused by far the most frustrating and time consuming problem. Since the images needed to be nested inside parent containers (.carousel-item), as well as having a transform, they were moved into a separate stacking context to the lairds banner. This meant the foreground portrait didn't show above the banner -- one of the key elements in portraying the skeuomorphic / layered aesthetic. I tried hard to rectify the situation using css tricks -- masking (although obtaining exact transferred positions in javascript was impossible due to the already complicated fixing of widths and heights, thus making obtained values too unreliable / inconsistent) and other techniques. Eventually, I realised I just needed to create a separate image carousel for the foreground layer; javascript positions and scales this carousel to occupy the same coordinates as the original carousel. After final fixes to the timing of calculations and rendering order, this task was finally complete.
     
     - ### Time Spent: 3 hours
+
+- ## 13/08/2026
+    - [x] Established a more robust and reliable initial rendering pipeline
+        - Reworked the loading sequence so that dependent DOM generation occurs in a controlled order, with data fetched before dynamic content is generated and subsequent visual components being initialised afterwards.
+        - Added explicit completion handling to asynchronous generation functions, allowing later stages of the pipeline to wait for earlier stages rather than relying on timing-based `setTimeout()` behaviour.
+        - Added an initial `pre-render` state and fade-in system so that incompletely generated elements remain hidden until they are ready to be displayed, preventing visible layout shifts and partially rendered components during the initial page load.
+    - [x] Improved the initial visual presentation and loading transitions
+        - Added a reusable `fade_in()` function supporting Promise-based completion, allowing rendering and animation stages to be synchronised.
+        - Introduced a radial mask animation for the initial appearance of rendered elements, alongside dedicated transitions for the leather and rough-border components.
+        - Added support for `prefers-reduced-motion` so that these animations are disabled for users who have requested reduced motion.
+        - Refined the banner activation process so its dimensions are calculated immediately after generation rather than relying on an arbitrary delay.
+    - [x] Increased the banner rough-border thickness to better complement the thickness of the header's rough border
+        - Moved the shared `--border-height` variable into the global stylesheet so the border dimensions remain consistent across the site.
+        - Adjusted the rough-border masking and positioning to accommodate the increased thickness.
+    - [x] Improved the fullscreen landing section for larger displays
+        - Added a `max-height` constraint to prevent the fullscreen composition from becoming excessively tall on large screens.
+        - At widths above 1500px, the fullscreen section is capped at `85vh`, with the portrait centred and sized independently of the viewport width.
+        - Corrected the resulting aspect-ratio issues on larger displays.
+    - [x] Added parallax carousel scroll to the foreground
+        - Inspired by an unexpected `translateX(-100%)` effect observed at screen widths where the portrait image is less wide than the viewport, this effect was developed into an intentional parallax-style transition for the foreground portrait.
+        - Added a separate foreground portrait carousel which remains precisely aligned with the banner portrait area while transitioning alongside the background carousel.
+    - [x] Added configurable website variables through the database
+        - Added a new `Website Variables` data source allowing site-wide values to be controlled without modifying the front-end code.
+        - Added `get_website_variable(var_name)` to retrieve and parse these values from local storage.
+        - Carousel speed and quote/carousel intervals can now be adjusted through the database, allowing Richard to control the timing of the site's rotating content to his preference.
+        - Updated the caching behaviour so that development mode automatically bypasses the six-hour data cache, whilst production continues to use cached data where appropriate.
+    - [x] Refactored dynamic content generation to make `.dyn-container` components substantially more flexible
+        - Containers can now use `data-dyn-auto="true"` to have their heading and content elements generated automatically from the supplied `data-dyn-heading` and `data-dyn-content` attributes.
+        - With `data-dyn-auto="false"`, existing `.dyn-heading` and `.dyn-content` elements are retained and populated with the corresponding database content instead.
+        - Added handling for both single existing content elements and multiple child elements, allowing the same dynamic-content system to support a wider range of page layouts.
+        - Added warnings where expected dynamic-content DOM elements are absent, making configuration errors easier to identify during development.
+    - [x] Fixed a major initial-load layout problem caused by asynchronous data fetching
+        - Previously, DOM generation could begin before the required database data had been retrieved, resulting in incorrectly sized or incomplete layouts on the first page load.
+        - The page now waits for the required data and header generation to complete before starting dependent content generation and carousel initialisation, making the first render substantially more deterministic and reliable.
+
+    - ### Time Spent: 7 hours
+    
+
+- ## To Do
+    - [ ] Fancy loading
+    - [ ] Border and stitch load in animations
+    - [ ] Add call to action section
+    - [ ] Placed carousel indicator above call-to-action for wider screen widths (when call-to-action borders the fullscreen section)
+    - [ ] Added subtle vignette to extra carousel photos to improve readability of quotes
+    - [ ] Add empty notes section to showcase instrument background
