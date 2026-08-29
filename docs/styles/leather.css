@@ -149,7 +149,7 @@
 }
 
 .leather.rough-border:not(.pre-load, .visible)::before, .rough-border-no-leather:not(.pre-load, .visible)::before {
-    animation: stitch-slide-in forwards 2s ease;
+    animation: stitch-slide-in forwards 1s 1s ease;
 }
 
 .leather.rough-border::before, .rough-border-no-leather::before {

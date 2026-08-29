@@ -37,6 +37,11 @@ body {
 
 html {
     overflow-x: hidden;
+    scroll-behavior: smooth;
+
+    @media (prefers-reduced-motion: reduce) {
+        scroll-behavior: initial;
+    }
     /* scrollbar-gutter: stable; */
 }
 
@@ -48,7 +53,7 @@ html {
     opacity: 0;
 }
 
-.visible {
+.visible:not(.bg-container) {
     opacity: 1;
     mask-image: radial-gradient(white 50%, black 80%);
     mask-size: 100vw 100vw;
@@ -102,9 +107,21 @@ header > .spacer {
 
 .bg-container {
     position: absolute;
+    opacity: 0;
     inset: 0;
     width: 100%;
     height: 125%;
+    z-index: -1;
+    transition: 1s ease opacity;
+}
+
+.bg-container:not(.pre-render) {opacity: 1;}
+
+.bg-glow-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 .glow-svg {
@@ -154,8 +171,8 @@ header > .spacer {
 
 .glow {
     position: absolute;
-    width: 100%;
-    aspect-ratio: 1;
+    width: var(--content-width);
+    height: min(var(--content-width), var(--content-height));
     background: var(--glow-col);
     border-radius: 50%;
     filter: blur(7.5rem);
@@ -231,7 +248,8 @@ main {
     --padding-top: calc(var(--header-height) + var(--banner-height) + 1rem);
     padding-top: var(--padding-top);
     padding-bottom: calc(var(--padding-top) / 2);
-    display: grid;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     justify-content: center;
     gap: 1rem;
@@ -351,11 +369,6 @@ nav.mobile-view:not(.open) {
     .instrument-container {
         --instruments-bleed: 4rem;
     }
-
-    .glow {
-        width: auto;
-        height: 100%;
-    }
 }
 
 @media (max-width: 700px) {
@@ -391,4 +404,8 @@ nav.mobile-view:not(.open) {
     100% {
         mask-size: 400vw 400vw;
     }
+}
+
+@keyframes opacity-fade-in {
+    to {opacity: 1;}
 }

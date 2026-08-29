@@ -2,7 +2,8 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
-const CACHE = !!DEV_MODE;
+const CACHE = !DEV_MODE;
+let main_promise;
 
 const svg_defs = `
 <svg style="position:absolute; width:0; height:0; overflow:hidden"
@@ -61,6 +62,7 @@ const svg_defs = `
 
 const header = $("header")[0];
 const dom_main = $("main")[0];
+const prevent_scroll_containers = $("[data-prevent-default-scroll-navigation]");
 
 document.body.insertAdjacentHTML("afterbegin", svg_defs);
 
@@ -299,6 +301,22 @@ function parse_gb_date(str) {
     return Date.parse([mm, dd, yyyy].join("/"));
 }
 
+function shift_dom_el(el, index) {
+    const parent = el.parentElement;
+    if (!parent) return;
+
+    const children = [...parent.children];
+    const current_index = children.indexOf(el);
+    const new_index = current_index + index;
+
+    if (new_index < 0 || new_index >= children.length) return;
+
+    parent.insertBefore(
+        el,
+        children[new_index + (index > 0 ? 1 : 0)] || null
+    );
+}
+
 function get_website_variable(var_name) {
     const website_variables = JSON.parse(localStorage.getItem("website_variables"));
     let val = website_variables.find(el => el["Variable Name"] === var_name)["Value"]
@@ -344,7 +362,7 @@ async function populate_dyn_containers(data) {
             
         }    
 
-        fade_in(container)
+        if(!container.classList.contains("bg-glow")) fade_in(container)
     })
 
     console.log("Dynamic Content Generated Sucessfully!")
@@ -547,7 +565,8 @@ async function generate_header(this_page, pages) {
 function build_svg_mask(
     els,
     glow_blur = 60,
-    subtract_blur = 20
+    subtract_blur = 20,
+    blur_multiplier = 1
 ) {
     const svg_ns = "http://www.w3.org/2000/svg";
 
@@ -650,10 +669,16 @@ function build_svg_mask(
     const subtract_filter_id = `subtract_${id}`;
 
     defs.appendChild(create_blur_filter(glow_filter_id, glow_blur));
-    defs.appendChild(create_blur_filter(subtract_filter_id, subtract_blur));
+    defs.appendChild(create_blur_filter(subtract_filter_id, subtract_blur * blur_multiplier));
 
     const mask = create_svg_element("mask", {
-        id: `mask_${id}`
+        id: `mask_${id}`,
+        maskUnits: "userSpaceOnUse",
+        maskContentUnits: "userSpaceOnUse",
+        x: 0,
+        y: 0,
+        width: doc_width,
+        height: doc_height
     });
 
     // full black base
@@ -679,8 +704,8 @@ function build_svg_mask(
         glow_group.appendChild(create_glow_rect(el));
 
         const parent = el.parentElement;
-        if (parent) {
-            subtract_group.appendChild(create_subtract_rect(parent));
+        if (parent && !el.classList.contains("no-mask")) {
+            subtract_group.appendChild(create_subtract_rect(parent.querySelector(".bg-glow")));
         }
     });
 
@@ -695,9 +720,9 @@ function build_svg_mask(
     return mask.id;
 }
 
-function generate_background(glow_els, parallax = 0.3) {
+async function generate_background(parallax = 0.3) {
     const background_container = $el(".bg-container,pre-render");
-    const instrument_container = $el(".instrument-container");
+    const instrument_container = $el(".instrument-container,scroll-transfer");
     let rand = Math.random();
 
     for(let i = 0; i < 2; i++) {
@@ -715,37 +740,63 @@ function generate_background(glow_els, parallax = 0.3) {
 
     const glows = $(".bg-glow");
     generate_glows(glows);
-    const mask_id = build_svg_mask($(".glow"));
-    background_container.style.mask = `url(#${mask_id})`;
 
-    fade_in(background_container)
+    setTimeout(() => {
+        const mask_id = build_svg_mask($(".glow"), 60, 20, blur_multiplier = get_website_variable("Instrument Background Falloff") || 1);
+        background_container.style.mask = `url(#${mask_id})`;
+        fade_in(background_container); glows.forEach(el => fade_in(el))
+    }, 50);
+
+        prevent_scroll_containers.forEach(scroll_container => {
+        Array.from(scroll_container.querySelectorAll("a")).filter(anchor => anchor.href.includes("#")).forEach(anchor => {
+            anchor.addEventListener("click", (e) => {
+                e.preventDefault();
+                const target = document.getElementById((anchor.href.split("#").pop()));
+                const {y} = target.getBoundingClientRect();
+                const scroll_top = y - header.offsetHeight - 40; // 2.5rem buffer top
+                document.documentElement.scrollTo(0, scroll_top);
+            })
+        })
+    })
 }
 
 function generate_glows(glows) {
     const viewport_width = document.documentElement.offsetWidth;
+
     const rules = {
-        left:   { left: 0,   tx: viewport_width < 1200 ? -100 : -50 },
-        right:  { right: 0,  tx:  viewport_width < 1200 ? 100 : 50 },
+        left:   { left: 0,   tx: viewport_width > 1200 ? -100 : -50 },
+        right:  { right: 0,  tx: viewport_width > 1200 ? 100 : 50 },
         top:    { top: 0,    ty: -25 },
         bottom: { bottom: 0, ty:  7.5 }
     };
-
+    
     glows.forEach(glow_container => {
+        const container_size = {width: glow_container.offsetWidth, height: glow_container.offsetHeight}
         const glow_el = $el(".glow");
+        const glow_wrapper = $el(".bg-glow-wrapper")
+        Object.entries(container_size).forEach(([property, value]) => glow_wrapper.style.setProperty(`--content-${property}`, value + "px"));
         const positions = glow_container.dataset.glowPos.split(" ");
 
         let tx = 0;
         let ty = 0;
+        let scale = "100%";
 
         if (positions.length === 1 && positions[0] === "center") {
+
             glow_el.style.left = "50%";
             glow_el.style.top = "50%";
-            glow_el.style.width = "112.5%"; glow_el.style.height = "100%"; glow_el.style.aspectRatio = "unset";
+            glow_el.style.width = "112.5%";
+            glow_el.style.height = "100%";
+            glow_el.style.aspectRatio = "unset";
+
             tx = ty = -50;
-        }
-        else {
+
+        } else {
+
             positions.forEach(position => {
+
                 if (position === "center") {
+
                     if (positions.some(p => p === "top" || p === "bottom")) {
                         glow_el.style.left = "50%";
                         tx = -50;
@@ -753,19 +804,40 @@ function generate_glows(glows) {
                         glow_el.style.top = "50%";
                         ty = -50;
                     }
+
                     return;
                 }
 
                 const rule = rules[position];
-                Object.assign(glow_el.style, rule);
+
+                Object.assign(glow_el.style, {
+                    left: rule.left,
+                    right: rule.right,
+                    top: rule.top,
+                    bottom: rule.bottom
+                });
 
                 tx = rule.tx ?? tx;
                 ty = rule.ty ?? ty;
             });
         }
 
-        glow_el.style.transform = `translate(${tx}%, ${ty}%) scale(${glow_container.dataset.glowSize})`;
-        glow_container.prepend(glow_el);
+        glow_el.style.transform =
+            `translate(${tx}%, ${ty}%) scale(${
+                glow_container.dataset.glowSize || scale
+            })`;
+
+        glow_container.parentNode.insertBefore(
+            glow_wrapper,
+            glow_container
+        );
+
+        let content_mask;
+        try {content_mask = glow_container.dataset.glowMaskContent} catch (err) {}
+        if(content_mask === "false") glow_el.classList.add("no-mask")
+
+        glow_wrapper.appendChild(glow_el);
+        glow_wrapper.appendChild(glow_container);
     });
 }
 
@@ -784,8 +856,7 @@ function generate_quotes(json) {
     })
 }
 
-async function main() { 
-
+async function initial_page_rendering() {
     const variables_res = await fetch_data("Website Variables (dataonly)");
     const variables = parse_table(variables_res);
     localStorage.setItem("website_variables", JSON.stringify(variables));
@@ -800,11 +871,8 @@ async function main() {
     const header_rendered = fade_in(header, 1000);
     header_rendered.then(() => activate(banner))
 
-    await populate_dyn_containers(data);
+    const dyn_containers_promise = await populate_dyn_containers(data);
     generate_leather($(".leather"));
-    window.addEventListener("DOMContentLoaded", () => {
-        generate_background();
-    })
 }
 
-const main_promise = main();
+const promise__initial_page_rendering = initial_page_rendering();

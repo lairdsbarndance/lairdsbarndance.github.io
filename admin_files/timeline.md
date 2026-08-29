@@ -311,7 +311,7 @@
     - Begun sketching new instruments in a folky, minimalist style.
     - <img style="max-height: 20em" src="../assets/temp/sketch_1.png"/>
     ```
-    Tomorrow I'll work on some slightly more minimalist variants. At the moment, the line fidelity isn't even, so I need to find a look that doesn't distract the viewer and simply looks convincing and fitting). Once we're happy with the guitar, I'll attempt to produce similar line drawings of the other instruments.
+    Tomorrow I'll work on some slightly more minimalist variants. At the moment, the line fidelity isn't even, so I need to find a look that doesn't distract the viewer and simply looks convincing and fitting. Once we're happy with the guitar, I'll attempt to produce similar line drawings of the other instruments.
     ```
     - Richard had the revelation of mimicking woodcuts, which aligns much more closely with the website's aesthetic, and intergrates itself into the background logic (as if woodcuts are stamped on sporadically).
 
@@ -599,12 +599,18 @@
         - The page now waits for the required data and header generation to complete before starting dependent content generation and carousel initialisation, making the first render substantially more deterministic and reliable.
 
     - ### Time Spent: 7 hours
+
+- ## 29/08/2026
+    - [x] Add call to action section
+        - [x] Fix anchor tag navigation calculation error (due to unconventional scroll context)
+            - Ensured scroll-behaviour property matched user preference (prefers-reduced-motion) and scrollTo() function properly utilised
+        - [x] Determined that all bg-glow sections must have a width: 100vw, otherwise generated glows are positioned relative to the container's offsetLeft.
+            - [x] This was just the beginning of the problems I encountered when trying to actually integrate the first bg-glow section. I ended up totally refactoring the bg-glow functionality... the bg-glow container is wrapped in another container with constant width 100% in order to position the glow element correctly; the glow element then acquires the bg-glow width and or height through css variables.
+        - [x] Fixed incorrect mask positioning by properly integrating this process into the correct position in the rendering pipeline (awaiting the page's main(), then triggering after its completion)
+        - [x] Added suitable fade-in animations for the background instrument container as well as each bg-glow element
+        - [x] Added data-glow-mask-content="false" for sections where the instruments should not be masked by the content
+        - [x] Reorded DOM elements below 700px so quotes display above call-to-action section
     
 
 - ## To Do
-    - [ ] Fancy loading
-    - [ ] Border and stitch load in animations
-    - [ ] Add call to action section
-    - [ ] Placed carousel indicator above call-to-action for wider screen widths (when call-to-action borders the fullscreen section)
     - [ ] Added subtle vignette to extra carousel photos to improve readability of quotes
-    - [ ] Add empty notes section to showcase instrument background
