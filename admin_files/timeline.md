@@ -613,4 +613,3 @@
     
 
 - ## To Do
-    - [ ] Added subtle vignette to extra carousel photos to improve readability of quotes

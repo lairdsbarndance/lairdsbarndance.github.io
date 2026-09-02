@@ -380,15 +380,23 @@ nav.mobile-view:not(.open) {
         padding: 5vw 10vw; /* less padding due to longer text */
     }
 
-    .banner > .logo:not(.large) {
-        width: 30vw;
+    .banner {
+        width: 100vw;
+    }
+    .banner > .logo {
+        height: 1rem;
+        width: auto;
     }
     .banner > .border {
-        inset: -3px;
+        inset: -4px;
     }
 
     .banner.smaller > .title {
         width: 100%;
+    }
+
+    .banner > .title {
+        margin-block: -1rem;
     }
 
     .instrument-container > .instrument {

@@ -521,6 +521,11 @@ async function create_tight_svg_title(text, small_cap_ratio = 0.7) {
     return svg;
 }
 
+function apply_header_css_vars(banner) {
+    document.body.style.setProperty("--banner-height", banner.offsetHeight + "px");    
+    $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px");
+}
+
 async function generate_header(this_page, pages) {
     generate_nav(pages); // 1rem padding between title and nav
 
@@ -553,9 +558,11 @@ async function generate_header(this_page, pages) {
     const children = is_home ? [logo, border] : [logo, title, border];
     banner.appendChildren(...children);
 
-    document.body.style.setProperty("--banner-height", banner.offsetHeight + "px");    
-    $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px");
-
+    if(is_home) {
+        logo.onload = () => apply_header_css_vars(banner)
+    } else {
+        apply_header_css_vars(banner);
+    }
     
     if(header.classList.contains("mobile-view")) $("nav")[0].style.transition = "500ms ease transform, 500ms ease filter";
     
@@ -570,7 +577,7 @@ function build_svg_mask(
 ) {
     const svg_ns = "http://www.w3.org/2000/svg";
 
-    const doc_width = document.documentElement.offsetWidth;
+    const doc_width = document.documentElement.offsetWidth * 1.05;
     const doc_height = document.documentElement.scrollHeight;
 
     function create_svg_element(tag, attributes = {}) {
