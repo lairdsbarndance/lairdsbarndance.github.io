@@ -264,14 +264,15 @@
 }
 
 .call-to-action > .carousel-indicator { 
+    --extra-padding-bottom: 1px;
     position: absolute;
     top: 0;
     left: 50%;
     margin: 0;
     opacity: 1;
-    padding: .45rem .75rem;
+    padding: .45rem .75rem calc(.45rem + var(--extra-padding-bottom)) .75rem;
     background: var(--white);
-    transform: translate(-50%, -99%);
+    transform: translate(-50%, calc(-100% + var(--extra-padding-bottom)));
     border-radius: .5rem .5rem 0 0;
     border: inherit;
     border-bottom-width: 0;
