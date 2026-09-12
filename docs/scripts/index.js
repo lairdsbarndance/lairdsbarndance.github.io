@@ -91,7 +91,6 @@ async function generate_fullscreen_carousel() {
     );
 }
 
-
 function create_portrait_mask(portrait, banner) {
     const rect = portrait.getBoundingClientRect();
     
@@ -133,6 +132,57 @@ async function generate_carousel_indicators(carousel_indicators) {
     })
 }
 
+function stagger_post_its() {
+    const post_its = $(".post-it");
+    post_its.forEach((post_it, index) => {
+        setTimeout(() => {
+            post_it.style.transition = "opacity 0s ease, max-height 0s ease, transform 250ms ease";
+            post_it.classList.remove("pre-render");
+            setTimeout(() => {
+                activate(post_it);
+                if(window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+                    post_it.style.transition = "opacity 1s 250ms ease, max-height 1.25s ease-in, transform 250ms ease";
+                }
+            }, 250);
+        }, index * 125)
+    })
+}
+
+function post_its_logic() {
+    const hero_btn = $(".call-to-action > a")[0];
+    const post_its_container = $(".post-its")[0];
+
+    let post_its_triggered = false;
+    let user_scrolled = false;
+
+    function trigger_post_its() {
+        if (post_its_triggered) return;
+
+        post_its_triggered = true;
+        stagger_post_its();
+
+        observer.disconnect();
+        window.removeEventListener("scroll", handle_scroll);
+    }
+
+    function handle_scroll() {
+        trigger_post_its();
+    }
+
+    hero_btn.onclick = () => trigger_post_its();
+
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && user_scrolled) {
+            trigger_post_its();
+        }
+    }, {
+        threshold: 0.1
+    });
+
+    observer.observe(post_its_container);
+    window.addEventListener("scroll", handle_scroll);
+}
+
 async function main() { 
     console.log("Index Main Started!");
     if(window.innerWidth < 700) shift_dom_el($(".call-to-action")[0], 2)
@@ -143,6 +193,10 @@ async function main() {
     await generate_fullscreen_carousel();
     await generate_carousel_indicators(carousel_indicators);
     initialise_quote_widths();
+
+    const post_its_res = await fetch_data("post_its");
+    const post_its_obj = parse_table(post_its_res)
+    generate_post_its($(".post-its")[0], post_its_obj);
     
     document.body.style.setProperty("--fullscreen-img-height", background_wrapper.querySelector(".carousel-item").offsetHeight + "px");
     document.body.style.setProperty("--carousel-interval", get_website_variable("Carousel Speed") + "s");
@@ -151,6 +205,9 @@ async function main() {
     
     fade_in(background_wrapper);
     const portrait_wrapper = $(".portrait-carousel")[0];
+    if(portrait_wrapper.offsetWidth >= window.innerWidth || window.innerWidth < 1000) {
+        portrait_wrapper.style.overflowX = "clip";
+    }
     fade_in(portrait_wrapper);
     
     let carousel_increment = 0;
@@ -174,12 +231,14 @@ async function main() {
     const call_to_action = $(".call-to-action")[0];
     call_to_action.style.setProperty("--height", call_to_action.offsetHeight + "px");
     call_to_action.style.setProperty("--indicator-height", call_to_action.querySelector(".carousel-indicator").offsetHeight + "px");
-    if(call_to_action.offsetHeight + call_to_action.offsetTop > window.innerHeight) {
+    if(call_to_action.offsetHeight + call_to_action.offsetTop + 16 * 2.5 > window.innerHeight && window.innerWidth > 700) { // 2.5rem added to margin
         call_to_action.style.setProperty("--extra-margin", ((call_to_action.offsetHeight + call_to_action.offsetTop) - window.innerHeight) + "px")
         call_to_action.classList.add("force-bottom")
     }
     generate_background();
     Array.from(quotes.children).forEach(el => fade_in(el))
+
+    post_its_logic();
 }
 
 promise__initial_page_rendering.then(() => {main()})

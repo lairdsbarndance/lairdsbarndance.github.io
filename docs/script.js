@@ -2,7 +2,7 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
-const CACHE = !DEV_MODE;
+const CACHE = true;
 let main_promise;
 
 const svg_defs = `
@@ -248,7 +248,10 @@ async function fetch_sheet_names() {
 
     const data = await res.json();
     const sheets = data.sheets.map(sheet => sheet.properties.title);
-    localStorage.setItem("sheet_names", JSON.stringify(sheets));
+    localStorage.setItem("sheet_names", JSON.stringify({
+        pages: sheets,
+        timestamp: Date.now()
+    }));
 
     return sheets;
 }
@@ -383,10 +386,9 @@ function generate_nav(pages) {
 
     const ul = header.querySelector("ul");
     f_pages.forEach(page => {
+        const anchor = $el("a");
         let url = `/pages/${page.toLowerCase().split(" ").join("_")}`;
         if(page === "Home") url = DEV_MODE ? "/index.html" : "/";
-
-        const anchor = $el("a");
         anchor.href = url + (DEV_MODE && page !== "Home" ? ".html" : "");
         anchor.textContent = page;
         ul.appendChild(anchor);
@@ -659,7 +661,8 @@ function build_svg_mask(
         height: doc_height,
         viewBox: `0 0 ${doc_width} ${doc_height}`
     });
-
+    svg.classList.add("defs-container")
+    
     Object.assign(svg.style, {
         position: "absolute",
         top: "0",
@@ -675,8 +678,11 @@ function build_svg_mask(
     const glow_filter_id = `glow_${id}`;
     const subtract_filter_id = `subtract_${id}`;
 
-    defs.appendChild(create_blur_filter(glow_filter_id, glow_blur));
-    defs.appendChild(create_blur_filter(subtract_filter_id, subtract_blur * blur_multiplier));
+    const glow_filter = create_blur_filter(glow_filter_id, glow_blur);
+    const glow_subtract_filter = create_blur_filter(subtract_filter_id, subtract_blur * blur_multiplier);
+
+    defs.appendChild(glow_filter);
+    defs.appendChild(glow_subtract_filter);
 
     const mask = create_svg_element("mask", {
         id: `mask_${id}`,
@@ -725,6 +731,49 @@ function build_svg_mask(
     document.body.appendChild(svg);
 
     return mask.id;
+}
+
+function generate_post_its(post_its_container, obj, colour_arr = ["#FFFFFF", "#FFF8EF", "#EEF6FF"], rotation_strength = 1.5) {
+    obj.forEach((post_it, index) => {
+        const container = $el(".post-it,pre-render");
+
+        let target_page;
+        let page_link = post_it["Page Link (Required with Button Text)"];
+        if(page_link) {
+            target_page = (page_link === "Home") 
+            ? 
+            (DEV_MODE ? "/index.html" : "/") 
+            : 
+            `/pages/${page_link.toLowerCase().split(" ").join("_")}` + (
+                DEV_MODE && page_link !== "Home" 
+                ? 
+                ".html" 
+                : ""
+            )
+        }
+
+        container.style.setProperty("--random-rotation", `${Math.random() * rotation_strength - (rotation_strength/2)}deg`);
+        container.style.setProperty("--random-bg-offset", `${Math.random() * 100}% ${Math.random() * 100}%`);
+        container.style.setProperty("--random-colour", colour_arr[index % colour_arr.length]);
+
+        container.innerHTML = `
+            <div class="heading">
+                <img src="/assets/bronze-pin.png">
+                <h3>${post_it["Title"]}</h3>
+            </div>
+            <p>${post_it["Text"]}</p>
+            ${post_it["Page Link (Required with Button Text)"] ? 
+                `<a href="${target_page}">${post_it["Button Text (Optional)"]}</a>`
+                : 
+                ""
+            }
+        `;
+
+        post_its_container.appendChild(container);
+    })
+
+    post_its_container.style.setProperty("--column-width", post_its_container.querySelector(".post-it").offsetWidth + "px")
+    post_its_container.style.height = post_its_container.offsetHeight + "px";
 }
 
 async function generate_background(parallax = 0.3) {
@@ -868,17 +917,20 @@ async function initial_page_rendering() {
     const variables = parse_table(variables_res);
     localStorage.setItem("website_variables", JSON.stringify(variables));
     const this_page = document.title.split("- ").pop();
-    let pages = JSON.parse(localStorage.getItem("sheet_names"));
-    if(!pages) pages = await fetch_sheet_names();
-    const res = await fetch_data(PAGE);
-    const data = parse_document(res, pages);
 
-    await generate_header(this_page, pages);
+    let pages = JSON.parse(localStorage.getItem("sheet_names"));
+    if(!pages || Date.now() - pages.timestamp > 12 * 60 * 60 * 1000) pages = await fetch_sheet_names();
+    const res = await fetch_data(PAGE);
+    const data = parse_document(res, pages.pages);
+
+    await generate_header(this_page, pages.pages);
     const banner = $(".banner")[0];
     const header_rendered = fade_in(header, 1000);
     header_rendered.then(() => activate(banner))
 
-    const dyn_containers_promise = await populate_dyn_containers(data);
+    const dyn_data_res = await fetch_data("dyn_content");
+    const dyn_data = parse_document(dyn_data_res, pages.pages)
+    const dyn_containers_promise = await populate_dyn_containers(dyn_data);
     generate_leather($(".leather"));
 }
 

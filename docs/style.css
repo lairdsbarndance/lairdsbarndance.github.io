@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cantora+One&family=PT+Sans+Narrow:wght@400;700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cantora+One&family=Caveat:wght@400..700&family=PT+Sans+Narrow:wght@400;700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 *, *::before, *::after {
     margin: 0;
@@ -14,6 +14,7 @@
     --white: #F8F8F8;
     --background: #0E172A;
     --glow-col: #182746;
+    --red: #92242F;
 
     --title-height: 5rem;
     --border-height: 1rem;
@@ -24,9 +25,10 @@
 
 body {
     font-family: "PT Sans", sans-serif;
-    overflow-x: hidden;
+    overflow-x: clip;
     background: var(--background);
     width: 100vw;
+    overflow-x: hidden;
     min-height: 100vh;
 
     -webkit-font-smoothing: antialiased;
@@ -34,6 +36,8 @@ body {
     text-rendering: optimizeLegibility;
     font-smooth: never;
 }
+
+/* body * {outline: red 1px solid;} */
 
 html {
     overflow-x: hidden;
@@ -53,7 +57,7 @@ html {
     opacity: 0;
 }
 
-.visible:not(.bg-container) {
+.visible:not(.bg-container, .post-it) {
     opacity: 1;
     mask-image: radial-gradient(white 50%, black 80%);
     mask-size: 100vw 100vw;
@@ -122,6 +126,11 @@ header > .spacer {
     width: 100%;
     display: flex;
     justify-content: center;
+}
+
+svg.defs-container {
+    width: 100vw;
+    overflow-x: clip;
 }
 
 .glow-svg {
@@ -295,6 +304,22 @@ section p {font-size: 1.25rem; line-height: 1.5em;}
 
 header.mobile-view {
     align-items: center;
+    overflow-x: clip;
+}
+
+nav.mobile-view::after {
+    content: "";
+    position: absolute;
+    inset: 0 100% 0 -105%;
+    background: black;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    transition: 500ms opacity ease;
+}
+
+nav.mobile-view.open::after {
+    opacity: .5;
 }
 
 .menu-btn, .close-btn {
@@ -388,7 +413,7 @@ nav.mobile-view:not(.open) {
         width: auto;
     }
     .banner > .border {
-        inset: -4px;
+        inset: -3px;
     }
 
     .banner.smaller > .title {

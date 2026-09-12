@@ -610,6 +610,21 @@
         - [x] Added suitable fade-in animations for the background instrument container as well as each bg-glow element
         - [x] Added data-glow-mask-content="false" for sections where the instruments should not be masked by the content
         - [x] Reorded DOM elements below 700px so quotes display above call-to-action section
-    
+    - ### Time Spent: 6 hours
 
+- ## 12/09/2026
+    - [x] Add SEO-Friendly pre-javascript-injection nav
+    - [x] Fix nav page fetching for outdated cache
+    - [x] Add opacity micro-affordance to mobile nav to improve interface element separation
+    - [x] Fix scrolling issue due to multiple scroll containers and incorrect handling of overflowing containers
+        - [x] Added overflow-x: clip to appropriate containers, used red outline diagnostic trick to identify them
+    - [x] Improved data fetching of dynamic content from database to prevent incorrect readings of row and column relationship (added separate named range)
+    - [x] Add post-its section
+        - [x] Fully functioning data-layer (including page-linking)
+        - [x] Masonry layout between 800-1300px screen widths
+        - [x] 3D post-its with random rotation, paper texture and alternating colours.
+        - [x] Hover animations and microinteractions
+
+    - ### Time Spent: 8 hours
+    
 - ## To Do
