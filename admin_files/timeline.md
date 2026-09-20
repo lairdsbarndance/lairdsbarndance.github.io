@@ -610,7 +610,24 @@
         - [x] Added suitable fade-in animations for the background instrument container as well as each bg-glow element
         - [x] Added data-glow-mask-content="false" for sections where the instruments should not be masked by the content
         - [x] Reorded DOM elements below 700px so quotes display above call-to-action section
+
     - ### Time Spent: 6 hours
+
+- ## 02/09/2026
+    - [x] Fix inconsistent banner height and thus fullscreen carousel calculation upon first page load on mobile
+        - A simple fix that required lots of diagnosing: added logo.onload() to ensure correct height is calculated.
+    - [x] Fix mask clipping near right border of window
+        - doc_width = document.documentElement.offsetWidth * 1.05;
+    - [x] Fix inconsistent logo / title sizing on intermediate screen widths
+
+    - ### Time Spent: 2 hours
+
+- ## 03/09/2026
+    - [x] Fix overflow-x incorrect scrolling on mobile devices (this also affects the scroll-wrapper evident by the header not being fixed at the clientTop)
+    - [x] Fix carousel-indicator separation from call-to-action at screen widths larger than 1500px
+    - [x] Add data-glow-col="#284072" functionality
+
+    - ### Time Spent: 2 hours
 
 - ## 12/09/2026
     - [x] Add SEO-Friendly pre-javascript-injection nav
@@ -626,5 +643,24 @@
         - [x] Hover animations and microinteractions
 
     - ### Time Spent: 8 hours
-    
+
+- ## 19/09/2026
+    - [x] Fixed custom scroll navigation calculation error
+    - [x] Improved post-its section on smaller device widths (removed 3D transform as it feels unecessary and ineffective; improved gap and spacing; changed flex-wrap to fixed flex-direction etc.)
+    - [x] Initialised History logic and data layer
+    - [x] Refactored History Database Page; added new folder for image uploads to work with smart-chips.
+    - [x] Designed SEO-Friendly masonary layout, using spacer divs to control the negative margin top of polaroid / text
+    - [x] Microinteraction with non-hovered elements
+    - [x] Pre-render fade-in animations
+    - [x] Pre-render animations for glow-bgs
+    - ### Time Spent: 6 hours 30 minutes
+
+- ## 20/09/2026
+    - [x] Mobile layout change (non-masonry)
+    - [x] Random rotation and paper overlay
+    - [x] Fullscreen images on user click
+    - [x] Fix overflow: hidden of polaroid on load animation
+    - [x] Improve visual balance of banner with auto-generated text
+
+    - ### Time Spent: 2 hours 30 minutes
 - ## To Do

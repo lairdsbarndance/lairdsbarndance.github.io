@@ -156,6 +156,8 @@ function post_its_logic() {
     let user_scrolled = false;
 
     function trigger_post_its() {
+        post_its_container.style.height = post_its_container.offsetHeight + "px";
+        
         if (post_its_triggered) return;
 
         post_its_triggered = true;
@@ -235,6 +237,7 @@ async function main() {
         call_to_action.style.setProperty("--extra-margin", ((call_to_action.offsetHeight + call_to_action.offsetTop) - window.innerHeight) + "px")
         call_to_action.classList.add("force-bottom")
     }
+
     generate_background();
     Array.from(quotes.children).forEach(el => fade_in(el))
 

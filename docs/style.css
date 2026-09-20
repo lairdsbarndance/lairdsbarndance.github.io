@@ -21,6 +21,7 @@
     
     --subtle-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.2);
     --harsh-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.75);
+    --polaroid-shadow: 0 .75rem .5rem -.25rem rgba(0,0,0,0.75)
 }
 
 body {
@@ -57,7 +58,7 @@ html {
     opacity: 0;
 }
 
-.visible:not(.bg-container, .post-it) {
+.visible:not(.bg-container, .post-it, .glow) {
     opacity: 1;
     mask-image: radial-gradient(white 50%, black 80%);
     mask-size: 100vw 100vw;
@@ -82,6 +83,10 @@ header {
     width: 100vw;
     justify-content: space-between;
     z-index: 100;
+}
+
+header.pre-render {
+    opacity: 0;
 }
 
 h2 {font-size: 2rem; text-align: center;}
@@ -186,14 +191,20 @@ svg.defs-container {
     border-radius: 50%;
     filter: blur(7.5rem);
     z-index: -105;
+    opacity: 1;
+    transition: opacity 500ms ease;
 }
+
+.glow.pre-render {opacity: 0;}
+
+.glow-visible {opacity: 1;}
 
 .banner {
     --border-radius-proportion: 0.729;
     --banner-inline-padding: 6rem;
     position: absolute;
     max-width: 90vw;
-    top: var(--header-height);
+    top: calc(var(--header-height) + 0.25 * var(--border-height));
     left: 50%;
     transform: translateX(-50%) translateY(-105%);
     padding: 2rem var(--banner-inline-padding);
@@ -266,6 +277,10 @@ main {
 
 main.nav-padding {
     --padding-top: calc(var(--header-height));
+}
+
+main.banner-padding {
+    --padding-top: calc(var(--header-height) + var(--banner-height));
 }
 
 main > section {
@@ -390,6 +405,77 @@ nav.mobile-view:not(.open) {
     filter: none;
 }
 
+.paper-overlay {position: relative;}
+
+.paper-overlay::after {
+    position: absolute;
+    content: "";
+    inset: calc(-1*var(--border-width));
+    background-image: url(../assets/paper-overlay.jpg);
+    background-position: var(--random-paper-position);
+    z-index: 1;
+    mix-blend-mode: multiply;
+    filter: brightness(1.1);
+    opacity: .4;
+}
+
+.fullscreen-img-container {
+    --btn-margin: .5rem;
+    --touch-target-padding: 2rem;
+    --img-size: 2rem;
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    inset: 0;
+    background: color-mix(in srgb, var(--background) 50%, transparent);
+    backdrop-filter: blur(.25rem);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 250ms ease;
+}
+
+.fullscreen-img-container > .close {
+    position: fixed;
+    display: grid;
+    place-content: center;
+    top: var(--btn-margin); right: var(--btn-margin);
+    width: var(--img-size); height: var(--img-size);
+    padding: var(--touch-target-padding);
+    background: none; border: none;
+    cursor: pointer;
+}
+
+.close > img {width: var(--img-size); aspect-ratio: 1;}
+
+.fullscreen-img-container.active {
+    pointer-events: all;
+    opacity: 1;
+}
+
+.fullscreen-img-container > .polaroid {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    width: min-content;
+    overflow: auto;
+    transform: none;
+}
+
+.fullscreen-img-container > .polaroid > img {
+    max-width: unset;
+    width: min(85vw, calc(85vh * var(--aspect-ratio)));
+    aspect-ratio: var(--aspect-ratio);
+    object-fit: cover;
+}
+
+.fullscreen-img-container > .polaroid > span.info {
+    font-size: 1.5rem;
+    font-weight: bolder;
+}
+
+.fullscreen-img-container > .polaroid::after {display: none;}
+
 @media (max-width: 1000px) {
     .instrument-container {
         --instruments-bleed: 4rem;
@@ -407,6 +493,7 @@ nav.mobile-view:not(.open) {
 
     .banner {
         width: 100vw;
+        padding: 1.5rem 1rem;
     }
     .banner > .logo {
         height: 1rem;
@@ -420,12 +507,35 @@ nav.mobile-view:not(.open) {
         width: 100%;
     }
 
-    .banner > .title {
-        margin-block: -1rem;
-    }
-
     .instrument-container > .instrument {
         width: 10rem;
+    }
+
+    .fullscreen-img-container > .polaroid > span.info {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 500px) {
+    header {
+        padding-block: 1rem;
+    }
+    .banner {
+        width: 100vw;
+        padding: 4.5vw 15vw;
+        gap: .75rem;
+        top: calc(var(--header-height) + .5 * var(--border-height))
+    }
+    .banner > .title {
+        height: auto;
+        max-width: unset;
+        width: 100%;
+        margin-top: -.3rem;
+        max-height: 3rem;
+    }
+
+    .banner.smaller > .logo {
+        height: .75rem;
     }
 }
 

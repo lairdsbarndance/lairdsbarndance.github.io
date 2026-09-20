@@ -1,0 +1,142 @@
+.history {
+    width: min(90vw, 60em);
+    container: history-container / inline-size;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    margin-block: 1rem;
+}
+
+.history article {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    width: 100%;
+    gap: .75rem 4rem;
+    color: var(--white);
+}
+
+article > h2, article > p {
+    text-align: left;
+}
+
+.bg-glow-wrapper:nth-child(2n) > article > .polaroid {
+    grid-column: 2 / 3;
+}
+
+.bg-glow-wrapper:nth-child(2n) > article > h2, .bg-glow-wrapper:nth-child(2n) > article > p {
+    text-align: right;
+}
+
+article > p {
+    font-size: 1.125rem;
+    height: fit-content;
+}
+
+article > h2 {
+    font-family: "Cantora One", cursive;
+    font-weight: 100;
+    font-size: 1.75rem;
+    height: fit-content;
+}
+
+article > .spacer {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+}
+
+.polaroid {
+    --border-width: .5rem;
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    border: var(--border-width) var(--white) solid;
+    gap: .5rem;
+    font-family: "Caveat", cursive;
+    grid-row: 1 / -1;
+    height: fit-content;
+    margin-top: calc(-1 * var(--spacer-height));
+    box-shadow: var(--polaroid-shadow);
+    cursor: pointer;
+    transform: rotate(var(--random-rotation));
+}
+
+.history > * > * > * {
+    transition: opacity 500ms ease,
+                transform 500ms ease;
+}
+
+@media (min-width: 600px) {
+    .history:not(:has(.pre-render)):has(> :hover) > *:not(:hover) > article > * {
+        opacity: 0.8;
+    }
+    .history > *:hover > article > * {
+        transform: scale(1.01);
+    }
+}
+
+.history article:not(:has(h2)) {
+    grid-template-rows: auto 1fr;
+}
+
+.polaroid > span.info {
+    padding-inline: 2rem;
+    padding-bottom: .25rem;
+    text-align: center;
+    text-wrap-style: balance;
+    color: black;
+    font-size: 1.125rem;
+}
+
+.polaroid > img {
+    width: 100%;
+    max-width: 30em;
+}
+
+@media (max-width: 950px) {
+    .history article {
+        column-gap: 2.125rem;
+    }
+    article > p {font-size: 1.05rem;}
+}
+
+@media (max-width: 600px) {
+    .history article {
+        width: 80vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+
+    article > .polaroid {
+        margin-inline: auto;
+        width: 100%;
+        height: fit-content;
+    }
+
+    .history > * > article > h2 {
+        margin-inline: -1em;
+        text-align: center;
+    }
+
+    .bg-glow-wrapper:nth-child(2n) > article > h2 {text-align: center;}
+    .bg-glow-wrapper:nth-child(2n) > article > p {text-align: left;}
+
+    article > p {
+        text-align: left;
+        text-wrap-style: balance;
+    }
+
+    article:has(h2) > p {
+        margin-top: -.75rem;
+    }
+    article > .polaroid > img {
+        width: 100%;
+    }
+}

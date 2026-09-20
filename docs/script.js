@@ -71,7 +71,8 @@ function cache_data(name, data) {
     localStorage.setItem(name, JSON.stringify(data))
 }
 
-async function fetch_data(named_range) {
+async function fetch_data(named_range, ignore_blank_cells = true) {
+
     const cached = `cached_${named_range}`;
     let data;
 
@@ -89,6 +90,7 @@ async function fetch_data(named_range) {
         }
 
     } catch (err) {
+
         console.log("Recaching Data");
 
         const res = await fetch(
@@ -103,19 +105,26 @@ async function fetch_data(named_range) {
     }
 
     const rows = data.sheets?.[0]?.data?.[0]?.rowData ?? [];
-
     let output = [];
 
     rows.forEach(row => {
-        const values = row.values || [];
 
+        const values = row.values || [];
         let row_has_content = false;
         let row_cells = [];
 
         for (let i = 0; i < values.length; i++) {
+
             const text = values[i]?.formattedValue;
 
-            if (!text || text.trim() === "") continue;
+            if (!text || text.trim() === "") {
+
+                if (!ignore_blank_cells) {
+                    row_cells.push({});
+                }
+
+                continue;
+            }
 
             row_has_content = true;
 
@@ -128,7 +137,10 @@ async function fetch_data(named_range) {
         if (!row_has_content) {
             output.push({ type: "row_break" });
         } else {
-            output.push({ type: "row", cells: row_cells });
+            output.push({
+                type: "row",
+                cells: row_cells
+            });
         }
     });
 
@@ -184,6 +196,12 @@ function parse_table(json) {
 }
 
 function parse_document(flat_data, pages) {
+    if(pages == undefined) {
+        console.log("Reloading Cache!")
+        localStorage.clear();
+        window.location.reload();
+    } // for stale LocalStorage that uses outdated page caching
+
     let sections = [];
     let current = null;
 
@@ -534,6 +552,8 @@ async function generate_header(this_page, pages) {
     const is_home = this_page === "Home";
 
     const banner = $(".banner")[0];
+    banner.innerHTML = ""; // Remove SEO <h1/>
+    
     document.body.style.setProperty("--header-height", header.offsetHeight + "px");
     if(this_page.length > 9) banner.classList.add("smaller")
 
@@ -772,8 +792,7 @@ function generate_post_its(post_its_container, obj, colour_arr = ["#FFFFFF", "#F
         post_its_container.appendChild(container);
     })
 
-    post_its_container.style.setProperty("--column-width", post_its_container.querySelector(".post-it").offsetWidth + "px")
-    post_its_container.style.height = post_its_container.offsetHeight + "px";
+    post_its_container.style.setProperty("--column-width", post_its_container.querySelector(".post-it").offsetWidth + "px");
 }
 
 async function generate_background(parallax = 0.3) {
@@ -800,7 +819,10 @@ async function generate_background(parallax = 0.3) {
     setTimeout(() => {
         const mask_id = build_svg_mask($(".glow"), 60, 20, blur_multiplier = get_website_variable("Instrument Background Falloff") || 1);
         background_container.style.mask = `url(#${mask_id})`;
-        fade_in(background_container); glows.forEach(el => fade_in(el))
+        const glow_els = $(".glow");
+        fade_in(background_container);
+        glows.forEach(glow_container => fade_in(glow_container))
+        glow_els.forEach(el => fade_in(el))
     }, 50);
 
         prevent_scroll_containers.forEach(scroll_container => {
@@ -809,11 +831,45 @@ async function generate_background(parallax = 0.3) {
                 e.preventDefault();
                 const target = document.getElementById((anchor.href.split("#").pop()));
                 const {y} = target.getBoundingClientRect();
-                const scroll_top = y - header.offsetHeight - 40; // 2.5rem buffer top
+                const scroll_top = document.documentElement.scrollTop + (y - header.offsetHeight - 40); // 2.5rem buffer top
                 document.documentElement.scrollTo(0, scroll_top);
             })
         })
     })
+}
+
+function generate_paper_overlays() {
+    const els = $(".paper-overlay");
+    els.forEach(el => {
+        el.style.setProperty("--random-paper-position", `${Math.random() * 100}% ${Math.random() * 100}%`);
+    })
+}
+
+function fullscreen_img_container_logic() {
+    $(".fullscreen-img-container").forEach(old => old.remove());
+    const fullscreen_img_container = $el(".fullscreen-img-container");
+    const close_btn = $el("button.close");
+    const close_img = $el("img"); close_img.src = "/assets/header/close.svg";
+    close_btn.appendChild(close_img);
+    fullscreen_img_container.appendChild(close_btn);
+    document.body.appendChild(fullscreen_img_container);
+
+    const els = $(".toggle-fullscreen");
+    els.forEach(el => {
+        el.onclick = () => {
+            fullscreen_img_container.querySelectorAll("*:not(.close, .close > *)").forEach(el => el.remove());
+            const img_clone = el.cloneNode(true);
+            img_clone.classList.remove("toggle-fullscreen")
+            fullscreen_img_container.appendChild(img_clone);
+            activate(fullscreen_img_container)
+        }
+    })
+
+    fullscreen_img_container.onclick = (e) => {
+        if([fullscreen_img_container, close_btn, close_img].includes(e.target)) {
+            deactivate(fullscreen_img_container);
+        }
+    }
 }
 
 function generate_glows(glows) {
@@ -923,13 +979,14 @@ async function initial_page_rendering() {
         pages_res = await fetch_sheet_names();
         pages = {pages: pages_res, timestamp: Date.now()}
     }
-    const res = await fetch_data(PAGE);
-    const data = parse_document(res, pages.pages);
+    
+    // const res = await fetch_data(PAGE);
+    // const data = parse_document(res, pages.pages);
 
     await generate_header(this_page, pages.pages);
     const banner = $(".banner")[0];
     const header_rendered = fade_in(header, 1000);
-    header_rendered.then(() => activate(banner))
+    header_rendered.then(() => activate(banner));
 
     const dyn_data_res = await fetch_data("dyn_content");
     const dyn_data = parse_document(dyn_data_res, pages.pages)
