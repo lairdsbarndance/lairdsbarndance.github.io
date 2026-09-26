@@ -12,7 +12,7 @@
     --blue: #1D2F5C;
     --light-blue: #3F70A9;
     --white: #F8F8F8;
-    --background: #0E172A;
+    --background: rgb(14, 23, 42);
     --glow-col: #182746;
     --red: #92242F;
 
@@ -22,6 +22,34 @@
     --subtle-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.2);
     --harsh-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.75);
     --polaroid-shadow: 0 .75rem .5rem -.25rem rgba(0,0,0,0.75)
+}
+
+dialog {
+    display: grid;
+    place-content: center;
+    position: fixed;
+    inset: 0;
+    width: unset; height: unset; max-height: unset; max-width: unset;
+    background-color: rgb(14, 23, 42, 0.5);
+    color: var(--white);
+    border: none;
+    z-index: 1000;
+    backdrop-filter: blur(.125rem);
+    pointer-events: none;
+    opacity: 0;
+
+    transition: opacity 500ms ease;
+}
+
+dialog[open] {
+    opacity: 1;
+    pointer-events: all;
+}
+
+dialog > .modal-text {
+    font-size: 2.75rem;
+    font-family: "Cantora One", sans-serif;
+    filter: drop-shadow(var(--harsh-shadow));
 }
 
 body {

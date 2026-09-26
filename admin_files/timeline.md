@@ -667,7 +667,9 @@
 - ## 26/09/2026
     - [x] Improved the way undefined / stale localStorage was handled
     - [x] Create Contact Page (visual and logic layer) (using dyn-containers)
-    - [ ] Improved UX for smaller screen widths where the form would otherwise only be accessible through the user scrolling. The form is teased at the top of the page with a gradient overlay for the information, then accessible by the user clicking to maximise.
-    - [ ] Added functionality (data layer) using Web3Forms and connecting to email.
+    - [x] Improved UX for smaller screen widths where the form would otherwise only be accessible through the user scrolling. The form is teased at the top of the page with a gradient overlay for the information, then accessible by the user clicking to maximise.
+    - [x] Added functionality (data layer) using Web3Forms.
+
+    - ### Time Spent: 6 hours 30 minutes
 
 - ## To Do
