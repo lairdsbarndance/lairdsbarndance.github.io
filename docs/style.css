@@ -91,7 +91,7 @@ button.accent-btn {
     cursor: pointer;
 }
 
-.visible:not(.bg-container, .post-it, .glow) {
+.visible:not(.bg-container, .post-it, .glow, .no-mask) {
     opacity: 1;
     mask-image: radial-gradient(white 50%, black 80%);
     mask-size: 100vw 100vw;

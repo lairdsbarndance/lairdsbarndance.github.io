@@ -1,14 +1,26 @@
+
 main {
-    --gap-below-banner: 2.5rem;
+    container: main / inline-size;
+
+    --gap-below-banner: min(7.5vh, 2.5rem);
     --even-gap: 1rem;
-    padding-inline: 5vw;
+    --min-col-width: 27.5em;
+
+    padding-inline: max(7.5vw, 2.5rem);
+    margin-inline: auto;
+    max-width: 110em;
     display: grid;
     column-gap: var(--even-gap);
-    grid-template-columns: repeat(auto-fit, minmax(32.5em, 1fr));
+    grid-template-columns:
+        repeat(auto-fit, minmax(min(var(--min-col-width), 100%), 1fr));
+}
+
+.instrument-container {
+    --instruments-bleed: 0rem;
 }
 
 .contact-main section {
-    padding-block: var(--gap-below-banner);
+    padding-top: var(--gap-below-banner);
     color: var(--white);
     display: flex;
     gap: var(--even-gap);
@@ -54,6 +66,7 @@ section > * > a {
 
 section > * > p {
     opacity: 0.95;
+    font-size: 1.175rem;
 }
 
 section > * > a::before {
@@ -90,9 +103,15 @@ main form {
     background: rgba(255, 255, 255, 0.1);
     padding: calc(var(--padding) * 2) calc(var(--padding) * 1);
     border-radius: .5rem;
-    row-gap: 1rem;
+    row-gap: .25rem;
     backdrop-filter: blur(.5rem);
     border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+form.pre-render {opacity: 0;}
+
+form.visible {
+    animation: opacity-fade-in 500ms ease forwards;
 }
 
 form > div {
@@ -105,6 +124,7 @@ form > div {
 
 form > div > label {
     font-size: .9rem;
+    opacity: 0.85;
     height: fit-content;
 }
 
@@ -119,6 +139,7 @@ form > div > input, form > div > textarea, form > fieldset {
 form > div > input, form > div > textarea {
     padding: 1rem .5rem;
     border: none;
+    width: 100%;
 }
 
 form *:not(input[type="radio"]) {
@@ -153,7 +174,7 @@ form > fieldset {
 }
 
 input[type="radio"] {
-    accent-color: var(--blue);
+    accent-color: var(--light-blue);
     cursor: pointer;
     width: 1.25rem;
     aspect-ratio: 1;
@@ -168,6 +189,7 @@ fieldset > legend {
     position: absolute;
     top: calc(-1*var(--legend-height));
     font-size: .9rem;
+    opacity: 0.85;
 }
 
 fieldset > div {
@@ -193,4 +215,73 @@ form textarea {
     field-sizing: content;
     overflow: visible;
     min-height: 6lh;
+}
+
+@container main (width < 56em) {
+    main > .bg-glow-wrapper:has(form) {
+        order: 1;
+    }
+    main > .bg-glow-wrapper:has(section) {
+        order: 2;
+    }
+    .contact-main section {
+        --gap-below-banner: 2rem;
+    }
+    .contact-main form {
+        margin-top: calc(0.5 * var(--gap-below-banner));
+        max-height: 25rem;
+        transform-origin: top center;
+        transform: scale(0.75);
+        overflow-y: hidden;
+        mask-image: linear-gradient(white 70%, transparent 100%);
+        mask-size: 100% 200%;
+        mask-position: 0% 100%;
+        transition: mask-position 250ms ease, 
+                    max-height 250ms ease,
+                    transform 250ms ease;
+    }
+    .contact-main form.active, .contact-main form:hover {
+        max-height: 1000vh;
+        mask-position: 0% 0%;
+        transform: scale(1);
+    }
+    .contact-main:not(:has(form.active, form:hover)) section {
+        margin-top: -15vh;
+    }
+    main h2 {text-align: center;}
+}
+
+@media (max-width: 1241px) {
+    section > * > p {font-size: 1rem;}
+    .socials {margin-top: 1rem}
+    .socials > a {--icon-width: 2rem;}
+    main form {row-gap: .5rem;}
+}
+
+@media (max-width: 700px) {
+    main {--gap-below-banner: 2rem}
+    .socials > a {
+        font-size: 1.1rem;
+        --icon-width: 1.5rem;
+    }
+    main h2 {font-size: 2rem;}
+}
+
+@media (max-width: 500px) {
+    form input::placeholder {font-size: 1rem;}
+    .contact-main form {
+        max-height: 40vh;
+        margin-top: calc(1.125 * var(--gap-below-banner));
+    }
+    main {
+        padding-inline: unset;
+        margin-inline: auto;
+        width: 90%;
+    }
+    form > div > input {
+        padding-block: .75rem;
+    }
+    fieldset > div > label {
+        font-size: 1rem;
+    }
 }

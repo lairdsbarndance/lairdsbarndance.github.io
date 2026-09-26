@@ -19,9 +19,9 @@
     <div class="banner"></div>
     <div class="scroll-wrapper" data-prevent-default-scroll-navigation>
         <main class="banner-padding contact-main">
-            <section class="bg-glow" data-glow-pos="top left" data-glow-size="150%">
+            <section class="bg-glow pre-render" data-glow-pos="center left" data-glow-size="125%">
                 <div class="dyn-container" data-dyn-tag="making_a_booking_enquiry" data-dyn-auto="true" data-dyn-heading="h2" data-dyn-content="p">
-                    <h2 class="dyn-heading"></h2>
+                    <h2 class="dyn-heading">Making a booking enquiry</h2>
                     <p class="dyn-content">
                         The Lairds would love to play at your event, and we offer a variety of packages to suit the size and style of your party and your budget. Drop us a message below or give us a call and we'll send you a no obligation quote. Please check your email spam/junk folder regularly in case our message ends up there. We aim to reply to all enquiries within a couple of days.
                         <br>Don't worry if you do not yet have full details of the event. We have a wealth of experience in organising barn dances or ceilidhs, so please ask for advice on turning your great party idea into a great party!
@@ -30,8 +30,9 @@
                 <div class="dyn-container socials" data-dyn-tag="socials" data-dyn-auto="true" data-dyn-content="a">
                 </div>
             </section>
-            <form action="#" class="bg-glow" data-glow-pos="bottom right" data-glow-size="150%" data-glow-mask-content="false" autocomplete="on">
-               <div>
+            <form action="https://api.web3forms.com/submit" method="POST" class="bg-glow no-mask pre-render" data-glow-pos="center right" data-glow-size="125%" data-glow-mask-content="false" autocomplete="on" tabindex="1">
+               <input type="hidden" name="access_key" value="dd64c28b-20d3-44c8-a09d-6df190042cba">
+                <div>
                     <label for="first_name">First Name*</label>
                     <input
                         type="text"

@@ -1021,7 +1021,7 @@ async function initial_page_rendering() {
     const this_page = document.title.split("- ").pop();
 
     let pages = JSON.parse(localStorage.getItem("sheet_names"));
-    if(pages == undefined || Date.now() - pages.timestamp > 12 * 60 * 60 * 1000) {
+    if(pages == undefined || pages.timstamp == undefined || Date.now() - pages.timestamp > 12 * 60 * 60 * 1000) {
         pages_res = await fetch_sheet_names();
         pages = {pages: pages_res, timestamp: Date.now()}
     }
@@ -1030,11 +1030,11 @@ async function initial_page_rendering() {
     // const data = parse_document(res, pages.pages);
 
     await generate_header(this_page, pages.pages);
-    const banner = $(".banner")[0];
-    const header_rendered = fade_in(header, 1000);
-    header_rendered.then(() => activate(banner));
-
     generate_leather($(".leather"));
+    const banner = $(".banner")[0];
+    await fade_in(header, 1000);
+    activate(banner);
+    await new Promise(resolve => setTimeout(resolve, 125));
 }
 
 const promise__initial_page_rendering = initial_page_rendering();
