@@ -665,5 +665,7 @@
     - ### Time Spent: 2 hours 30 minutes
 
 - ## 26/09/2026
-    - 
+    - [x] Improved the way undefined / stale localStorage was handled
+    - [ ] Create Contact Page (using dyn-containers)
+
 - ## To Do
