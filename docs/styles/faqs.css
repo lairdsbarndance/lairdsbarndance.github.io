@@ -1,0 +1,70 @@
+main {
+    align-items: center;
+    gap: 1.5rem;
+}
+
+main h4 {
+    margin-top: 2.5rem;
+    width: min(75%, 60em);
+    color: var(--white);
+    text-align: center;
+    text-wrap-style: balance;
+    font-weight: lighter;
+}
+
+main .noticeboard {
+    display: grid;
+    width: min(85%, 60em);
+    min-height: 50vh;
+    height: fit-content;
+}
+
+.post-its {
+    --gap: 1rem;
+    all: unset;
+    grid-area: 1 / -1 / 1 / -1;
+    width: 100%;
+    display: flex;
+    gap: calc(0.5 * var(--gap));
+}
+
+.post-its > div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    width: 20rem;
+}
+
+.post-its > div > .post-it {
+    --3d-rotation: 0deg;
+    cursor: pointer;
+}
+
+.post-it > .heading {
+    align-items: flex-start;
+}
+
+.post-it > .heading > img {margin-top: .5em;}
+
+/* float */
+/* .post-it > .heading {
+    display: initial;
+}
+
+.post-it > .heading > img {
+    margin-inline: 1rem;
+    float: left;
+} */
+
+div > .post-it {width: 100%;}
+
+.post-it > p {
+    max-height: 50vh;
+    overflow-y: auto;
+    transition: max-height 250ms ease;
+}
+
+.post-it.minimised > p {
+    max-height: 0vh;
+    overflow-y: hidden;
+}

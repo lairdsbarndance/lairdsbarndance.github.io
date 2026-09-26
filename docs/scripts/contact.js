@@ -17,7 +17,6 @@ async function main() {
     const result = $(".modal-text")[0];
     form.onclick = () => {activate(form); form.onclick = ""}
     form.onmouseover = () => {activate(form); form.onclick = ""}
-    // main logic
 
     generate_background();
 

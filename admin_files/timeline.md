@@ -669,7 +669,11 @@
     - [x] Create Contact Page (visual and logic layer) (using dyn-containers)
     - [x] Improved UX for smaller screen widths where the form would otherwise only be accessible through the user scrolling. The form is teased at the top of the page with a gradient overlay for the information, then accessible by the user clicking to maximise.
     - [x] Added functionality (data layer) using Web3Forms.
+    - [x] Completed logic layer for FAQs page
+    - [x] Exported noticeboard assets
+    - [x] Started visual and logic layer for FAQs page
+        - [x] QOL: Ensured a maximum of 3 post-it-notes are maximised at any given time to prevent the noticeboard from expanding too far / appearing cluttered
 
-    - ### Time Spent: 6 hours 30 minutes
+    - ### Time Spent: 8 hours 45 minutes
 
 - ## To Do

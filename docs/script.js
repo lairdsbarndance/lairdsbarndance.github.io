@@ -359,10 +359,12 @@ function shift_dom_el(el, index) {
 }
 
 function get_website_variable(var_name) {
-    const website_variables = JSON.parse(localStorage.getItem("website_variables"));
-    let val = website_variables.find(el => el["Variable Name"] === var_name)["Value"]
-    try { val = parseFloat(val) }
-    catch (err) { }
+    let website_variables = undefined;  let val = undefined;
+    try {
+        website_variables = JSON.parse(localStorage.getItem("website_variables"));
+        val = website_variables.find(el => el["Variable Name"] === var_name)["Value"]
+    } catch (err) {console.warn("Please reset localStorage")}
+    if (!Number.isNaN(parseFloat(val))) val = parseFloat(val);
     return val;
 }
 
@@ -799,9 +801,38 @@ function build_svg_mask(
     return mask.id;
 }
 
+function generate_post_it(heading, content, index, rotation_strength = 1.5, colour_arr = ["#FFFFFF", "#FFF8EF", "#EEF6FF"], post_it_obj = null, page_link = null) {
+    const container = $el(".post-it,pre-render");
+
+    container.style.setProperty("--random-rotation", `${Math.random() * rotation_strength - (rotation_strength/2)}deg`);
+    container.style.setProperty("--random-bg-offset", `${Math.random() * 100}% ${Math.random() * 100}%`);
+    container.style.setProperty("--random-colour", colour_arr[index % colour_arr.length]);
+
+    let page_link_required = false;
+    try {
+        page_link_required = post_it_obj["Page Link (Required with Button Text)"] != undefined;
+    } catch (err) {
+        console.warn("Post-it generated without page link")
+    }
+
+    container.innerHTML = `
+        <div class="heading">
+            <img src="/assets/bronze-pin.png">
+            <h3>${heading}</h3>
+        </div>
+        <p>${content}</p>
+        ${page_link_required ? 
+            `<a href="${page_link}">${post_it_obj["Button Text (Optional)"]}</a>`
+            : 
+            ""
+        }
+    `;
+
+    return container;
+}
+
 function generate_post_its(post_its_container, obj, colour_arr = ["#FFFFFF", "#FFF8EF", "#EEF6FF"], rotation_strength = 1.5) {
     obj.forEach((post_it, index) => {
-        const container = $el(".post-it,pre-render");
 
         let target_page;
         let page_link = post_it["Page Link (Required with Button Text)"];
@@ -818,24 +849,17 @@ function generate_post_its(post_its_container, obj, colour_arr = ["#FFFFFF", "#F
             )
         }
 
-        container.style.setProperty("--random-rotation", `${Math.random() * rotation_strength - (rotation_strength/2)}deg`);
-        container.style.setProperty("--random-bg-offset", `${Math.random() * 100}% ${Math.random() * 100}%`);
-        container.style.setProperty("--random-colour", colour_arr[index % colour_arr.length]);
-
-        container.innerHTML = `
-            <div class="heading">
-                <img src="/assets/bronze-pin.png">
-                <h3>${post_it["Title"]}</h3>
-            </div>
-            <p>${post_it["Text"]}</p>
-            ${post_it["Page Link (Required with Button Text)"] ? 
-                `<a href="${target_page}">${post_it["Button Text (Optional)"]}</a>`
-                : 
-                ""
-            }
-        `;
-
-        post_its_container.appendChild(container);
+        post_its_container.appendChild(
+            generate_post_it(
+                post_it["Title"], 
+                post_it["Text"], 
+                index,
+                rotation_strength,
+                colour_arr,
+                post_it,
+                target_page
+            )
+        );
     })
 
     post_its_container.style.setProperty("--column-width", post_its_container.querySelector(".post-it").offsetWidth + "px");

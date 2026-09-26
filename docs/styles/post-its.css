@@ -11,7 +11,8 @@
     transform-origin: center;
 }
 
-.post-its > .post-it {
+.post-its .post-it {
+    --3d-rotation: 15deg;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -26,7 +27,7 @@
     transition: opacity 1s 250ms ease, max-height 1.25s ease-in, transform 250ms ease;
     opacity: 0;
     overflow-y: clip;
-    transform: rotateZ(var(--random-rotation)) rotateX(15deg);
+    transform: rotateZ(var(--random-rotation)) rotateX(var(--3d-rotation));
     transform-origin: center center;
 }
 
@@ -39,7 +40,7 @@
     opacity: 0;
 }
 
-.post-its > .post-it.active {
+.post-its .post-it.active {
     opacity: 1;
 }
 
@@ -122,7 +123,7 @@
         margin-inline: auto;
     }
 
-    .post-its > * {break-inside: avoid; margin-bottom: -.5rem;}
+    .post-its > .post-it {break-inside: avoid; margin-bottom: -.5rem;}
 }
 
 @media (max-width: 800px) {
