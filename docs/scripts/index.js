@@ -187,7 +187,11 @@ function post_its_logic() {
 
 async function main() { 
     console.log("Index Main Started!");
-    if(window.innerWidth < 700) shift_dom_el($(".call-to-action")[0], 2)
+    if(window.innerWidth < 700) shift_dom_el($(".call-to-action")[0], 2);
+
+    const dyn_data_res = await fetch_data("dyn_content");
+    const dyn_data = parse_document(dyn_data_res)
+    await populate_dyn_containers(dyn_data);
     
     const carousel_interval = get_website_variable("Carousel Interval") * 1000;
     const carousel_indicators = $(".carousel-indicator");

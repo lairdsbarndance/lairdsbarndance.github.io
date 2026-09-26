@@ -71,6 +71,11 @@ function cache_data(name, data) {
     localStorage.setItem(name, JSON.stringify(data))
 }
 
+function _blank(a) {
+    a.rel = "noopener noreferrer"
+    a.target = "_blank"
+}
+
 async function fetch_data(named_range, ignore_blank_cells = true) {
 
     const cached = `cached_${named_range}`;
@@ -195,13 +200,13 @@ function parse_table(json) {
     return parsed;
 }
 
-function parse_document(flat_data, pages) {
-    if(pages == undefined) {
-        console.log("Reloading Cache!")
-        localStorage.clear();
-        window.location.reload();
-    } // for stale LocalStorage that uses outdated page caching
+function local_storage_reset() {
+    console.log("Reloading Cache!")
+    localStorage.clear();
+    window.location.reload();
+}
 
+function parse_document(flat_data, pages, merge_content = true) {
     let sections = [];
     let current = null;
 
@@ -217,6 +222,7 @@ function parse_document(flat_data, pages) {
 
         item.cells.forEach(cell => {
             const text = cell.text;
+
             if (cell.heading) {
                 current = {
                     heading: text,
@@ -229,16 +235,30 @@ function parse_document(flat_data, pages) {
                 new_paragraph = true;
                 return;
             }
+
             if (!current) return;
 
+            if (!merge_content) {
+                current.content.push(text);
+                new_paragraph = false;
+                return;
+            }
+
             const last_index = current.content.length - 1;
-            if (new_paragraph || current.content.length === 0) {current.content.push(text)}
-            else {current.content[last_index] += "<br>" + text;}
+
+            if (new_paragraph || current.content.length === 0) {
+                current.content.push(text);
+            } else {
+                current.content[last_index] += "<br>" + text;
+            }
+
             new_paragraph = false;
         });
     });
 
-    sections = sections.filter(obj => !pages.includes(obj.heading));
+    if (pages) {
+        sections = sections.filter(obj => !pages.includes(obj.heading));
+    }
 
     return sections;
 }
@@ -351,15 +371,41 @@ async function populate_dyn_containers(data) {
     containers.forEach(container => {
         const target_obj = data.find(entry => entry.tag === container.dataset.dynTag);
         if(container.dataset.dynAuto === "true") {
-            const heading = $el(container.dataset.dynHeading);
-            container.appendChild(heading);
+            container.innerHTML = "";
 
-            heading.innerHTML = target_obj.heading;
+            if(container.dataset.dynHeading) {
+                const heading = $el(container.dataset.dynHeading);
+                container.appendChild(heading);
+                heading.innerHTML = target_obj.heading;
+            }
+
             target_obj.content.forEach(entry => {
                 const dom_type = container.dataset.dynContent;
                 const content_el = $el(dom_type);
                 content_el.innerHTML = entry;
-                if(dom_type === "a") content_el.href = entry
+
+                if(dom_type === "a") {
+                    let href = entry;
+                    let icon_url = "";
+                    if(entry.includes("https")) {
+                        if(entry.includes("facebook")) icon_url = "facebook";
+                        if(entry.includes("instagram")) icon_url = "instagram";
+                        content_el.innerHTML = entry.split("https://")[1]?.split("www.")[1];
+                    } 
+                    else if(entry.includes("@")) {
+                        icon_url = "email"
+                        href = `mailto:${entry}`
+                    }
+                    else {
+                        if(entry.includes("+44")) icon_url = "phone"
+                        href = "#";
+                        content_el.onclick = (e) => e.preventDefault();
+                    } 
+                    content_el.href = href;
+                    content_el.style.setProperty("--icon-url", `url(../assets/${icon_url}.png)`);
+                    _blank(content_el)
+                }
+
                 container.appendChild(content_el)
             })
         } else {
@@ -988,9 +1034,6 @@ async function initial_page_rendering() {
     const header_rendered = fade_in(header, 1000);
     header_rendered.then(() => activate(banner));
 
-    const dyn_data_res = await fetch_data("dyn_content");
-    const dyn_data = parse_document(dyn_data_res, pages.pages)
-    const dyn_containers_promise = await populate_dyn_containers(dyn_data);
     generate_leather($(".leather"));
 }
 

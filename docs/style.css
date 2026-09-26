@@ -38,6 +38,21 @@ body {
     font-smooth: never;
 }
 
+body.radial-gradient::before {
+    --bg-size: 1;
+    --bg-stretch: 2;
+    content: "";
+    inset: 0;
+    position: fixed;
+    background: radial-gradient(
+        hsl(from var(--background) h s 20%) 30%, 
+        var(--background) 90%
+    );
+    background-size: calc(var(--bg-size) * 100vw), calc(var(--bg-size) * 100vw * var(--bg-stretch));
+    background-position: center;
+    z-index: -100;
+}
+
 /* body * {outline: red 1px solid;} */
 
 html {
@@ -56,6 +71,24 @@ html {
 
 .pre-render {
     opacity: 0;
+}
+
+button.accent-btn {
+    text-decoration: none;
+    background: var(--red);
+    width: fit-content;
+    color: var(--white);
+    font-weight: bold;
+    font-size: 1.25rem;
+    padding: .75rem 2.5rem;
+    text-shadow: var(--subtle-shadow);
+    border-radius: .45rem;
+    box-shadow: inset 0 .5rem .75rem rgba(0,0,0,0.25),
+                0 0.25rem 0.5rem rgba(0,0,0,0.25);
+    text-align: center;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
 }
 
 .visible:not(.bg-container, .post-it, .glow) {

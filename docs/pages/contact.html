@@ -6,14 +6,142 @@
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
     <script src="/scripts/functions.js"></script>
     <script src="/script.js" defer></script>
+    <script src="/scripts/contact.js" defer></script>
     <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/styles/contact.css">
     <link rel="stylesheet" href="/styles/leather.css">
     <title>The Lairds - Contact</title>
 </head>
-<body>
+<body class="radial-gradient">
     <header class="leather rough-border pre-render">
         <h1>Contact</h1>
     </header>
     <div class="banner"></div>
+    <div class="scroll-wrapper" data-prevent-default-scroll-navigation>
+        <main class="banner-padding contact-main">
+            <section class="bg-glow" data-glow-pos="top left" data-glow-size="150%">
+                <div class="dyn-container" data-dyn-tag="making_a_booking_enquiry" data-dyn-auto="true" data-dyn-heading="h2" data-dyn-content="p">
+                    <h2 class="dyn-heading"></h2>
+                    <p class="dyn-content">
+                        The Lairds would love to play at your event, and we offer a variety of packages to suit the size and style of your party and your budget. Drop us a message below or give us a call and we'll send you a no obligation quote. Please check your email spam/junk folder regularly in case our message ends up there. We aim to reply to all enquiries within a couple of days.
+                        <br>Don't worry if you do not yet have full details of the event. We have a wealth of experience in organising barn dances or ceilidhs, so please ask for advice on turning your great party idea into a great party!
+                    </p>
+                </div>
+                <div class="dyn-container socials" data-dyn-tag="socials" data-dyn-auto="true" data-dyn-content="a">
+                </div>
+            </section>
+            <form action="#" class="bg-glow" data-glow-pos="bottom right" data-glow-size="150%" data-glow-mask-content="false" autocomplete="on">
+               <div>
+                    <label for="first_name">First Name*</label>
+                    <input
+                        type="text"
+                        id="first_name"
+                        name="first_name"
+                        placeholder="First Name"
+                        autocomplete="given-name"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="last_name">Last Name*</label>
+                    <input
+                        type="text"
+                        id="last_name"
+                        name="last_name"
+                        placeholder="Last Name"
+                        autocomplete="family-name"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="email">Email Address*</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="example@gmail.com"
+                        autocomplete="email"
+                        inputmode="email"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="phone">Phone Number*</label>
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        placeholder="Phone Number"
+                        autocomplete="tel"
+                        inputmode="tel"
+                        required
+                    >
+                </div>
+
+                <fieldset>
+                    <legend>Preferred mode of communication*</legend>
+
+                    <div>
+                        <input
+                            type="radio"
+                            id="contact_email"
+                            name="preferred_contact"
+                            value="email"
+                            required
+                        >
+                        <label for="contact_email">Email</label>
+                    </div>
+
+                    <div>
+                        <input
+                            type="radio"
+                            id="contact_phone"
+                            name="preferred_contact"
+                            value="phone"
+                        >
+                        <label for="contact_phone">Phone</label>
+                    </div>
+
+                    <div>
+                        <input
+                            type="radio"
+                            id="contact_whatsapp"
+                            name="preferred_contact"
+                            value="whatsapp"
+                        >
+                        <label for="contact_whatsapp">WhatsApp</label>
+                    </div>
+                </fieldset>
+
+                <div class="venue">
+                    <label for="venue_address">Venue Address*</label>
+                    <input
+                        type="text"
+                        id="venue_address"
+                        name="venue_address"
+                        placeholder="Venue Address (or Town / Region if venue has not yet been booked)"
+                        required
+                        autocomplete="none"
+                    >
+                </div>
+
+                <div class="additional-details">
+                    <label for="additional_details">Additional details</label>
+                    <textarea
+                        id="additional_details"
+                        name="additional_details"
+                        placeholder="Please provide additional details about the event if you have them, such as detailed timings or if food is going to be served, or any other questions you might have at this stage."
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="accent-btn">
+                    Send Enquiry
+                </button>
+            </form>
+        </main>
+    </div>
 </body>
 </html>
