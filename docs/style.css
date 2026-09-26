@@ -37,6 +37,8 @@ dialog {
     backdrop-filter: blur(.125rem);
     pointer-events: none;
     opacity: 0;
+    padding-inline: min(5em, 10vw);
+    text-align: center;
 
     transition: opacity 500ms ease;
 }
