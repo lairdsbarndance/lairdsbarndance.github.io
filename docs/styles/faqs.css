@@ -37,14 +37,29 @@ main .noticeboard {
 
 .post-its > div > .post-it {
     --3d-rotation: 0deg;
+    padding-top: 1.25rem;
+    transition: gap 250ms ease,
+                transform 250ms ease,
+                filter 250ms ease;
+}
+
+.post-it h3 {
     cursor: pointer;
+    font-size: 1.5rem;
+    margin-right: -.5rem;
 }
 
 .post-it > .heading {
     align-items: flex-start;
+    margin-left: -1rem;
 }
 
-.post-it > .heading > img {margin-top: .5em;}
+.post-its > div > .post-it:nth-child(2n) > .heading {
+    flex-direction: row-reverse;
+    margin-left: unset; margin-right: -1rem;
+}
+
+.post-it > .heading > img {margin-top: -0em;}
 
 /* float */
 /* .post-it > .heading {
@@ -58,13 +73,71 @@ main .noticeboard {
 
 div > .post-it {width: 100%;}
 
-.post-it > p {
+.post-it > .info {
+    --max-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1ch;
     max-height: 50vh;
     overflow-y: auto;
-    transition: max-height 250ms ease;
+    scrollbar-gutter: stable;
+    transition: max-height 250ms ease,
+                mask-position 250ms ease;
+    font-size: 1rem;
 }
 
-.post-it.minimised > p {
+.info > p {font-size: inherit;}
+
+.post-it .info::-webkit-scrollbar {
+    width: 0px;
+}
+
+.post-it.minimised {
+    gap: 0;
+}
+
+.post-it.minimised > .info {
     max-height: 0vh;
-    overflow-y: hidden;
+}
+
+.post-its:has(.post-it.maximised) .post-it:not(.maximised) {
+    filter: brightness(0.9)
+}
+
+/* .post-it > p {
+    color: var(--white);
+    background-image: linear-gradient(black calc(var(--max-height) * 2 - 15%), transparent calc(var(--max-height) * 2));
+    background-size: 100% 200%;
+    background-position: 0% var(--max-height);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.post-it > p.scroll {
+    animation: transition-scroll-fade 250ms ease forwards;
+}
+
+@keyframes transition-scroll-fade {
+    from {background-position-y: 45%;}
+    to {background-position-y: 25%;}
+} */
+
+.post-it > .info {
+    mask-image: linear-gradient(black calc(var(--max-height) * 2 - 15%), transparent calc(var(--max-height) * 2));
+    mask-size: 100% 200%;
+    mask-position: 0% var(--max-height);
+}
+
+.post-it .info.scroll {
+    animation: transition-scroll-fade 500ms ease forwards;
+}
+
+.post-it.maximised {
+    transform: scale(1.125);
+    z-index: 1;
+}
+
+@keyframes transition-scroll-fade {
+    from {mask-position: 0% var(--max-height);}
+    to {mask-position: 0% calc(var(--max-height) - 33%);}
 }

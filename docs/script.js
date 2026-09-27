@@ -815,25 +815,33 @@ function generate_post_it(heading, content, index, rotation_strength = 1.5, colo
         console.warn("Post-it generated without page link")
     }
 
+    let content_struct = `<p>${content}</p>`;
+
+    if(content.constructor == Array) {
+        if(content.length > 1) {
+            content_struct = "";
+            content.forEach(par => content_struct += `<p>${par}</p>`);
+        }
+    }
+
     container.innerHTML = `
         <div class="heading">
             <img src="/assets/bronze-pin.png">
             <h3>${heading}</h3>
         </div>
-        <p>${content}</p>
+        <div class="info">${content_struct}</div>
         ${page_link_required ? 
             `<a href="${page_link}">${post_it_obj["Button Text (Optional)"]}</a>`
             : 
             ""
         }
     `;
-
+    
     return container;
 }
 
 function generate_post_its(post_its_container, obj, colour_arr = ["#FFFFFF", "#FFF8EF", "#EEF6FF"], rotation_strength = 1.5) {
     obj.forEach((post_it, index) => {
-
         let target_page;
         let page_link = post_it["Page Link (Required with Button Text)"];
         if(page_link) {

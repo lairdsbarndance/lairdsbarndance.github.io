@@ -676,4 +676,9 @@
 
     - ### Time Spent: 8 hours 45 minutes
 
+- ## 27/09/2026
+    - [x] Lots of visual improvements to post it notes, improved functionality of scroll state and content rendering (accomodating for multiple paragraphs), more intuitive minimised and maximised post-it affordances
+    
+    - ### Time Spent: 1 hour 30 minutes
+
 - ## To Do
