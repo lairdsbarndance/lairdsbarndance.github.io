@@ -32,7 +32,7 @@ main .noticeboard {
     display: flex;
     flex-direction: column;
     gap: var(--gap);
-    width: 20rem;
+    width: var(--post-it-width, 20rem);
 }
 
 .post-its > div > .post-it {
@@ -41,12 +41,22 @@ main .noticeboard {
     transition: gap 250ms ease,
                 transform 250ms ease,
                 filter 250ms ease;
+    width: 100%;
+}
+
+.corner-pin .post-it > .heading > img {
+    margin-left: -2rem;
+    margin-top: -2rem;
+}
+
+section.noticeboard.corner-pin > .post-its > div > .post-it:nth-child(2n) > .heading > img {
+    margin-left: unset; margin-right: -2rem;
 }
 
 .post-it h3 {
     cursor: pointer;
     font-size: 1.5rem;
-    margin-right: -.5rem;
+    margin-right: -.125rem;
 }
 
 .post-it > .heading {
@@ -57,6 +67,10 @@ main .noticeboard {
 .post-its > div > .post-it:nth-child(2n) > .heading {
     flex-direction: row-reverse;
     margin-left: unset; margin-right: -1rem;
+}
+
+.post-its > div > .post-it:nth-child(2n) > .heading > h3 {
+    width: 100%;
 }
 
 .post-it > .heading > img {margin-top: -0em;}

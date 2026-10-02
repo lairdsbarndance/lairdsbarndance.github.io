@@ -1,13 +1,21 @@
 function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "heading") {
+    const post_its = $(".post-it");
+    const maximised_history = [];
+    const post_it_width = noticeboard.getAttribute("data-post-it-width").split("rem")[0];
+    noticeboard.style.setProperty("--post-it-width", post_it_width + "rem");
+    const REM = 16;
+    
     const post_its_obj = obj.filter(
         el => el.heading !== "Introduction" && el.heading && el.content
     );
 
     const post_its_container = $el(".post-its");
 
-    const col_count = Math.floor(
-        noticeboard.offsetWidth / ((20 + 1) * 16)
-    ); // 20rem width + 1rem gap
+    const col_count = Math.max(Math.floor(
+        noticeboard.offsetWidth / ((post_it_width + 1) * REM)
+    ), 3);
+
+    console.log(noticeboard.offsetWidth);
 
     const columns = [];
 
@@ -58,12 +66,8 @@ function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "h
 
     noticeboard.appendChild(post_its_container);
 
-    const post_its = $(".post-it");
-    const maximised_history = [];
-
     post_its.forEach(post_it => {
         const p = post_it.querySelector(".info");
-
         post_it.classList.add("minimised");
 
         post_it.onclick = () => {

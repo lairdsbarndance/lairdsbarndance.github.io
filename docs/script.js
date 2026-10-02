@@ -1053,7 +1053,7 @@ async function initial_page_rendering() {
     const this_page = document.title.split("- ").pop();
 
     let pages = JSON.parse(localStorage.getItem("sheet_names"));
-    if(pages == undefined || pages.timstamp == undefined || Date.now() - pages.timestamp > 12 * 60 * 60 * 1000) {
+    if(pages == undefined || pages.timestamp == undefined || Date.now() - pages.timestamp > 12 * 60 * 60 * 1000) {
         pages_res = await fetch_sheet_names();
         pages = {pages: pages_res, timestamp: Date.now()}
     }

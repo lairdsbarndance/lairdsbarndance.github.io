@@ -15,3 +15,5 @@ Element.prototype.appendChildren = function (...children) {
     });
     return this;
 };
+
+function c(str) {console.log(str)}
