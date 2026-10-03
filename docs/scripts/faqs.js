@@ -1,26 +1,33 @@
-function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "heading") {
-    const post_its = $(".post-it");
+async function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "heading") {
+    const REM = 16; // no reliable way to get user-set value
     const maximised_history = [];
-    const post_it_width = noticeboard.getAttribute("data-post-it-width").split("rem")[0];
-    noticeboard.style.setProperty("--post-it-width", post_it_width + "rem");
-    const REM = 16;
+    const post_it_width = parseFloat(noticeboard.getAttribute("data-post-it-width").split("rem")[0]) * REM;
+
+    const font_families = {
+        "cursive": "Caveat",
+        "sans-serif": "PT Sans",
+        "playful": "Cantora One"
+    }
+
+    noticeboard.style.setProperty("--post-it-width", (post_it_width / REM) + "rem");
     
     const post_its_obj = obj.filter(
         el => el.heading !== "Introduction" && el.heading && el.content
     );
 
     const post_its_container = $el(".post-its");
+    post_its_container.style.setProperty("--font-family", `${font_families[heading_font_style]}, sans-serif`);
+    post_its_container.style.setProperty("--font-weight", heading_font_style === "playful" ? "100" : "900");
 
     const col_count = Math.max(Math.floor(
-        noticeboard.offsetWidth / ((post_it_width + 1) * REM)
-    ), 3);
-
-    console.log(noticeboard.offsetWidth);
+        noticeboard.offsetWidth / (post_it_width)
+    ), 1);
 
     const columns = [];
 
     for (let i = 0; i < col_count; i++) {
         const sub_container = $el("div");
+        // sub_container.style.zIndex = (col_count - i);
         post_its_container.appendChild(sub_container);
 
         columns.push({
@@ -38,7 +45,7 @@ function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "h
     // Higher = middle column will be allowed to become taller.
     const middle_preference = 0.125;
 
-    sorted_post_its.forEach(post_it => {
+    sorted_post_its.forEach((post_it, index) => {
         const middle = (col_count - 1) / 2;
         const shortest_column = columns.reduce((shortest, column) => {
             const is_middle = column.index === middle;
@@ -57,7 +64,7 @@ function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "h
             generate_post_it(
                 post_it.heading,
                 post_it.content,
-                1
+                index
             )
         );
 
@@ -65,18 +72,33 @@ function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "h
     });
 
     noticeboard.appendChild(post_its_container);
+    
+    noticeboard.innerHTML += `
+    <div class="board">
+        <div class="corner"></div>
+        <div class="connector" style="--img-path: url(../assets/notice_board/top.png)"></div>
+        <div class="corner" style="--rotation: 90deg"></div>
+        <div class="connector" style="--img-path: url(../assets/notice_board/left.png)"></div>
+        <div class="felt"></div>
+        <div class="connector" style="--img-path: url(../assets/notice_board/right.png)"></div>
+        <div class="corner" style="--rotation: -90deg"></div>
+        <div class="connector" style="--img-path: url(../assets/notice_board/bottom.png)"></div>
+        <div class="corner" style="--rotation: -180deg"></div>
+    </div>
+    `
+
+    const post_its = $(".post-it");
 
     post_its.forEach(post_it => {
         const p = post_it.querySelector(".info");
         post_it.classList.add("minimised");
 
         post_it.onclick = () => {
-            const is_minimising =
-                !post_it.classList.contains("minimised");
-
+            const is_minimising = !post_it.classList.contains("minimised");
             post_it.classList.toggle("minimised");
 
             if (!is_minimising) {
+                scroll_to_el(post_it, 60)
                 post_it.classList.add("maximised");
                 Array.from(post_its).filter(el => el !== post_it).forEach(el => el.classList.remove("maximised"));
 
@@ -94,7 +116,7 @@ function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "h
 
                 maximised_history.push(post_it);
 
-                if (maximised_history.length > 3) {
+                if (maximised_history.length > 2) {
                     const oldest = maximised_history.shift();
                     oldest.classList.add("minimised");
                 }
@@ -123,6 +145,8 @@ async function main() {
     $(".intro")[0].textContent = intro_par_text;
 
     generate_noticeboard(noticeboard, faqs_obj, heading_font_style, "heading");
+    fade_in($(".intro")[0], 0, 0);
+    generate_background();
     noticeboard.querySelectorAll(".pre-render").forEach(el => {fade_in(el); activate(el)});
 }
 

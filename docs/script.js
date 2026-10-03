@@ -2,7 +2,7 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
-const CACHE = true;
+const CACHE = !DEV_MODE;
 let main_promise;
 
 const svg_defs = `
@@ -907,13 +907,20 @@ async function generate_background(parallax = 0.3) {
         Array.from(scroll_container.querySelectorAll("a")).filter(anchor => anchor.href.includes("#")).forEach(anchor => {
             anchor.addEventListener("click", (e) => {
                 e.preventDefault();
-                const target = document.getElementById((anchor.href.split("#").pop()));
-                const {y} = target.getBoundingClientRect();
-                const scroll_top = document.documentElement.scrollTop + (y - header.offsetHeight - 40); // 2.5rem buffer top
-                document.documentElement.scrollTo(0, scroll_top);
+                scroll_to_el(document.getElementById((anchor.href.split("#").pop())));
             })
         })
     })
+}
+
+function scroll_to_el(el, scroll_margin = 40) {
+    const target_scroll =
+        window.scrollY +
+        el.getBoundingClientRect().top -
+        header.offsetHeight -
+        scroll_margin;
+
+    window.scrollTo(0, target_scroll);
 }
 
 function generate_paper_overlays() {

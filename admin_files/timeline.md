@@ -681,7 +681,12 @@
     
     - ### Time Spent: 1 hour 30 minutes
 
-- ## 02/10/2026
-    - [ ] Created blue-felt noticeboard wrapper
+- ## 03/10/2026
+    - [x] Reworked FAQ noticeboard layout with responsive column sizing, configurable heading fonts, larger post-it support, and improved expand/collapse behaviour.
+    - [x] Added reusable `scroll_to_el()` helper and automatic scrolling when opening FAQ items or navigating to page anchors.
+    - [x] Introduced decorative noticeboard frame/felt background assets and refined post-it styling, spacing, pin positioning, and typography.
+    - [x] Updated FAQ page rendering with smoother fade-in effects, disabled masking where appropriate, and regenerated page background after noticeboard creation.
+
+    - ### Time Spent (so far): 3 hours 30 minutes
 
 - ## To Do
