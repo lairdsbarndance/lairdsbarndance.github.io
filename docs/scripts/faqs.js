@@ -75,7 +75,7 @@ async function generate_noticeboard(noticeboard, obj, heading_font_style, sort_b
     
     noticeboard.innerHTML += `
     <div class="board">
-        <div class="corner"></div>
+        <div class="corner" style="--rotation: 0deg"></div>
         <div class="connector" style="--img-path: url(../assets/notice_board/top.png)"></div>
         <div class="corner" style="--rotation: 90deg"></div>
         <div class="connector" style="--img-path: url(../assets/notice_board/left.png)"></div>

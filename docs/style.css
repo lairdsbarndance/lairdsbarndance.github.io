@@ -99,8 +99,16 @@ html {
     navgiation: auto;
 }
 
+.no-mask {
+    opacity: 0;
+}
+
 .pre-render {
     opacity: 0;
+}
+
+.no-mask:not(.pre-render) {
+    animation: opacity-fade-in 1s ease forwards;
 }
 
 button.accent-btn {
@@ -119,6 +127,15 @@ button.accent-btn {
     border: none;
     font-family: inherit;
     cursor: pointer;
+}
+
+.page-top-description {
+    margin-top: 2.5rem;
+    width: min(75%, 60em);
+    color: var(--white);
+    text-align: center;
+    text-wrap-style: balance;
+    font-weight: lighter;
 }
 
 .visible:not(.bg-container, .post-it, .glow, .no-mask) {

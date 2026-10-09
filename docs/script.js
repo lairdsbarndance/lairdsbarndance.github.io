@@ -484,6 +484,18 @@ function generate_nav(pages) {
 function generate_leather(els) {
     els.forEach(el => {
         const is_rough_border = el.classList.contains("rough-border");
+        const mask_content = el.dataset.leatherMaskContent === "true";
+        const content = el.innerHTML;
+
+        if(mask_content) {
+            el.style.height = el.offsetHeight + "px";
+            el.style.width = el.offsetWidth + "px";
+            el.innerHTML = "";
+            const wrapper = $el(".content");
+            wrapper.innerHTML = content;
+            el.appendChild(wrapper);
+        }
+
         const bg_struct = `
             <div class="leather-background">
                 <div class="sheen"></div>
@@ -493,7 +505,7 @@ function generate_leather(els) {
             </div>
         `;
         el.insertAdjacentHTML("afterbegin", bg_struct);
-
+        
         if(!is_rough_border) {
             const borders = $el(".leather-borders");
             const div_arr = ["top", "right", "bottom", "left"];

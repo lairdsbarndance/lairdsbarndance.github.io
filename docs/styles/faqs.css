@@ -186,7 +186,7 @@ div > .post-it {width: 100%;}
 
 .board > .corner {
     background: url(../assets/notice_board/corner.png);
-    transform: rotate(var(--rotation));
+    transform: rotate(var(--rotation)) scale(1.05);
 }
 
 .board > .connector {

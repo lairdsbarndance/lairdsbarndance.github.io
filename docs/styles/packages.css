@@ -1,0 +1,24 @@
+main {
+    align-items: center;
+}
+
+.packages {
+    display: flex;
+    flex-wrap: wrap;
+    width: 80vw;
+    max-width: 90em;
+    color: var(--white);
+}
+
+.packages > .package > .front {
+    display: grid;
+    margin: var(--border-padding);
+}
+
+.package > .front h3 {
+    text-align: center;
+    font-family: "Cantora One", cursive;
+    font-weight: 100;
+    font-size: 2rem;
+    color: inherit;
+}

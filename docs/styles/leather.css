@@ -171,6 +171,12 @@
     z-index: 10;
 }
 
+.leather > .content {
+    position: absolute;
+    inset: var(--border-padding);
+    overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .leather.rough-border:not(.pre-load, .visible)::after, 
     .rough-border-no-leather:not(.pre-load, .visible)::after,

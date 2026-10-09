@@ -687,6 +687,12 @@
     - [x] Introduced decorative noticeboard frame/felt background assets and refined post-it styling, spacing, pin positioning, and typography.
     - [x] Updated FAQ page rendering with smoother fade-in effects, disabled masking where appropriate, and regenerated page background after noticeboard creation.
 
-    - ### Time Spent (so far): 3 hours 30 minutes
+    - ### Time Spent: 3 hours 30 minutes
+
+- ## 09/10/2026
+    - [x] Exported all package images, textures.
+    - [x] Coded data layer for Packages page.
+    - [x] Begun visual layer, implementing data-leather-mask-content, which appends div content to a wrapper (absolutely positioned, accounting for leather borders)
+    - ### Time Spent: 1 hour
 
 - ## To Do
