@@ -4,7 +4,8 @@
     --texture-scale: .9;
     --brightness: 1;
     background: var(--color);
-    box-shadow: 0 .25rem .5rem 0.125rem rgba(0,0,0,0.5);
+    box-shadow: 0 .25rem .5rem 0.125rem rgba(0,0,0,0.5),
+                inset 0 0 0.125rem 0.125rem hsl(from var(--color) h s calc(l + 5));
 }
 
 .leather:not(header) {position: relative;}
@@ -95,6 +96,7 @@
 
 .leather-background > .displacement {
     background-image: url(../assets/leather_displacement.png);
+    background-position: var(--random-position);
     mix-blend-mode: overlay;
 }
 

@@ -693,6 +693,13 @@
     - [x] Exported all package images, textures.
     - [x] Coded data layer for Packages page.
     - [x] Begun visual layer, implementing data-leather-mask-content, which appends div content to a wrapper (absolutely positioned, accounting for leather borders)
+
     - ### Time Spent: 1 hour
+
+- ## 11/10/2026
+    - [x] Created all animations and functionality associated with the opening and closing of packages, including centring packages within the available viewport (cloning the package and displaying in a relatively positioned fullscreen container)
+    - [x] Update to .leather: custom leather colour through data attribute, as well as randomly positioned displacement element to prevent repetition among adjacent package elements
+    
+    - ### Time Spent 4 hours
 
 - ## To Do

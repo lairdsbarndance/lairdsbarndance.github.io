@@ -514,7 +514,7 @@ async function generate_leather(els) {
                 <div class="sheen"></div>
                 <div class="glow-layer" id="sheen-mask"></div>
                 <div class="dimples"></div>
-                <div class="displacement"></div>
+                <div class="displacement" style="--random-position: ${Math.floor(Math.random() * 100)}% ${Math.floor(Math.random() * 100)}%"></div>
             </div>
         `;
 

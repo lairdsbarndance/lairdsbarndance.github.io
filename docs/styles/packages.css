@@ -6,8 +6,8 @@ main {
     --character-shadow: 0 2.375rem 3.3rem rgba(0,0,0,0.5);
     --package-padding: .25rem;
     --perspective: 1000px;
-    --max-package-width: 30rem;
-    --package-animation-speed: 0.5; /* higher number = longer duration */
+    --max-package-width: 45vw;
+    --package-animation-speed: 0.45; /* higher number = longer duration */
 }
 
 .packages {
@@ -27,7 +27,9 @@ main {
     backdrop-filter: blur(.25rem);
     opacity: 0;
     pointer-events: none;
-    color: var(--white)
+    color: var(--white);
+
+    transition: opacity 250ms ease;
 }
 
 .fullscreen-package-container > .relative-container {
@@ -45,6 +47,7 @@ main {
 
 .package {
     position: relative;
+    transition: top 250ms ease, left 250ms ease;
 }
 
 .package > * {
@@ -54,6 +57,10 @@ main {
     left: 0;
 }
 
+.package > .turnable > .left, .package > .right {
+    position: absolute;
+}
+
 .package > .turnable {
     position: relative;
     transform-origin: left;
@@ -61,11 +68,11 @@ main {
 }
 
 .relative-container > .package.open > .turnable {
-    animation: open-package calc(2s * var(--package-animation-speed)) ease forwards;
+    animation: open-package calc(2s * var(--package-animation-speed)) 300ms ease forwards;
 }
 
 .relative-container > .package.open .left, .relative-container > .package.open .right {
-    animation: maximise-contents calc(2s * var(--package-animation-speed)) calc(1s * var(--package-animation-speed) * 0.5) ease forwards;
+    animation: maximise-contents calc(2s * var(--package-animation-speed)) calc(1s * var(--package-animation-speed) * 0.5 + 300ms) ease forwards;
 }
 
 .relative-container > .package.close > .turnable {
@@ -94,7 +101,6 @@ main {
 }
 
 .package > .turnable > .left {
-    background: green;
     transform: perspective(var(--perspective)) rotateY(180deg) translateZ(1px);
 }
 
@@ -106,9 +112,12 @@ main {
 .package > .right {
     left: 0;
     top: 0;
-    background: pink;
     z-index: -1;
     opacity: 1;
+}
+
+.package .front {
+    max-width: 60vw;
 }
 
 .package > .turnable > .front > .content {
@@ -119,6 +128,8 @@ main {
 }
 
 .front > .content > img {
+    max-width: 100%;
+    object-fit: contain;
     transform: scale(1.05);
     filter: drop-shadow(var(--character-shadow))
 }
