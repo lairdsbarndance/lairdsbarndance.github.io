@@ -64,20 +64,27 @@ async function main() {
                     rotateY(0deg)
                 `;
 
+                const {x, y} = package.getBoundingClientRect();
                 const package_clone = package.cloneNode(true);
                 relative_container.innerHTML = "";
                 relative_container.appendChild(package_clone);
+
+                Object.assign(package_clone.style, {
+                    top: y + "px",
+                    left: x + "px"
+                })
+
                 activate(fullscreen_container);
 
                 package_clone.onclick = () => {
                     const is_open = package_clone.classList.contains("open");
-
                     package_clone.classList.remove("open", "close");
-
-                    // Force the browser to register the animation reset
                     void package_clone.offsetWidth;
-
                     package_clone.classList.add(is_open ? "close" : "open");
+
+                    if(is_open) {
+                        package_clone.onanimationend = () => deactivate(fullscreen_container);
+                    }
                 };
             }
         })
