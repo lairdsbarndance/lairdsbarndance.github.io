@@ -2,7 +2,7 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
-const CACHE = !DEV_MODE;
+const CACHE = true;
 let main_promise;
 
 const svg_defs = `
@@ -481,16 +481,29 @@ function generate_nav(pages) {
     }
 }
 
-function generate_leather(els) {
-    els.forEach(el => {
+async function generate_leather(els) {
+    els.forEach(async el => {
         const is_rough_border = el.classList.contains("rough-border");
         const mask_content = el.dataset.leatherMaskContent === "true";
+
+        el.style.setProperty("--color", el.dataset.leatherColor || "var(--blue)");
+
         const content = el.innerHTML;
 
-        if(mask_content) {
-            el.style.height = el.offsetHeight + "px";
-            el.style.width = el.offsetWidth + "px";
+        if (mask_content) {
+            const images = Array.from(el.querySelectorAll("img"));
+
+            await Promise.all(images.map(img => {
+                if (img.complete) return Promise.resolve();
+
+                return new Promise(resolve => {
+                    img.addEventListener("load", resolve, { once: true });
+                    img.addEventListener("error", resolve, { once: true });
+                });
+            }));
+
             el.innerHTML = "";
+
             const wrapper = $el(".content");
             wrapper.innerHTML = content;
             el.appendChild(wrapper);
@@ -504,16 +517,22 @@ function generate_leather(els) {
                 <div class="displacement"></div>
             </div>
         `;
+
         el.insertAdjacentHTML("afterbegin", bg_struct);
-        
-        if(!is_rough_border) {
+
+        if (!is_rough_border) {
             const borders = $el(".leather-borders");
             const div_arr = ["top", "right", "bottom", "left"];
-            div_arr.forEach(div => {borders.innerHTML += `
-            <div class="${div}">
-            <div class="normal"></div>
-            <div class="overlay"></div>
-            </div>`})
+
+            div_arr.forEach(div => {
+                borders.innerHTML += `
+                    <div class="${div}">
+                        <div class="normal"></div>
+                        <div class="overlay"></div>
+                    </div>
+                `;
+            });
+
             el.appendChild(borders);
         }
     })
@@ -1081,7 +1100,7 @@ async function initial_page_rendering() {
     // const data = parse_document(res, pages.pages);
 
     await generate_header(this_page, pages.pages);
-    generate_leather($(".leather"));
+    await generate_leather($(".leather"));
     const banner = $(".banner")[0];
     await fade_in(header, 1000);
     activate(banner);

@@ -2,23 +2,152 @@ main {
     align-items: center;
 }
 
+.packages, .fullscreen-package-container {
+    --character-shadow: 0 2.375rem 3.3rem rgba(0,0,0,0.5);
+    --package-padding: .25rem;
+    --perspective: 1000px;
+    --max-package-width: 30rem;
+    --package-animation-speed: 0.5; /* higher number = longer duration */
+}
+
 .packages {
     display: flex;
     flex-wrap: wrap;
     width: 80vw;
     max-width: 90em;
+    justify-content: center;
     color: var(--white);
 }
 
-.packages > .package > .front {
+.fullscreen-package-container {
+    position: fixed;
     display: grid;
-    margin: var(--border-padding);
+    inset: 0;
+    background: hsl(from var(--background) h s calc(l - 2.5) / .6);
+    backdrop-filter: blur(.25rem);
+    opacity: 0;
+    pointer-events: none;
+    color: var(--white)
 }
 
-.package > .front h3 {
+.fullscreen-package-container > .relative-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-content: center;
+}
+
+.fullscreen-package-container.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.package {
+    position: relative;
+}
+
+.package > * {
+    border-radius: .25rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.package > .turnable {
+    position: relative;
+    transform-origin: left;
+    transform-style: preserve-3d;
+}
+
+.relative-container > .package.open > .turnable {
+    animation: open-package calc(2s * var(--package-animation-speed)) ease forwards;
+}
+
+.relative-container > .package.open .left, .relative-container > .package.open .right {
+    animation: maximise-contents calc(2s * var(--package-animation-speed)) calc(1s * var(--package-animation-speed) * 0.5) ease forwards;
+}
+
+.relative-container > .package.close > .turnable {
+    animation: open-package calc(2s * var(--package-animation-speed)) calc(1s * var(--package-animation-speed) * 0.5) ease reverse both;
+}
+
+.relative-container > .package.close .left, .relative-container > .package.close .right {
+    animation: maximise-contents calc(2s * var(--package-animation-speed)) ease reverse both;
+}
+
+.relative-container > .package {
+    position: absolute;
+    top: 40%;
+    left: 40%;
+}
+
+.turnable > * {
+    position: absolute;
+    top: 0;
+}
+
+.package > .turnable > .front {
+    --border-padding: .85rem;
+    --stitch-width: 5px;
+    cursor: pointer;
+}
+
+.package > .turnable > .left {
+    background: green;
+    transform: perspective(var(--perspective)) rotateY(180deg) translateZ(1px);
+}
+
+.package .left, .package .right {
+    width: var(--front-width);
+    height: var(--front-height);
+}
+
+.package > .right {
+    left: 0;
+    top: 0;
+    background: pink;
+    z-index: -1;
+    opacity: 1;
+}
+
+.package > .turnable > .front > .content {
+    display: grid;
+    padding: var(--package-padding);
+    padding-bottom: 0;
+    gap: calc(3 * var(--package-padding));
+}
+
+.front > .content > img {
+    transform: scale(1.05);
+    filter: drop-shadow(var(--character-shadow))
+}
+
+.package > .turnable > .front h3 {
     text-align: center;
     font-family: "Cantora One", cursive;
     font-weight: 100;
     font-size: 2rem;
     color: inherit;
+    filter: drop-shadow(var(--h4-text-shadow));
+}
+
+@keyframes open-package {
+    0% {
+        transform: perspective(var(--perspective)) rotateY(0deg)
+    }
+
+    100% {
+        transform: perspective(var(--perspective)) rotateY(-180deg)
+    }
+}
+
+@keyframes maximise-contents {
+    0% {
+        width: var(--front-width);
+    }
+
+    100% {
+        width: var(--max-package-width);
+    }
 }

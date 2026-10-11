@@ -3,7 +3,7 @@
     --stitch-width: 5px;
     --texture-scale: .9;
     --brightness: 1;
-    background: var(--blue);
+    background: var(--color);
     box-shadow: 0 .25rem .5rem 0.125rem rgba(0,0,0,0.5);
 }
 
@@ -80,11 +80,10 @@
 }
 
 .leather:not(.rough-border) > .leather-background {
-    background: var(--blue);
-    --light-glow-col: #3f62b4;
+    background: hsl(from var(--color) h s calc(l + 5));
     box-shadow: inset 0 0 1.5rem -0.5rem rgba(0,0,0,0.5),
                 inset 0 -4rem 10rem -5rem rgba(0,0,0,0.5),
-                0 0 .125rem 0.125rem var(--light-glow-col);
+                0 0 .125rem 0.125rem hsl(from var(--color) h s calc(l + 20));
     inset: calc(var(--border-padding) - var(--stitch-width) / 2);
 }
 
@@ -137,7 +136,7 @@
     position: absolute;
     inset: auto 0 calc(3px - var(--border-height)) 0;
     height: var(--border-height);
-    background: linear-gradient(var(--light-blue) 10%, black 200%);
+    background: linear-gradient(hsl(from var(--color) h s calc(l + 20)) 10%, black 200%);
     mask: url(../assets/line.svg);
     mask-repeat: repeat-x;
     mask-position: center calc(-1 * var(--border-height));
@@ -171,9 +170,13 @@
     z-index: 10;
 }
 
+.leather[data-leather-mask-content="true"] {
+    display: grid;
+}
+
 .leather > .content {
-    position: absolute;
-    inset: var(--border-padding);
+    grid-area: 1 / -1 / 1 / -1;
+    margin: var(--border-padding);
     overflow: hidden;
 }
 
