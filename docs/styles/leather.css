@@ -3,8 +3,9 @@
     --stitch-width: 5px;
     --texture-scale: .9;
     --brightness: 1;
+    --shadow-strength: 0.5;
     background: var(--color);
-    box-shadow: 0 .25rem .5rem 0.125rem rgba(0,0,0,0.5),
+    box-shadow: 0 .45rem .25rem 0.125rem rgba(0,0,0,calc(var(--shadow-strength) * 1)),
                 inset 0 0 0.125rem 0.125rem hsl(from var(--color) h s calc(l + 5));
 }
 

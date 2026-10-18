@@ -17,3 +17,8 @@ Element.prototype.appendChildren = function (...children) {
 };
 
 function c(str) {console.log(str)}
+
+function fix_size(el, margin = 0, inherit_from = el) {
+    el.style.height = inherit_from.offsetHeight + margin + "px";
+    el.style.width = inherit_from.offsetWidth + margin + "px";
+}

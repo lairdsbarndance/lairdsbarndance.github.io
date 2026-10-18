@@ -2,6 +2,7 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
+const OFFLINE_MODE = true;
 const CACHE = true;
 let main_promise;
 
@@ -90,7 +91,7 @@ async function fetch_data(named_range, ignore_blank_cells = true) {
 
         const timeout = 6 * (60 * 60 * 1000); // recaches every 6 hours
 
-        if (Date.now() - data.date_cached > timeout || !CACHE) {
+        if ((Date.now() - data.date_cached > timeout && !OFFLINE_MODE) || !CACHE) {
             throw new Error("re_cache");
         }
 
@@ -297,9 +298,11 @@ async function fetch_sheet_names() {
 async function fetch_events() {
     const events_res = await fetch_data("events");
     const files_res = await fetch_data("files");
-    const events = parse_table(events_res); const files = parse_table(files_res);
-    const parsed_events = parse_events(events, files);
-    return parsed_events;
+
+    return parse_events(
+        parse_table(events_res), 
+        parse_table(files_res)
+    );
 }  
 
 function activate(els, delay) {

@@ -700,6 +700,14 @@
     - [x] Created all animations and functionality associated with the opening and closing of packages, including centring packages within the available viewport (cloning the package and displaying in a relatively positioned fullscreen container)
     - [x] Update to .leather: custom leather colour through data attribute, as well as randomly positioned displacement element to prevent repetition among adjacent package elements
     
-    - ### Time Spent 4 hours
+    - ### Time Spent: 4 hours
+
+- ## 16/10/2026
+    - [x] Fixed package front changing width when opening (should have overflow hidden and fixed width and height, but calculated at the right time)
+        - [x] Solution: add a few pixels of padding to the calculated height to prevent word wrap (css glitch)
+    - [x] Several more hours of tedious positioning and scale calculation implementations for vertical package fold for smaller screen widths
+
+    - ### Time Spent: 3 hours
+
 
 - ## To Do
