@@ -709,5 +709,13 @@
 
     - ### Time Spent: 3 hours
 
+- ## 18/10/2026
+    - [x] Visual layer complete for smaller device widths (where packages open out vertically, and the package fronts must shrink in both axes during the open animation to prevent overflow)
+    - [x] Visual layer complete for inside of packages (left: image carousel, right: package description)
+    - [x] Integration with Contact page (Book us button)
+    - [x] Data and logic layer complete for Packages Page
+
+    - ### Time Spent (so far): 10 hours 30 minutes
 
 - ## To Do
+    - [ ] Final tweaks to phone screen widths inside packages

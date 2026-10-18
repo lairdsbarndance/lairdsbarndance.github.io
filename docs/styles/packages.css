@@ -2,12 +2,27 @@ main {
     align-items: center;
 }
 
+h4.page-top-description {
+    text-align: center;
+    padding-bottom: 1ch;
+
+    @media (max-width: 600px) {text-align: left;}
+}
+
 .packages, .fullscreen-package-container {
     --character-shadow: 0 2.375rem 3.3rem rgba(0,0,0,0.5);
     --package-padding: .25rem;
     --perspective: 1000px;
     --max-package-width: min(45vw, 30rem);
     --package-animation-speed: .75; /* higher number = longer duration */
+    --btn-margin: .5rem;
+    --touch-target-padding: 2rem;
+    --img-size: 2rem;
+}
+
+.fullscreen-package-container > .close {
+    margin-top: var(--header-height);
+    z-index: 1;
 }
 
 .packages {
@@ -66,6 +81,10 @@ main {
 
 .package > .turnable > .left, .package > .right {
     position: absolute;
+}
+
+.package > .right {
+    overflow: hidden;
 }
 
 .package > .turnable {
@@ -138,7 +157,7 @@ main {
     transform: perspective(var(--perspective)) rotateX(180deg) translateZ(1px);
 }
 
-.package .left, .package .right {
+.package > .turnable > .left, .package > .right {
     width: var(--front-width);
     height: var(--front-height);
 }
@@ -169,7 +188,11 @@ main {
     max-height: max(20vh, 25rem);
     object-fit: contain;
     transform: scale(1.05);
-    filter: drop-shadow(var(--character-shadow))
+    filter: drop-shadow(var(--character-shadow));
+    @media (max-width: 550px) {
+        height: unset;
+        max-height: 20vh;
+    }
 }
 
 .package > .turnable > .front h3 {
@@ -186,6 +209,143 @@ main {
         padding-inline: 2.5vw;
         font-size: 1.5rem;
     }
+}
+
+/* Inside Package Styling */
+
+.turnable > .left {
+    --border-padding: 1rem;
+    --border-padding-inline: 2.25rem;
+    backface-visibility: hidden;
+}
+
+.turnable > .front {
+    backface-visibility: hidden;
+}
+
+.turnable > .left > * {
+    position: absolute;
+}
+
+.left > .content > .plastic-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: url(../assets/packages/plastic_overlay.jpg);
+    background-size: 100% 100%;
+    mix-blend-mode: screen;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.left-btn, .right-btn {
+    width: var(--border-padding-inline, var(--border-padding));
+    padding-inline: .4rem .6rem;
+    --flip: 0deg;
+    top: 50%;
+    transform: translateY(-50%) rotate(var(--flip));
+    background: transparent;
+    border: none;
+
+    & > img {width: 100%; height: 100%; mix-blend-mode: luminosity}
+}
+
+.turnable > .left > .content {
+    position: absolute;
+    background: radial-gradient(var(--white), var(--grey));
+    box-shadow: inset 0 .125rem .5rem .125rem rgba(0,0,0,0.25);
+}
+
+.turnable > .left > .content > * {inset: 0;}
+
+.left > .content > .carousel-container {
+    padding: 1rem;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow-x: scroll;
+    gap: 1rem;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+
+    @media (prefers-reduced-motion: reduce) {
+        scroll-behavior: auto;
+    }
+}
+
+.carousel-container::-webkit-scrollbar {
+    visibility: hidden;
+}
+
+.left > .content > .carousel-container > .carousel-item {
+    display: flex;
+    max-width: var(--carousel-item-width, 30vw);
+    height: 100%;
+    scroll-snap-align: center;
+    filter: drop-shadow(0 .125rem .25rem rgba(0,0,0,.75))
+}
+
+.carousel-item > * {
+    max-height: 100%;
+    max-width: var(--carousel-item-width, 30vw);
+    object-fit: contain;
+    mask-image: url("../assets/carousel_img_mask.svg");
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+}
+
+.left > .content > .carousel-container > .carousel-item:has(iframe) {
+    margin-left: -2rem;
+    justify-content: center;
+    max-width: unset; max-height: unset;
+    height: 100%;
+}
+
+.left > .content > .carousel-container > .carousel-item > iframe {
+    min-width: var(--carousel-item-width, 30vw);
+    max-width: unset;
+}
+
+.right-btn {
+    --flip: 180deg;
+    right: 0;
+}
+
+.package > .right > .content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem min(5rem, 20%);
+    gap: 1rem;
+}
+
+.right > .content > h2 {
+    font-family: "Cantora One", cursive;
+    font-weight: 100;
+    filter: drop-shadow(var(--h4-text-shadow))
+}
+
+.right > .content > .description {
+    margin-top: -1.125ch;
+    display: grid;
+    gap: 1ch;
+    font-size: 1rem;
+    overflow-y: auto;
+}
+
+.right .sheen {
+    opacity: 0;
+}
+
+.right > .content > button {
+    padding: .75ch 2ch;
+    font-weight: 100;
+}
+
+.content > button > a {
+    color: inherit;
+    text-decoration: none;
 }
 
 @keyframes open-package {

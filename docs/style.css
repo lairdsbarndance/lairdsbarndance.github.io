@@ -12,6 +12,7 @@
     --blue: #1D2F5C;
     --light-blue: #3F70A9;
     --white: #F8F8F8;
+    --grey: #d6d6d6;
     --background: rgb(14, 23, 42);
     --glow-col: #182746;
     --red: #92242F;
@@ -112,6 +113,8 @@ html {
     animation: opacity-fade-in 1s ease forwards;
 }
 
+button {cursor: pointer}
+
 button.accent-btn {
     text-decoration: none;
     background: var(--red);
@@ -132,11 +135,39 @@ button.accent-btn {
 
 .page-top-description {
     margin-top: 2.5rem;
+    margin-inline: auto;
     width: min(75%, 60em);
     color: var(--white);
     text-align: center;
     text-wrap-style: balance;
     font-weight: lighter;
+}
+
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: white transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 1rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: white;
+    border-radius: 100vw;
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.break {
+    display: inline-block;
+    width: 100%;
 }
 
 .visible:not(.bg-container, .post-it, .glow, .no-mask) {
@@ -509,7 +540,7 @@ nav.mobile-view:not(.open) {
     justify-content: center;
     align-items: center;
     inset: 0;
-    background: color-mix(in srgb, var(--background) 50%, transparent);
+    background: hsl(from var(--background) h s calc(l - 2.5) / .6);
     backdrop-filter: blur(.25rem);
     z-index: 100;
     opacity: 0;
@@ -517,7 +548,7 @@ nav.mobile-view:not(.open) {
     transition: opacity 250ms ease;
 }
 
-.fullscreen-img-container > .close {
+.fullscreen-img-container > .close, .fullscreen-package-container > .close {
     position: fixed;
     display: grid;
     place-content: center;

@@ -2,7 +2,7 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
-const OFFLINE_MODE = true;
+const OFFLINE_MODE = false;
 const CACHE = true;
 let main_promise;
 
@@ -153,13 +153,15 @@ async function fetch_data(named_range, ignore_blank_cells = true) {
     return output;
 }
 
-function parse_table(json) {
+function parse_table(json, include_incomplete_rows = false) {
     const rows = json
         .filter(item => item.type === "row")
         .map(item => item.cells.map(cell => cell.text));
-
         
-    const trunc = rows.filter(
+    const trunc = include_incomplete_rows ? 
+    rows.filter(arr => arr[0] !== "FALSE")
+    :
+    rows.filter(
         arr => arr.length > 0 && !arr.some(el => el === "") && !arr.includes('FALSE')
     );
 
@@ -207,7 +209,7 @@ function local_storage_reset() {
     window.location.reload();
 }
 
-function parse_document(flat_data, pages, merge_content = true) {
+function parse_document(flat_data, pages, merge_content = true, custom_br = "<br>") {
     let sections = [];
     let current = null;
 
@@ -250,7 +252,7 @@ function parse_document(flat_data, pages, merge_content = true) {
             if (new_paragraph || current.content.length === 0) {
                 current.content.push(text);
             } else {
-                current.content[last_index] += "<br>" + text;
+                current.content[last_index] += custom_br + text;
             }
 
             new_paragraph = false;
@@ -300,7 +302,7 @@ async function fetch_events() {
     const files_res = await fetch_data("files");
 
     return parse_events(
-        parse_table(events_res), 
+        parse_table(events_res, include_incomplete_rows = true), 
         parse_table(files_res)
     );
 }  
@@ -485,7 +487,7 @@ function generate_nav(pages) {
 }
 
 async function generate_leather(els) {
-    els.forEach(async el => {
+    await Promise.all(Array.from(els).map(async el => {
         const is_rough_border = el.classList.contains("rough-border");
         const mask_content = el.dataset.leatherMaskContent === "true";
 
@@ -538,7 +540,7 @@ async function generate_leather(els) {
 
             el.appendChild(borders);
         }
-    })
+    }));
 }
 
 async function fade_in(el, timeout = 1000, visible_timeout = 1000) {
@@ -671,6 +673,13 @@ async function generate_header(this_page, pages) {
     if(header.classList.contains("mobile-view")) $("nav")[0].style.transition = "500ms ease transform, 500ms ease filter";
     
     console.log("Header Generated Sucessfully!")
+}
+
+async function get_package_types() {
+    const packages_res = await fetch_data("packages");
+    const packages_obj = parse_document(packages_res, null, true, custom_br = `<div class="break"></div>`);
+    const package_types = packages_obj.filter(el => el.heading !== "General Information").map(el => el.heading);
+    return package_types;
 }
 
 function build_svg_mask(
@@ -955,6 +964,12 @@ function scroll_to_el(el, scroll_margin = 40) {
         scroll_margin;
 
     window.scrollTo(0, target_scroll);
+}
+
+function scroll_to_carousel_el(carousel, el) {
+    carousel.scrollTo({
+        left: carousel.scrollLeft + el.getBoundingClientRect().x - carousel.getBoundingClientRect().x
+    });
 }
 
 function generate_paper_overlays() {

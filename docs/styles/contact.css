@@ -128,7 +128,7 @@ form > div > label {
     height: fit-content;
 }
 
-form > div > input, form > div > textarea, form > fieldset { 
+form > div > input, form > div > textarea, form > fieldset, form > div > select, select::picker(select) { 
     background: rgba(255, 255, 255, 0.1);
     color: var(--white);
     box-shadow: inset 0px .125rem .6rem rgba(255, 255, 255, 0.1);
@@ -136,7 +136,7 @@ form > div > input, form > div > textarea, form > fieldset {
     backdrop-filter: blur(.5rem);
 }
 
-form > div > input, form > div > textarea {
+form > div > input, form > div > textarea, form > div > select {
     padding: 1rem .5rem;
     border: none;
     width: 100%;
@@ -157,8 +157,36 @@ form *:focus {
 
 form > div > * {font-size: inherit; font-family: inherit;}
 
-form > fieldset, form > .venue, form > .additional-details, form > button {
+form > fieldset, form > .additional-details, form > button {
     grid-column: span 2;
+}
+
+select, select::picker(select) {
+    appearance: base-select;
+}
+
+select {
+    font-size: 1rem;
+    text-box-trim: trim-both;
+}
+
+form.active .package-type.autofilled > select {
+    animation: autofill-flash 500ms ease infinite alternate both;
+    animation-iteration-count: 4;
+}
+
+select option {
+    padding: .75rem 1.5rem;
+}
+
+select::picker(select) {
+    backdrop-filter: blur(5rem);
+    border: none;
+}
+
+select::picker-icon {
+    font-size: 1rem;
+    align-content: center;
 }
 
 form > fieldset {
@@ -284,4 +312,9 @@ form textarea {
     fieldset > div > label {
         font-size: 1rem;
     }
+}
+
+@keyframes autofill-flash {
+    0% {background: inherit}
+    100% {background: var(--red)}
 }

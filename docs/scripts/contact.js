@@ -5,6 +5,24 @@ async function main() {
     const contact_obj = parse_document(contact_res, null, merge_content = false);
     await populate_dyn_containers(contact_obj);
 
+    const package_options = await get_package_types();
+    const select = $(".package-type > select")[0];
+    
+    let selected_package;
+
+    if(window.location.href.includes("selected_package")) {
+        selected_package = package_options.find(package => window.location.href.split("?selected_package=").pop() === package.split(" ").join("_").toLowerCase());
+    }
+
+    console.log(selected_package)
+
+    select.innerHTML = 
+    `<option value="" disabled selected>Select a package</option>` +
+    package_options
+    .map(option => `<option value="${option.split(" ").join("_").toLowerCase()}" ${selected_package && selected_package === option ? "selected" : ""}>${option}</option>`)
+    .join("") +
+    `<option value="unsure">Not sure yet</option>`;
+
     const form = $("form")[0];
     const modal = $("dialog")[0];
 

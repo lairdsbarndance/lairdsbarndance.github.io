@@ -4,7 +4,9 @@
     --texture-scale: .9;
     --brightness: 1;
     --shadow-strength: 0.5;
-    background: var(--color);
+    background-color: var(--color);
+    background-image: url(../assets/leather_displacement.png);
+    background-blend-mode: overlay;
     box-shadow: 0 .45rem .25rem 0.125rem rgba(0,0,0,calc(var(--shadow-strength) * 1)),
                 inset 0 0 0.125rem 0.125rem hsl(from var(--color) h s calc(l + 5));
 }
@@ -47,35 +49,34 @@
 .leather-borders > * > .overlay {mix-blend-mode: overlay;}
 
 .leather-borders > .top > * {
-    top: calc(var(--border-padding) - var(--stitch-width));
-    left: var(--border-padding);
+    top: calc(var(--border-padding-block, var(--border-padding)) - var(--stitch-width));
+    left: var(--border-padding-inline, var(--border-padding));
     height: var(--stitch-width);
-    width: calc(100% - 2 * var(--border-padding));
+    width: calc(100% - 2 * var(--border-padding-inline, var(--border-padding)));
 }
-  
+
 .leather-borders > .right > * {
-    top: var(--border-padding);
-    right: calc(var(--border-padding) - var(--stitch-width));
+    top: var(--border-padding-block, var(--border-padding));
+    right: calc(var(--border-padding-inline, var(--border-padding)) - var(--stitch-width));
     width: var(--stitch-width);
-    height: calc(100% - 2 * var(--border-padding));
+    height: calc(100% - 2 * var(--border-padding-block, var(--border-padding)));
     background-size: auto 1000px;
-    
     background-image: url(../assets/sewing_optimised_y.png);
     background-repeat: repeat-y;
 }
-  
+
 .leather-borders > .bottom > * {
-    bottom: calc(var(--border-padding) - var(--stitch-width));
-    left: var(--border-padding);
+    bottom: calc(var(--border-padding-block, var(--border-padding)) - var(--stitch-width));
+    left: var(--border-padding-inline, var(--border-padding));
     height: var(--stitch-width);
-    width: calc(100% - 2 * var(--border-padding));
+    width: calc(100% - 2 * var(--border-padding-inline, var(--border-padding)));
 }
-  
+
 .leather-borders > .left > * {
-    top: var(--border-padding);
-    left: calc(var(--border-padding) - var(--stitch-width));
+    top: var(--border-padding-block, var(--border-padding));
+    left: calc(var(--border-padding-inline, var(--border-padding)) - var(--stitch-width));
     width: var(--stitch-width);
-    height: calc(100% - 2 * var(--border-padding));
+    height: calc(100% - 2 * var(--border-padding-block, var(--border-padding)));
     background-size: auto 1000px;
     background-image: url(../assets/sewing_optimised_y.png);
     background-repeat: repeat-y;
@@ -83,10 +84,17 @@
 
 .leather:not(.rough-border) > .leather-background {
     background: hsl(from var(--color) h s calc(l + 5));
-    box-shadow: inset 0 0 1.5rem -0.5rem rgba(0,0,0,0.5),
-                inset 0 -4rem 10rem -5rem rgba(0,0,0,0.5),
-                0 0 .125rem 0.125rem hsl(from var(--color) h s calc(l + 20));
-    inset: calc(var(--border-padding) - var(--stitch-width) / 2);
+    box-shadow: inset 0 0 1.5rem -0.5rem rgba(0, 0, 0, 0.5),
+                inset 0 -4rem 10rem -5rem rgba(0, 0, 0, 0.5),
+                0 0 0.125rem 0.125rem hsl(from var(--color) h s calc(l + 20));
+}
+
+.leather:not(.rough-border) > .leather-background, .leather > .content.custom {
+    inset: calc(
+        var(--border-padding-block, var(--border-padding)) - var(--stitch-width) / 2
+    ) calc(
+        var(--border-padding-inline, var(--border-padding)) - var(--stitch-width) / 2
+    );
 }
 
 .leather-background > * {
@@ -177,9 +185,11 @@
     display: grid;
 }
 
-.leather > .content {
+.leather > .content:not(.custom) {
     grid-area: 1 / -1 / 1 / -1;
     margin: var(--border-padding);
+    margin-inline: var(--border-padding-inline, var(--border-padding));
+    margin-block: var(--border-padding-block, var(--border-padding));
     overflow: hidden;
 }
 
