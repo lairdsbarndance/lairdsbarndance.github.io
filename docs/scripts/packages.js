@@ -117,7 +117,7 @@ function generate_package(package_obj, files, leather_colour = "#3f3042") {
 
         media.src = is_video
             ? `https://drive.google.com/file/d/${file.file_id}/preview`
-            : `https://lh3.googleusercontent.com/d/${file.file_id}`;
+            : fetch_image(file.file_id);
 
         if (is_video) {
             if (file.width && file.height) {

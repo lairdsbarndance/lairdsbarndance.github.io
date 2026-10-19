@@ -720,8 +720,14 @@
 - ## 19/10/2026
     - [x] Final tweaks to phone screen widths inside packages
         - [x] Required several more hours of tedious width and height calculation fixes, refactoring logic-visual layer. .right content expands to fit content; .left content expands to max-package-height
+    - [x] Exported all meet-the-band photos within frames, normalising height, keeping variable width due to some photos breaking out of the frame horizontally
+    - [x] Updated Meet The Band database table, adding correctly embedded images as smart chips, so the client can update band member photos.
+    - [x] Initialise Meet The Band page
+        - [x] Data layer
+        - [x] Visual layer
+    - [x] Attempted infinite carousel scrolling and user interaction
 
-    - ### Time Spent (so far): 3 hours 30 minutes
+    - ### Time Spent (so far): 6 hours 30 minutes
 
 - ## To Do
    

@@ -248,5 +248,5 @@ async function main() {
     post_its_logic();
 }
 
-promise__initial_page_rendering.then(() => {main()})
+promise__initial_page_rendering.then(() => main())
     

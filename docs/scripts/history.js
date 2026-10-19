@@ -42,7 +42,7 @@ async function main() {
         article.setAttribute("data-glow-pos", `top ${index % 2 === 0 ? "left" : "right"}`);
         article.setAttribute("data-glow-size", "125%");
         const polaroid = generate_polaroid(
-            link = get_image_link(el["Image URL"]),
+            link = get_image_link(el["Image URL (Autofilled)"]),
             info_text = el["Image Description"],
             index
         );

@@ -630,6 +630,10 @@ function apply_header_css_vars(banner) {
     $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px");
 }
 
+function fetch_image(img_id) {
+    return `https://lh3.googleusercontent.com/d/${img_id}`;
+}
+
 async function generate_header(this_page, pages) {
     generate_nav(pages); // 1rem padding between title and nav
 
