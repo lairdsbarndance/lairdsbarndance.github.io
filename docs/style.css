@@ -303,11 +303,16 @@ svg.defs-container {
     border-radius: 50%;
     filter: blur(7.5rem);
     z-index: -105;
-    opacity: 1;
+    opacity: 0;
     transition: opacity 500ms ease;
 }
 
-.glow.pre-render {opacity: 0;}
+.glow:not(.pre-render) {animation: fade-in-glow 1s ease forwards}
+
+@keyframes fade-in-glow {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
 
 .glow-visible {opacity: 1;}
 

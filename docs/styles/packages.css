@@ -14,6 +14,7 @@ h4.page-top-description {
     --package-padding: .25rem;
     --perspective: 1000px;
     --max-package-width: min(45vw, 30rem);
+    --max-package-height: 90vh;
     --package-animation-speed: .75; /* higher number = longer duration */
     --btn-margin: .5rem;
     --touch-target-padding: 2rem;
@@ -105,6 +106,10 @@ h4.page-top-description {
     animation: var(--maximise-animation-name) calc(2s * var(--package-animation-speed)) calc(1s * var(--package-animation-speed) * 0.5 + 300ms) ease forwards;
 }
 
+.relative-container > .package:not(.vertical).measure-clone.open .right {
+    --maximise-animation-name: determine-max-package-height;
+}
+
 .relative-container > .package.close > .turnable {
     animation: var(--animation-name) calc(2s * var(--package-animation-speed)) calc(1s * var(--package-animation-speed) * 0.5) ease reverse both;
 }
@@ -118,7 +123,7 @@ h4.page-top-description {
 }
 
 .relative-container > .package.vertical {
-    --max-package-height: 33vh;
+    --max-package-height: 40vh;
     --animation-name: open-package-vertical;
     --maximise-animation-name: maximise-contents-vertical;
     --minimise-animation-name: minimise-front-vertical;
@@ -130,6 +135,10 @@ h4.page-top-description {
 
 .relative-container > .package.vertical > * {
     max-height: var(--max-package-height);
+}
+
+.relative-container > .package.vertical > .turnable > .left {
+    height: min(33vh, var(--max-package-height));
 }
 
 .relative-container > .package {
@@ -255,6 +264,52 @@ h4.page-top-description {
     box-shadow: inset 0 .125rem .5rem .125rem rgba(0,0,0,0.25);
 }
 
+.package::after {
+    --join-stitch-width: .5rem;
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    width: var(--join-stitch-width);
+    transform: perspective(var(--perspective)) translate(-50%, -50%) rotateY(90deg);
+    height: 90%;
+    background-image: url(../assets/joining_stitch.png);
+    background-repeat: repeat-y;
+    background-size: contain;
+    mix-blend-mode: luminosity;
+    opacity: .5;
+}
+
+.package.open::after {
+    animation: open-package-join-stitch calc(1s * var(--package-animation-speed)) calc(1.25s * var(--package-animation-speed)) ease forwards;
+}
+
+.package.vertical::after {
+    top: 0%;
+    left: max(50%, calc(var(--max-package-width)));
+    width: max(100%, calc(2 * var(--max-package-width) * 0.8));
+    height: var(--join-stitch-width);
+    background-image: url(../assets/joining_stitch_vertical.png);
+    background-repeat: repeat-x;
+    opacity: 0;
+}
+
+.package.vertical.open::after {
+    animation: open-package-join-stitch-vertical calc(1s * var(--package-animation-speed)) calc(1.25s * var(--package-animation-speed)) ease forwards;
+}
+
+.package.close::after {animation: open-package-join-stitch calc(1s * var(--package-animation-speed)) calc(1.25s * var(--package-animation-speed)) ease reverse both;}
+.package.close.vertical::after {animation: open-package-join-stitch-vertical calc(1s * var(--package-animation-speed)) calc(0.5s * var(--package-animation-speed)) ease reverse both;}
+
+.package.vertical > .right {
+    --maximise-animation-name: maximise-right-contents;
+}
+
+.package.vertical > .right > .content {
+    max-height: calc(var(--max-package-height) - 2 * var(--border-padding));
+    overflow-y: auto;
+}
+
 .turnable > .left > .content > * {inset: 0;}
 
 .left > .content > .carousel-container {
@@ -314,9 +369,9 @@ h4.page-top-description {
 .package > .right > .content {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    padding: 1rem min(5rem, 20%);
+    padding: 1rem min(4rem, 15%);
+    padding-bottom: 1.5rem;
     gap: 1rem;
 }
 
@@ -327,11 +382,9 @@ h4.page-top-description {
 }
 
 .right > .content > .description {
-    margin-top: -1.125ch;
     display: grid;
     gap: 1ch;
     font-size: 1rem;
-    overflow-y: auto;
 }
 
 .right .sheen {
@@ -339,6 +392,7 @@ h4.page-top-description {
 }
 
 .right > .content > button {
+    margin-top: auto;
     padding: .75ch 2ch;
     font-weight: 100;
 }
@@ -346,6 +400,13 @@ h4.page-top-description {
 .content > button > a {
     color: inherit;
     text-decoration: none;
+}
+
+@media (max-width: 600px) {
+    .package h2 {font-size: 1.75rem;}
+    .package > .right > .content {
+        padding: 1rem min(3rem, 10%);
+    }
 }
 
 @keyframes open-package {
@@ -371,10 +432,28 @@ h4.page-top-description {
 @keyframes maximise-contents {
     0% {
         width: var(--front-width);
+        height: var(--front-height);
     }
 
     100% {
         width: var(--max-package-width);
+        height: max(var(--right-content-height), var(--front-height));
+    }
+}
+
+@keyframes determine-max-package-height {
+    0% {
+        width: var(--front-width);
+        height: unset;
+        min-height: var(--front-height);
+        max-height: var(--front-height);
+    }
+
+    100% {
+        height: fit-content;
+        width: var(--max-package-width);
+        min-height: var(--front-height);
+        max-height: var(--max-package-height);
     }
 }
 
@@ -387,6 +466,19 @@ h4.page-top-description {
     100% {
         width: calc(2 * var(--max-package-width));
         max-height: var(--max-package-height);
+    }
+}
+
+@keyframes maximise-right-contents {
+    0% {
+        width: var(--front-width);
+        height: var(--front-height);
+    }
+
+    100% {
+        width: calc(2 * var(--max-package-width));
+        height: auto;
+        max-height: var(--max-package-height)
     }
 }
 
@@ -404,5 +496,28 @@ h4.page-top-description {
     100% {
         max-height: var(--max-package-height);
         max-width: calc(var(--max-package-width) * 2);
+    }
+}
+
+@keyframes open-package-join-stitch {
+    0% {
+        transform: perspective(var(--perspective)) translate(-50%, -50%) rotateY(90deg);
+    }
+    100% {
+        transform: perspective(var(--perspective)) translate(-50%, -50%) rotateY(0deg);
+    }
+}
+
+@keyframes open-package-join-stitch-vertical {
+    0% {
+        opacity: 0;
+        transform: perspective(var(--perspective)) translate(-50%, -50%) rotateX(90deg);
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 0.8;
+        transform: perspective(var(--perspective)) translate(-50%, -50%) rotateX(0deg);
     }
 }

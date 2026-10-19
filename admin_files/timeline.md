@@ -717,5 +717,11 @@
 
     - ### Time Spent (so far): 10 hours 30 minutes
 
+- ## 19/10/2026
+    - [x] Final tweaks to phone screen widths inside packages
+        - [x] Required several more hours of tedious width and height calculation fixes, refactoring logic-visual layer. .right content expands to fit content; .left content expands to max-package-height
+
+    - ### Time Spent (so far): 3 hours 30 minutes
+
 - ## To Do
-    - [ ] Final tweaks to phone screen widths inside packages
+   

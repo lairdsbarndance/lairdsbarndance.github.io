@@ -78,7 +78,7 @@ async function generate_packages(packages_obj, events_obj, images_per_package, v
 }
 
 function generate_package(package_obj, files, leather_colour = "#3f3042") {
-    const package_el = $el(".package");
+    const package_el = $el(".package,pre-render,no-mask");
     package_el.dataset.packageType = package_obj.heading;
 
     // Front panel
@@ -111,6 +111,7 @@ function generate_package(package_obj, files, leather_colour = "#3f3042") {
 
     files.forEach(file => {
         const carousel_item = $el(".carousel-item");
+        carousel_item.style.transform = `rotate(${Math.random() * 2 - 0.5}deg)`;
         const is_video = file.mime_type?.startsWith("video/");
         const media = is_video ? $el("iframe") : $el("img");
 
@@ -268,15 +269,14 @@ async function main() {
 
         fix_size(
             package_clone.querySelector(".front > .content"),
-            10,
+            1,
             package_el.querySelector(".front > .content")
         );
 
         const measure_clone = create_measure_clone(package_clone);
+        const right = measure_clone.querySelector(".right.leather");        
 
         relative_container.appendChild(measure_clone);
-
-        // fix_size(package_clone.querySelector(".right > .content"), 5, measure_clone.querySelector(".right > .content"))
 
         requestAnimationFrame(() => {
             position_package_clone(package_el, package_clone, measure_clone);
@@ -294,7 +294,14 @@ async function main() {
         const right_btn = left_container.querySelector(".right-btn");
         const carousel_items = carousel.querySelectorAll(".carousel-item");
 
-        carousel.style.setProperty("--carousel-item-width", (carousel.offsetWidth * 0.9) + "px")
+        carousel.style.setProperty("--carousel-item-width", (carousel.offsetWidth * 0.9) + "px");
+
+        requestAnimationFrame(() => {
+            package_clone.style.setProperty(
+                "--right-content-height",
+                package_clone.querySelector(".right.leather").getBoundingClientRect().height + "px"
+            );
+        })
 
         let scroll_index = 1;
         carousel.scrollLeft += (carousel_items[scroll_index].getBoundingClientRect().left - carousel.getBoundingClientRect().left) * -1; 
@@ -306,8 +313,10 @@ async function main() {
     function create_measure_clone(package_clone) {
         const measure_clone = package_clone.cloneNode(true);
         measure_clone.classList.add("open");
+        measure_clone.classList.add("measure-clone");
 
         Object.assign(measure_clone.style, {
+            visibility: "hidden",
             position: "absolute",
             transition: "none",
             animationDuration: "0s",
@@ -325,8 +334,8 @@ async function main() {
 
     function position_package_clone(package_el, package_clone, measure_clone) {
         const measure_turnable = measure_clone.querySelector(".turnable");
-        const measure_left = measure_clone.querySelector(".left");
-        const measure_right = measure_clone.querySelector(".right");
+        const measure_left = measure_clone.querySelector(".left.leather");
+        const measure_right = measure_clone.querySelector(".right.leather");
 
         let width = measure_left.offsetWidth + measure_right.offsetWidth;
         let height = Math.max(measure_turnable.offsetHeight, measure_right.offsetHeight);
@@ -337,30 +346,31 @@ async function main() {
         );
 
         if ((measure_left.offsetWidth / height) > min_aspect_ratio) {
+            requestAnimationFrame(() => {
+                package_clone.style.setProperty("--right-content-height", measure_right.offsetHeight + "px");
+            })
             package_clone.style.left = `${(relative_container.clientWidth - width) / 2 + measure_left.offsetWidth}px`;
             package_clone.style.top = `${banner_bottom + (relative_container.clientHeight - banner_bottom - height) / 2}px`;
-            package_clone.querySelector(".front").style.height = height + "px";
         } else {
-            position_package_clone_vertical(package_el, package_clone, measure_left, measure_right, banner_bottom);
+            requestAnimationFrame(() => {
+                position_package_clone_vertical(package_el, package_clone, measure_left, measure_right, measure_clone, banner_bottom);
+            })
         }
 
-        measure_clone.remove();
+        setTimeout(() => {
+            measure_clone.remove();
+        }, 1000);
     }
 
-    function position_package_clone_vertical(package_el, package_clone, measure_left, measure_right, banner_bottom) {
+    function position_package_clone_vertical(package_el, package_clone, measure_left, measure_right, measure_clone, banner_bottom) {
         package_clone.classList.add("vertical");
-
+        const turnable_height = package_clone.querySelector(".left.leather").offsetHeight;
         const width = measure_left.offsetWidth * 2;
-        const height = measure_right.offsetHeight;
+        const height = turnable_height + package_clone.querySelector(".right.leather").offsetHeight;
 
         package_clone.style.left = `${(relative_container.clientWidth - width) / 2}px`;
-        package_clone.style.top = `${banner_bottom + (relative_container.clientHeight - banner_bottom - height + measure_left.offsetHeight + header.offsetHeight) / 2}px`;
-
-        fix_size(
-            package_clone.querySelector(".front > .content"),
-            1,
-            package_el.querySelector(".front > .content")
-        );
+        package_clone.style.top = `${banner_bottom + (relative_container.clientHeight - banner_bottom - height) / 2 + turnable_height}px`;
+        console.log(relative_container.clientHeight, banner_bottom, height, turnable_height)
     }
 
     function handle_fullscreen_click(e, package_el, package_clone, x, y) {
@@ -396,7 +406,7 @@ async function main() {
             deactivate(fullscreen_container);
             package_clone.onclick = "";
             setTimeout(() => {
-                relative_container.innerHTML = "";
+                package_clone.remove();
             }, 1000);
         });
     }
@@ -409,9 +419,10 @@ async function main() {
     }
 
     generate_leather(packages_container.querySelectorAll(".leather"))
-    .then(() => {
+    .then(async () => {
         packages.forEach(initialise_package);
-        generate_background();
+        await generate_background();
+        packages.forEach(fade_in)
     })
 }
 
