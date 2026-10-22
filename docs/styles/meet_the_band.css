@@ -1,31 +1,53 @@
 .band {
+    position: relative;
     margin-top: 2.5rem;
-    display: flex;
     width: 100%;
+    display: grid;
+    overflow-x: hidden;
+    grid-template-columns: 1fr;
+}
+
+.band > div {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    display: flex;
     overflow-x: auto;
 
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-
-    /* animation: carousel 5s linear infinite; */
 
     @media (prefers-reduced-motion: reduce) {
         scroll-behavior: auto;
     }
 }
 
-.band > .wrapper {
+.band > div {opacity: 0;}
+.band > div.active {opacity: 1;}
+
+.scroll-container {
+    width: fit-content;
+    overflow-x: visible;
+    pointer-events: none;
+    scroll-snap-type: unset;
+    animation: carousel 10s linear infinite;
+}
+
+.interacitve-container {
+    scroll-behavior: auto;
+}
+
+.band > div > .wrapper {
     display: flex;
     gap: 2.5rem;
 }
 
-.band::-webkit-scrollbar {visibility: hidden;}
+.band > div::-webkit-scrollbar {visibility: hidden;}
 
-.band.expanded > .wrapper {
+.band.expanded > div > .wrapper {
     flex-wrap: wrap;
 }
 
-.band > .wrapper > .band-member {
+.band > div > .wrapper > .band-member {
     display: grid;
     justify-items: center;
     justify-content: start;
@@ -95,6 +117,6 @@
         transform: translateX(0%);
     }
     100% {
-        transform: translateX(-100%)
+        transform: translateX(-50%);
     }
 }

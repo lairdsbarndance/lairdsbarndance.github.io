@@ -715,7 +715,7 @@
     - [x] Integration with Contact page (Book us button)
     - [x] Data and logic layer complete for Packages Page
 
-    - ### Time Spent (so far): 10 hours 30 minutes
+    - ### Time Spent: 10 hours 30 minutes
 
 - ## 19/10/2026
     - [x] Final tweaks to phone screen widths inside packages
@@ -727,7 +727,12 @@
         - [x] Visual layer
     - [x] Attempted infinite carousel scrolling and user interaction
 
-    - ### Time Spent (so far): 6 hours 30 minutes
+    - ### Time Spent: 6 hours 30 minutes
+
+- ## 22/10/2026
+    - [ ] Attempted to implement infinite carousel scrolling functionality that allows interactivity by rendering two carousels (.scroll-container, .interactive-container). When the state switches between is and isn't interacting, the respective carousel is rendered, inheriting the scroll position of the other, which is hidden.
+
+    - ### Time Spent (so far): 1 hour
 
 - ## To Do
    
