@@ -4,6 +4,7 @@ const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
 const OFFLINE_MODE = false;
 const CACHE = true;
+const CACHE_REFRESH = 6 // in hours
 let main_promise;
 
 const svg_defs = `
@@ -77,37 +78,45 @@ function _blank(a) {
     a.target = "_blank"
 }
 
-async function fetch_data(named_range, ignore_blank_cells = true) {
+async function re_cache_data(named_range, cached) {
+    console.log("Recaching Data");
 
+    const res = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}` +
+        `?ranges=${encodeURIComponent(named_range)}` +
+        `&includeGridData=true` +
+        `&key=${κ}`
+    );
+
+    data = await res.json();
+    cache_data(cached, data);
+
+    return data;
+}
+
+async function fetch_data(named_range, ignore_blank_cells = true, force_refresh = false) {
     const cached = `cached_${named_range}`;
     let data;
 
-    try {
+    if(force_refresh) {
+        data = await re_cache_data(named_range, cached);
+    } else {
+        try {
         data = JSON.parse(localStorage.getItem(cached));
 
         if (!data?.date_cached) {
             throw new Error("re_cache");
         }
 
-        const timeout = 6 * (60 * 60 * 1000); // recaches every 6 hours
+        const timeout = CACHE_REFRESH * (60 * 60 * 1000);
 
         if ((Date.now() - data.date_cached > timeout && !OFFLINE_MODE) || !CACHE) {
             throw new Error("re_cache");
         }
 
-    } catch (err) {
-
-        console.log("Recaching Data");
-
-        const res = await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}` +
-            `?ranges=${encodeURIComponent(named_range)}` +
-            `&includeGridData=true` +
-            `&key=${κ}`
-        );
-
-        data = await res.json();
-        cache_data(cached, data);
+        } catch (err) {
+            data = await re_cache_data(named_range, cached);
+        }
     }
 
     const rows = data.sheets?.[0]?.data?.[0]?.rowData ?? [];
@@ -363,14 +372,27 @@ function shift_dom_el(el, index) {
     );
 }
 
-function get_website_variable(var_name) {
-    let website_variables = undefined;  let val = undefined;
-    try {
+async function get_website_variable(var_name, attempt = 0) {
+    if(attempt < 3) {
         website_variables = JSON.parse(localStorage.getItem("website_variables"));
-        val = website_variables.find(el => el["Variable Name"] === var_name)["Value"]
-    } catch (err) {console.warn("Please reset localStorage")}
-    if (!Number.isNaN(parseFloat(val))) val = parseFloat(val);
-    return val;
+        let val;
+        try {
+            val = website_variables.find(el => el["Variable Name"] === var_name)["Value"]
+        } catch (err) {
+            console.warn("New Website Variable detected")
+        }
+
+        if(!val && attempt < 3) {
+            await set_website_variables(force_refresh = true);
+            val = await get_website_variable(var_name, attempt = attempt + 1);
+        }
+
+        if (!Number.isNaN(parseFloat(val))) val = parseFloat(val);
+        return val;
+    } else {
+        console.error("Please reset LocalStorage")
+        return undefined;
+    }
 }
 
 async function populate_dyn_containers(data) {
@@ -630,8 +652,12 @@ function apply_header_css_vars(banner) {
     $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px");
 }
 
-function fetch_image(img_id) {
-    return `https://lh3.googleusercontent.com/d/${img_id}`;
+function fetch_image(img_id, {max_width, max_height}) {
+    if(!max_width && !max_height) {
+        return `https://lh3.googleusercontent.com/d/${img_id}`;
+    } else {
+        return `https://lh3.googleusercontent.com/d/${img_id}=${max_width ? `w${max_width}` : ""}${max_width && max_height ? "-" : ""}${max_height ? `h${max_height}` : ""}`;
+    }
 }
 
 async function generate_header(this_page, pages) {
@@ -941,8 +967,9 @@ async function generate_background(parallax = 0.3) {
     const glows = $(".bg-glow");
     generate_glows(glows);
 
-    setTimeout(() => {
-        const mask_id = build_svg_mask($(".glow"), 60, 20, blur_multiplier = get_website_variable("Instrument Background Falloff") || 1);
+    setTimeout(async () => {
+        const blur_multiplier = await get_website_variable("Instrument Background Falloff");
+        const mask_id = build_svg_mask($(".glow"), 60, 20, blur_multiplier || 1);
         background_container.style.mask = `url(#${mask_id})`;
         const glow_els = $(".glow");
         fade_in(background_container);
@@ -1011,6 +1038,7 @@ function fullscreen_img_container_logic() {
 }
 
 function generate_glows(glows) {
+    console.log(glows)
     const viewport_width = document.documentElement.offsetWidth;
 
     const rules = {
@@ -1106,14 +1134,18 @@ function generate_quotes(json) {
     })
 }
 
-async function initial_page_rendering() {
-    const variables_res = await fetch_data("Website Variables (dataonly)");
-    const variables = parse_table(variables_res);
+async function set_website_variables(force_refresh = false) {
+    const res = await fetch_data("Website Variables (dataonly)", true, force_refresh);
+    const variables = parse_table(res);
     localStorage.setItem("website_variables", JSON.stringify(variables));
+}
+
+async function initial_page_rendering() {
+    set_website_variables();
     const this_page = document.title.split("- ").pop();
 
     let pages = JSON.parse(localStorage.getItem("sheet_names"));
-    if(pages == undefined || pages.timestamp == undefined || Date.now() - pages.timestamp > 12 * 60 * 60 * 1000) {
+    if(pages == undefined || pages.timestamp == undefined || Date.now() - pages.timestamp > CACHE_REFRESH * 60 * 60 * 1000) {
         pages_res = await fetch_sheet_names();
         pages = {pages: pages_res, timestamp: Date.now()}
     }

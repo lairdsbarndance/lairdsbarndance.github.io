@@ -34,9 +34,10 @@ function quote_carousel(interval, alternate = false) {
     })
 }
 
-function initialise_quote_widths() {
+async function initialise_quote_widths() {
     let quote_container_width = (document.body.offsetWidth - banner.offsetWidth) * 0.5;
-    let quotes_styles = getComputedStyle($(".quotes > div")[0])
+    let quotes_styles = getComputedStyle($(".quotes > div")[0]);
+    const quotes_interval = await get_website_variable("Quotes Interval") * 1000;
     quotes.style.setProperty("--quotes-width", quote_container_width + "px");
     
     mobile_quotes.style.setProperty(
@@ -58,7 +59,7 @@ function initialise_quote_widths() {
     if(parseFloat(quotes_styles["min-width"].split("px")[0]) > quote_container_width) {
         quotes.classList.add("beside-banner");
         quotes.style.setProperty("--banner-height", banner.offsetHeight + "px");
-        quote_carousel(get_website_variable("Quotes Interval") * 1000, true);
+        quote_carousel(quotes_interval, true);
     }
 }
 
@@ -193,7 +194,8 @@ async function main() {
     const dyn_data = parse_document(dyn_data_res)
     await populate_dyn_containers(dyn_data);
     
-    const carousel_interval = get_website_variable("Carousel Interval") * 1000;
+    const carousel_interval = await get_website_variable("Carousel Interval") * 1000;
+    const carousel_speed = await get_website_variable("Carousel Speed");
     const carousel_indicators = $(".carousel-indicator");
     
     await generate_fullscreen_carousel();
@@ -205,7 +207,7 @@ async function main() {
     generate_post_its($(".post-its")[0], post_its_obj);
     
     document.body.style.setProperty("--fullscreen-img-height", background_wrapper.querySelector(".carousel-item").offsetHeight + "px");
-    document.body.style.setProperty("--carousel-interval", get_website_variable("Carousel Speed") + "s");
+    document.body.style.setProperty("--carousel-interval", carousel_speed + "s");
     create_portrait_mask($(".portrait")[0], banner);
     $(".carousel-item.extra").forEach(extra => extra.style.display = "initial");
     

@@ -22,3 +22,7 @@ function fix_size(el, margin = 0, inherit_from = el) {
     el.style.height = inherit_from.offsetHeight + margin + "px";
     el.style.width = inherit_from.offsetWidth + margin + "px";
 }
+
+function scale_val(val, min, max) {
+    return min + val * (max - min);
+}

@@ -730,9 +730,16 @@
     - ### Time Spent: 6 hours 30 minutes
 
 - ## 22/10/2026
-    - [ ] Attempted to implement infinite carousel scrolling functionality that allows interactivity by rendering two carousels (.scroll-container, .interactive-container). When the state switches between is and isn't interacting, the respective carousel is rendered, inheriting the scroll position of the other, which is hidden.
+    - [x] Attempted to implement infinite carousel scrolling functionality that allows interactivity by rendering two carousels (.scroll-container, .interactive-container). When the state switches between is and isn't interacting, the respective carousel is rendered, inheriting the scroll position of the other, which is hidden.
+        - Although a good concept, this idea fell short as the CPU repainting takes a good 100ms, nowhere near the threshold required for responsive design.
+    - [x] Successfully implemented infinite scrolling carousel, after realising that the .scrollTo({}) functionality wasn't working as I was spelling the object entry "behavior" with english spelling, which prevented the switching form instant and smooth scrolling behaviours.
+    - [x] Refactored band member generation to load images concurrently using Promise.all(), reducing sequential loading delays. Preserved the original DOM order by queuing completed members until preceding members are ready.
+    - [x] Used the first member's loaded image to establish a consistent maximum image width, forcing layout with offsetWidth after appending it to the DOM.
+    - [x] 3D effects with full interactivity (scrolljacking to allow standard scrolling to be used)
 
-    - ### Time Spent (so far): 1 hour
+    - ### Time Spent (so far): 7 hours
 
 - ## To Do
+    - [ ] Progress bar on header rough border
+
    
