@@ -286,6 +286,8 @@ function parse_events(events, files) {
         parsed.push(parsed_event)
     });
 
+    parsed.sort((a, b) => b["Date"] - a["Date"])
+
     return parsed;
 }
 
@@ -652,12 +654,21 @@ function apply_header_css_vars(banner) {
     $(".border > .join")[0].style.setProperty("--cap-width", $(".border > .left")[0].offsetWidth + "px");
 }
 
-function fetch_image(img_id, {max_width, max_height}) {
-    if(!max_width && !max_height) {
-        return `https://lh3.googleusercontent.com/d/${img_id}`;
-    } else {
-        return `https://lh3.googleusercontent.com/d/${img_id}=${max_width ? `w${max_width}` : ""}${max_width && max_height ? "-" : ""}${max_height ? `h${max_height}` : ""}`;
-    }
+async function fetch_image(img_id, {max_width, max_height} = {}) {
+    const img_url = !max_width && !max_height
+        ? `https://lh3.googleusercontent.com/d/${img_id}`
+        : `https://lh3.googleusercontent.com/d/${img_id}=${max_width ? `w${max_width}` : ""}${max_width && max_height ? "-" : ""}${max_height ? `h${max_height}` : ""}`;
+
+    await new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onload = resolve;
+        img.onerror = () => reject(new Error(`Failed to load image: ${img_url}`));
+
+        img.src = img_url;
+    });
+
+    return img_url;
 }
 
 async function generate_header(this_page, pages) {
@@ -710,6 +721,22 @@ async function get_package_types() {
     const packages_obj = parse_document(packages_res, null, true, custom_br = `<div class="break"></div>`);
     const package_types = packages_obj.filter(el => el.heading !== "General Information").map(el => el.heading);
     return package_types;
+}
+
+function append_loader(container) {
+    const loading = $el("img.loading");
+    loading.src = "/assets/loading.svg";
+    document.body.appendChild(loading);
+    activate(loading)
+
+    const interval_id = setInterval(() => {
+        if(!loading.classList.contains("active")) clearInterval(interval_id);
+        const {left, top, width, height} = container.getBoundingClientRect();
+        loading.style.top = height > 0 ? (top + (height / 2)) : (document.documentElement.clientHeight / 2) + "px";
+        loading.style.left = width > 0 ? ((left + (width / 2))) : (document.documentElement.clientWidth / 2) + "px";
+    }, 100);
+
+    return loading;
 }
 
 function build_svg_mask(
@@ -857,11 +884,12 @@ function build_svg_mask(
     });
 
    els.forEach(el => {
-        glow_group.appendChild(create_glow_rect(el));
-
-        const parent = el.parentElement;
+       glow_group.appendChild(create_glow_rect(el));
+       
+       const parent = el.parentElement;
 
         if (parent && !el.classList.contains("no-mask")) {
+            console.log("creating subtract rect")
             if (custom_mask_els == null) {
                 const subtract_rect = create_subtract_rect(
                     parent.querySelector(".bg-glow")
@@ -872,7 +900,8 @@ function build_svg_mask(
         }
         });
 
-        if (custom_mask_els != null) {
+        if (custom_mask_els != null && !el.classList.contains("no-mask")) {
+            console.log("creating subtract rect")
             custom_mask_els.forEach(el => {
                 subtract_group.appendChild(create_subtract_rect(el));
             });
@@ -986,6 +1015,8 @@ async function generate_background(parallax = 0.3, glows = $(".bg-glow"), custom
             $(".instrument-container")[0].scrollTop = document.documentElement.scrollTop * parallax;
         };
     }
+
+    glows.forEach(glow => glow.id = Date.now());
 
     generate_glows(glows);
 
@@ -1102,6 +1133,7 @@ function generate_glows(glows) {
         void glow_container.offsetWidth; void glow_container.offsetHeight;
         const container_size = {width: glow_container.offsetWidth, height: glow_container.offsetHeight}
         const glow_el = $el(".glow");
+        glow_el.id = glow_container.id;
         const glow_wrapper = $el(".bg-glow-wrapper")
         Object.entries(container_size).forEach(([property, value]) => glow_wrapper.style.setProperty(`--content-${property}`, value + "px"));
         const positions = glow_container.dataset.glowPos.split(" ");

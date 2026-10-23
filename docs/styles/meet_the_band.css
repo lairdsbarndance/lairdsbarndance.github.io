@@ -10,9 +10,11 @@ main .band, main .band-grid {margin-top: 5vh}
     display: none;
     gap: var(--gap);
     flex-wrap: wrap;
+    padding-inline: 2rem;
     justify-content: center;
     max-width: 70em;
     pointer-events: none;
+    padding-bottom: 3rem; /* account for view button */
 }
 
 .band-grid.active:not(.measuring) {
@@ -42,6 +44,10 @@ main .band.deactivating {
     grid-template-columns: 1fr;
     opacity: 0;
     pointer-events: none;
+}
+
+.band.measuring {
+    display: grid;
 }
 
 main > .bg-glow-wrapper > .band-grid.measuring {
@@ -168,13 +174,18 @@ button.view-switch {
     padding-inline: 1.5rem;
     position: fixed;
     display: grid;
+    width: max-content;
     grid-auto-flow: column;
     place-content: center;
     gap: 1.5ch;
     bottom: var(--button-margin);
     left: 50%;
     transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 250ms ease;
 }
+
+.view-switch.active {opacity: 1;}
 
 .view-switch > img {
     width: 80%;

@@ -750,11 +750,19 @@
     - [x] Encountered issue for 1.5 hours where the page kept on freezing during page load.
         - [x] Caused by infinite while loop that was receiving a value of 0 for various incorrectly calculated widths.
         - [x] This issue took a while to debug, but in turn, I cleaned up lots of the code, logic errors etc.
+    - [x] Implemented Loading icon, since Meet the Band images take ~4 seconds to load
+    - [x] Updated fetch_image function so it actually fetches and tests the potential image and returns a promise
+    - [x] Finalised Meet the Band page
+    - [x] Created reusable function for 3D proximity-based rendering system used on Meet the Band page
 
-    - ### Time Spent (so far): 8 hours
+    - [x] Initialised Data, logic and visual layer for Events page
+    - [x] Created and styled event container
+        - [x] Styled minimised and expanded modes, ensuring smooth transition between them
+        - [x] Begun javascript variable injection for height of container, timeline etc.
+    - [x] Created auto banner minimising functionality to allow for a greater vertical height to be used during scrolling.
 
+    - ### Time Spent: 15 hours
 
 - ## To Do
-    - [ ] Progress bar on header rough border
 
    

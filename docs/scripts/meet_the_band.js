@@ -112,7 +112,6 @@ async function synchronous_member_generation(band_container, members_obj, biogra
 
 async function format_pars(pars, biography_length) {
     pars.forEach(par => {
-            // console.log(par.offsetHeight, par.scrollHeight)
         if (biography_length === "long") {
             par.style.overflowY = "auto";
 
@@ -147,8 +146,12 @@ async function main() {
 
     const view_switch = $(".view-switch")[0];
     const band_container = $(".band")[0];
+    const loading = append_loader(band_container);
 
+    band_container.classList.add("measuring");
     const {band_sub_container, clone__band_sub_container, interactive_container} = await synchronous_member_generation(band_container, members_obj, biography_length);
+    band_container.classList.remove("measuring")
+
 
     grid_clone.appendChildren(...Array.from(band_sub_container.querySelectorAll(".band-member")).map(el => el.cloneNode(true)));
     main_el.appendChild(grid_clone);
@@ -161,18 +164,32 @@ async function main() {
     const document_width = document.documentElement.clientWidth;
     const styles_intensity = .5;
 
-    function update_styles() {
+    function update_styles(axis = "x", container = document_width) {
+        const is_horizontal = axis === "x";
+        const container_size = typeof container === "number"
+            ? container
+            : container.getBoundingClientRect()[is_horizontal ? "width" : "height"];
+
         band_member_els.forEach((el, index) => {
             const rect = el.getBoundingClientRect();
-            const offset = rect.left + rect.width / 2 - document_width / 2;
-            const distance = Math.min(Math.abs(offset) * styles_intensity / (document_width / 2), 1);
+            const offset = (
+                rect[is_horizontal ? "left" : "top"] +
+                rect[is_horizontal ? "width" : "height"] / 2 -
+                container_size / 2
+            );
+
+            const distance = Math.min(
+                Math.abs(offset) * styles_intensity / (container_size / 2),
+                1
+            );
+
             const interpolated_val = (1 + Math.cos(distance * Math.PI)) / 2;
 
             el.style.opacity = Math.min(1, interpolated_val + 0.25);
-            el.style.transform = `perspective(500px) rotateY(${scale_val(interpolated_val, 10 / styles_intensity, 0) * Math.sign(offset)}deg) scale(${scale_val(interpolated_val, 0.4 / styles_intensity, 1)})`;
+            el.style.transform = `perspective(500px) rotate${is_horizontal ? "Y" : "X"}(${scale_val(interpolated_val, 10 / styles_intensity, 0) * Math.sign(offset)}deg) scale(${scale_val(interpolated_val, 0.4 / styles_intensity, 1)})`;
         });
 
-        requestAnimationFrame(update_styles);
+        requestAnimationFrame(() => update_styles("x", document_width));
     }
 
     requestAnimationFrame(update_styles);
@@ -190,6 +207,7 @@ async function main() {
     deactivate(grid_clone);
 
     fade_in(band_container);
+    activate(view_switch);
 
     const carousel_interval =
         await get_website_variable("Band Carousel Speed") * 1000;
@@ -204,7 +222,7 @@ async function main() {
 
     await format_pars([...band_container.querySelectorAll("p"), ...grid_clone.querySelectorAll("p")], biography_length);
 
-    // setTimeout(() => {
+    deactivate(loading)
     
     const repeat_width =
     clone__band_sub_container.getBoundingClientRect().left -
@@ -558,10 +576,19 @@ async function main() {
     }
 
     start_carousel();
+
+    const view_switch_text = [
+        {is_grid_mode: true, text: "View as Carousel", img: "carousel.svg"},
+        {is_grid_mode: false, text: "View as Grid", img: "grid.svg"},
+    ]
     
     view_switch.addEventListener("click", () => {
         grid_clone.classList.toggle("switch-view");
         const is_grid_mode = grid_clone.classList.contains("switch-view");
+        const target_obj = view_switch_text.find(el => el.is_grid_mode === is_grid_mode)
+        view_switch.querySelector("span").textContent = target_obj["text"];
+        view_switch.querySelector("img").src = `/assets/${target_obj["img"]}`;
+
         if(is_grid_mode) {
             grid_clone.classList.remove("measuring")
             pause_carousel();
