@@ -141,7 +141,7 @@ async function main() {
     const faqs_res = await fetch_data("faqs");
     const faqs_obj = parse_document(faqs_res, null, merge_content = false);
     const intro_par_text = faqs_obj.find(el => el.heading === "Introduction").content[0];
-    const heading_font_style = get_website_variable("FAQs Post-it-notes Font");
+    const heading_font_style = await get_website_variable("FAQs Post-it-notes Font");
     $(".intro")[0].textContent = intro_par_text;
 
     generate_noticeboard(noticeboard, faqs_obj, heading_font_style, "heading");

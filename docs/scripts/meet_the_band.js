@@ -2,9 +2,16 @@ async function generate_member(obj, biography_length, img_max_width) {
     const member_container = $el("article.band-member");
     const name = $el("h3.name");
     name.textContent = `${obj["Name"]} - ${obj["Member Type"] !== "Musician" ? obj["Member Type"].toLowerCase() : obj["Instrument"].toLowerCase()}`;
-
+    const img_includes_border = obj["Image includes border?"];
     const img = $el("img");
+
+    if(!img_includes_border) {
+        var borderless_container = $el(".borderless");
+        borderless_container.appendChild(img);
+    };
+
     try {
+        if(["#REF!", undefined].includes(obj["Image URL (Autofilled)"]) || OFFLINE_MODE) throw Error
         img.src = await fetch_image(
             obj["Image URL (Autofilled)"].split("id=").pop(),
             img_max_width === undefined ? {} : {max_width: img_max_width}
@@ -17,7 +24,11 @@ async function generate_member(obj, biography_length, img_max_width) {
     const par = $el("p");
     par.textContent = biography_length !== "long" ? obj["Shortened Biography"] : obj["Biography"];
 
-    member_container.appendChildren(name, img, par);
+    if(img_includes_border) {
+        member_container.appendChildren(name, img, par);
+    } else {
+        member_container.appendChildren(name, borderless_container, par);
+    }
 
     await new Promise(resolve => {
         if (img.complete) return resolve();
@@ -28,16 +39,7 @@ async function generate_member(obj, biography_length, img_max_width) {
     return {member_container, par, img};
 }
 
-async function main() {
-    const members_res = await fetch_data("band_members");
-    const members_obj = parse_table(members_res);
-    const biography_length = await get_website_variable("Biography Length");
-    const carousel_mode = String(
-        await get_website_variable("Meet the Band Carousel Mode")
-    ).trim().toLowerCase();
-
-    const band_container = $(".band")[0];
-
+async function synchronous_member_generation(band_container, members_obj, biography_length) {
     const interactive_container = $el(".interactive-container");
     band_container.appendChild(interactive_container);
 
@@ -105,9 +107,12 @@ async function main() {
     const clone__band_sub_container = band_sub_container.cloneNode(true);
     interactive_container.appendChild(clone__band_sub_container);
 
-    const pars = band_container.querySelectorAll("p");
+    return {band_sub_container, clone__band_sub_container, interactive_container};
+}
 
+async function format_pars(pars, biography_length) {
     pars.forEach(par => {
+            // console.log(par.offsetHeight, par.scrollHeight)
         if (biography_length === "long") {
             par.style.overflowY = "auto";
 
@@ -125,6 +130,31 @@ async function main() {
 
             par.style.overflowY = "hidden";
         }
+    })
+}
+
+async function main() {
+    const main_el = $("main")[0];
+    const members_res = await fetch_data("band_members", false);
+    const members_obj = parse_table(members_res, include_incomplete_rows = true);
+    const biography_length = await get_website_variable("Biography Length");
+    const carousel_mode = String(
+        await get_website_variable("Meet the Band Carousel Mode")
+    ).trim().toLowerCase();
+    const grid_clone = $el(".band-grid,bg-glow,no-mask,pre-render");
+    grid_clone.dataset.glowPos = "center";
+    grid_clone.dataset.glowMaskContent = "false";
+
+    const view_switch = $(".view-switch")[0];
+    const band_container = $(".band")[0];
+
+    const {band_sub_container, clone__band_sub_container, interactive_container} = await synchronous_member_generation(band_container, members_obj, biography_length);
+
+    grid_clone.appendChildren(...Array.from(band_sub_container.querySelectorAll(".band-member")).map(el => el.cloneNode(true)));
+    main_el.appendChild(grid_clone);
+
+    grid_clone.addEventListener("click", (e) => {
+        e.target.closest("p").classList.toggle("expanded")
     })
 
     const band_member_els = band_container.querySelectorAll(".band-member");
@@ -147,33 +177,55 @@ async function main() {
 
     requestAnimationFrame(update_styles);
 
-    generate_background();
+    activate(band_container);
+    const band_background_promise = generate_background(0.3, [band_container]);
+    
+    grid_clone.style.position = "absolute";
+    grid_clone.classList.add("measuring")
+    activate(grid_clone);
+    await generate_background(0.3, [grid_clone]);
+    grid_clone.style.position = "relative";
+    await band_background_promise;
+
+    deactivate(grid_clone);
+
+    fade_in(band_container);
 
     const carousel_interval =
-        Number(await get_website_variable("Band Carousel Speed")) * 1000;
-
+        await get_website_variable("Band Carousel Speed") * 1000;
+        
+    const carousel_speed = await get_website_variable("Band Carousel Speed");
+    
     const carousel_gap = parseFloat(
         getComputedStyle(band_sub_container).columnGap
     ) || 0;
-
+    
     const tolerance = 1;
 
-    const repeat_width =
-        clone__band_sub_container.getBoundingClientRect().left -
-        band_sub_container.getBoundingClientRect().left;
+    await format_pars([...band_container.querySelectorAll("p"), ...grid_clone.querySelectorAll("p")], biography_length);
 
+    // setTimeout(() => {
+    
+    const repeat_width =
+    clone__band_sub_container.getBoundingClientRect().left -
+    band_sub_container.getBoundingClientRect().left;
+
+    const max_scroll_left =
+    interactive_container.scrollWidth -
+    interactive_container.clientWidth;
+    
     // Centre the first member before activating the container.
     const container_width = interactive_container.clientWidth;
-
+    
     const first_member_offset =
-        band_sub_container.children[0].getBoundingClientRect().left -
-        band_sub_container.getBoundingClientRect().left;
-
+    band_sub_container.children[0].getBoundingClientRect().left -
+    band_sub_container.getBoundingClientRect().left;
+    
     interactive_container.scrollTo({
         left: repeat_width +
-            first_member_offset +
-            band_sub_container.children[0].offsetWidth / 2 -
-            container_width / 2,
+        first_member_offset +
+        band_sub_container.children[0].offsetWidth / 2 -
+        container_width / 2,
         behavior: "instant"
     });
 
@@ -229,9 +281,14 @@ async function main() {
                 ? obj["Biography"]
                 : obj["Shortened Biography"];
         }
+
+        return par.classList.contains("expanded");
     }
 
-    interactive_container.addEventListener("click", handle_par);
+    interactive_container.addEventListener("click", (e) => {
+        pointer_is_inside = handle_par(e);
+        handle_user_interaction();
+    });
 
     function pause_carousel() {
         if (carousel_mode === "continuous") {
@@ -262,7 +319,7 @@ async function main() {
         }
     }
 
-    function handle_user_interaction() {
+    function handle_user_interaction(timeout = 50) {
         pause_carousel();
 
         clearTimeout(interaction_timeout_id);
@@ -270,10 +327,15 @@ async function main() {
         interaction_timeout_id = setTimeout(() => {
             interaction_timeout_id = null;
 
-            if (pointer_is_down || pointer_is_inside) return;
+            if (pointer_is_down || pointer_is_inside) {
+                interactive_container.style.scrollSnapType = "var(--custom-scroll-snap-type)"
+                return;
+            } else {
+                interactive_container.style.scrollSnapType = "unset"
+            }
 
             start_carousel();
-        }, 50);
+        }, timeout);
     }
 
     interactive_container.addEventListener("pointerenter", () => {
@@ -313,6 +375,7 @@ async function main() {
         e.preventDefault();
 
         // Pause automatic movement and reset the inactivity timeout.
+        pointer_is_inside = true;
         handle_user_interaction();
 
         const max_scroll_left =
@@ -369,15 +432,17 @@ async function main() {
 
     // Touch screens.
     interactive_container.addEventListener(
-        "touchstart",
-        handle_user_interaction,
-        {passive: true}
+        "touchstart", (e) => {
+            pointer_is_down = true;
+            handle_user_interaction();
+        }, {passive: true}
     );
 
     interactive_container.addEventListener(
-        "touchmove",
-        handle_user_interaction,
-        {passive: true}
+        "touchmove", (e) => {
+        pointer_is_inside = true;
+        handle_user_interaction();
+        }, {passive: true}
     );
 
     // Mouse, pen and touch pointer interactions.
@@ -434,8 +499,9 @@ async function main() {
         previous_frame_time = timestamp;
 
         const pixels_per_ms =
-            repeat_width /
-            (members_obj.length * Math.max(1, carousel_interval));
+            Math.max(0.0725, repeat_width * carousel_speed /
+            (members_obj.length * 4750)
+            );
 
         let desired_left =
             interactive_container.scrollLeft +
@@ -492,6 +558,22 @@ async function main() {
     }
 
     start_carousel();
+    
+    view_switch.addEventListener("click", () => {
+        grid_clone.classList.toggle("switch-view");
+        const is_grid_mode = grid_clone.classList.contains("switch-view");
+        if(is_grid_mode) {
+            grid_clone.classList.remove("measuring")
+            pause_carousel();
+            deactivate(band_container, 0, 250);
+            activate(grid_clone, 250);
+        } else {
+            deactivate(grid_clone, 0, 250);
+            activate(band_container, 250);
+            start_carousel();
+        }
+    })
+        // }, 5000);
 }
 
 promise__initial_page_rendering.then(() => main())

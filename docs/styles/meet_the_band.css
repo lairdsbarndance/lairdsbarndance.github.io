@@ -1,23 +1,75 @@
+
 main {
     min-height: 100vh;
     justify-content: start;
 }
 
-.band {
-    position: relative;
-    margin-top: 5rem;
-    width: fit-content;
+main .band, main .band-grid {margin-top: 5vh}
+
+.band-grid {
+    display: none;
+    gap: var(--gap);
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 70em;
+    pointer-events: none;
+}
+
+.band-grid.active:not(.measuring) {
+    display: flex;
+    animation: fade-in 250ms ease forwards;
+    pointer-events: all;
+}
+
+main .band-grid.deactivating:not(.measuring) {
+    display: flex;
+    pointer-events: none;
+    animation: fade-out 250ms ease forwards;
+}
+
+main .band.deactivating {
     display: grid;
+    pointer-events: none;
+    animation: fade-out 250ms ease forwards;
+}
+
+.band {
+    display: none;
+    position: relative;
+    margin-top: 5vh;
+    width: fit-content;
     overflow-x: hidden;
     grid-template-columns: 1fr;
+    opacity: 0;
+    pointer-events: none;
+}
+
+main > .bg-glow-wrapper > .band-grid.measuring {
+    display: flex;
+    opacity: 0;
+}
+
+.band.active {
+    display: grid;
+    pointer-events: all;
+    animation: fade-in 500ms ease forwards;
+}
+
+.band > .interactive-container, .band-grid {
+    --gap: 2rem;
+    --custom-scroll-snap-type: unset;
+    --img-border-width: .375rem;
 }
 
 .band > .interactive-container {
-    --gap: 2rem;
     display: flex;
     overflow-x: auto;
     opacity: 0;
     scroll-behavior: smooth;
+
+    @media (any-pointer: coarse) {
+        --custom-scroll-snap-type: x mandatory;
+    }
 }
 
 .interactive-container.active {opacity: 1;}
@@ -29,11 +81,7 @@ main {
 
 .band > div::-webkit-scrollbar {visibility: hidden;}
 
-.band.expanded > .interactive-container > .wrapper {
-    flex-wrap: wrap;
-}
-
-.band > .interactive-container > .wrapper > .band-member {
+.band > .interactive-container > .wrapper > .band-member, .band-grid > .band-member {
     display: grid;
     justify-items: center;
     justify-content: start;
@@ -41,18 +89,30 @@ main {
     height: fit-content;
     color: var(--white);
     gap: 1rem;
-    scroll-snap-align: start;
+    scroll-snap-align: center;
 }
 
 .interactive-container > .wrapper > .band-member:last-of-type {
     margin-right: var(--gap);
 }
 
-.band-member > img {
+.band-member > img, .band-member > .borderless {
     height: min(30vh, 30rem);
     margin-top: -1rem;
     width: auto;
     align-self: center;
+}
+
+.band-member > .borderless {
+    height: 95%;
+    display: flex;
+    background-image: radial-gradient(300% 75% at 50% 0%, 
+                                        hsl(from var(--red) calc(h + 15) calc(s - 20) calc(l + 5)) 0%,
+                                        hsl(from var(--red) h s calc(l - 10)) 100%);
+}
+
+.borderless > img {
+    margin: var(--img-border-width);
 }
 
 .band-member > h3 {
@@ -95,9 +155,39 @@ main {
     );
     mask-size: 100% 200%;
     mask-position: 0% 100%;
+    text-overflow: elipses;
 }
 
 .band-member > p.expanded {
     mask-position: 0% 0%;
     max-height: 100vh;
+}
+
+button.view-switch {
+    --button-margin: 5vh;
+    padding-inline: 1.5rem;
+    position: fixed;
+    display: grid;
+    grid-auto-flow: column;
+    place-content: center;
+    gap: 1.5ch;
+    bottom: var(--button-margin);
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.view-switch > img {
+    width: 80%;
+    justify-self: center;
+    align-self: center;
+}
+
+@keyframes fade-in {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+
+@keyframes fade-out {
+    0% {opacity: 1;}
+    100% {opacity: 0;}
 }

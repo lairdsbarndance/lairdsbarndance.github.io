@@ -737,7 +737,22 @@
     - [x] Used the first member's loaded image to establish a consistent maximum image width, forcing layout with offsetWidth after appending it to the DOM.
     - [x] 3D effects with full interactivity (scrolljacking to allow standard scrolling to be used)
 
-    - ### Time Spent (so far): 7 hours
+    - ### Time Spent: 7 hours
+
+- ## 23/10/2026
+    - [x] Added carousel speed website variable to database
+    - [x] Improved auto carousel scroll interaction
+        - [x] Carousel is paused when user on hover, (mouse/touch)down / move, then unpaused when user minimises a paragraph or clicks outside the interactive container.
+        - [x] Scroll snapping during user interaction on mobile devices, using any-pointer: coarse media query for detection.
+    - [x] Ensured consistent borders were added to band member photos without embedded borders
+    - [x] Improved generate_background() function by allowing custom child elements to generate a more accurate subtract mask
+    - [x] Implemented View as Grid switch
+    - [x] Encountered issue for 1.5 hours where the page kept on freezing during page load.
+        - [x] Caused by infinite while loop that was receiving a value of 0 for various incorrectly calculated widths.
+        - [x] This issue took a while to debug, but in turn, I cleaned up lots of the code, logic errors etc.
+
+    - ### Time Spent (so far): 8 hours
+
 
 - ## To Do
     - [ ] Progress bar on header rough border

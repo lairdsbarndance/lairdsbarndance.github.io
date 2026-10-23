@@ -716,7 +716,8 @@ function build_svg_mask(
     els,
     glow_blur = 60,
     subtract_blur = 20,
-    blur_multiplier = 1
+    blur_multiplier = 1,
+    custom_mask_els = null
 ) {
     const svg_ns = "http://www.w3.org/2000/svg";
 
@@ -802,6 +803,7 @@ function build_svg_mask(
         height: doc_height,
         viewBox: `0 0 ${doc_width} ${doc_height}`
     });
+
     svg.classList.add("defs-container")
     
     Object.assign(svg.style, {
@@ -854,14 +856,27 @@ function build_svg_mask(
         filter: `url(#${subtract_filter_id})`
     });
 
-    els.forEach(el => {
+   els.forEach(el => {
         glow_group.appendChild(create_glow_rect(el));
 
         const parent = el.parentElement;
+
         if (parent && !el.classList.contains("no-mask")) {
-            subtract_group.appendChild(create_subtract_rect(parent.querySelector(".bg-glow")));
+            if (custom_mask_els == null) {
+                const subtract_rect = create_subtract_rect(
+                    parent.querySelector(".bg-glow")
+                );
+
+                subtract_group.appendChild(subtract_rect);
+            }
         }
-    });
+        });
+
+        if (custom_mask_els != null) {
+            custom_mask_els.forEach(el => {
+                subtract_group.appendChild(create_subtract_rect(el));
+            });
+    }
 
     mask.appendChild(glow_group);
     mask.appendChild(subtract_group);
@@ -946,7 +961,7 @@ function generate_post_its(post_its_container, obj, colour_arr = ["#FFFFFF", "#F
     post_its_container.style.setProperty("--column-width", post_its_container.querySelector(".post-it").offsetWidth + "px");
 }
 
-async function generate_background(parallax = 0.3) {
+async function generate_background(parallax = 0.3, glows = $(".bg-glow"), custom_mask_els = null) {
     const background_container = $el(".bg-container,pre-render");
     const instrument_container = $el(".instrument-container,scroll-transfer");
     let rand = Math.random();
@@ -954,37 +969,73 @@ async function generate_background(parallax = 0.3) {
     for(let i = 0; i < 2; i++) {
         const dom_el = $el(`.instrument,${["left", "right"][i]}`);
         const body_height = document.body.offsetHeight;
-        dom_el.style.setProperty("--offset-top", `${rand * body_height}px`); // ensure right instrument has 50% extra offset; backgrounds appear different
-        dom_el.style.height = ((1 / parallax) * 100 + 25) + "%"; // 25% bottom padding to ensure parallax is maintained at bottom of scroll container
-        instrument_container.appendChild(dom_el)
+        dom_el.style.setProperty("--offset-top", `${rand * body_height}px`);
+        dom_el.style.height = ((1 / parallax) * 100 + 25) + "%";
+        instrument_container.appendChild(dom_el);
     }
 
     background_container.appendChild(instrument_container);
-    $(".scroll-wrapper")[0].insertBefore(background_container, $("main")[0]);
 
-    window.onscroll = () => instrument_container.scrollTop = document.documentElement.scrollTop * parallax;
+    if(!$(".bg-container")[0]) {
+        $(".scroll-wrapper")[0].insertBefore(background_container, $("main")[0]);
+        window.onscroll = () => {
+            instrument_container.scrollTop = document.documentElement.scrollTop * parallax;
+        };
+    } else {
+        window.onscroll = () => {
+            $(".instrument-container")[0].scrollTop = document.documentElement.scrollTop * parallax;
+        };
+    }
 
-    const glows = $(".bg-glow");
     generate_glows(glows);
 
-    setTimeout(async () => {
-        const blur_multiplier = await get_website_variable("Instrument Background Falloff");
-        const mask_id = build_svg_mask($(".glow"), 60, 20, blur_multiplier || 1);
-        background_container.style.mask = `url(#${mask_id})`;
-        const glow_els = $(".glow");
-        fade_in(background_container);
-        glows.forEach(glow_container => fade_in(glow_container))
-        glow_els.forEach(el => fade_in(el))
-    }, 50);
+    await new Promise((resolve, reject) => {
+        setTimeout(async () => {
+            try {
+                const blur_multiplier = await get_website_variable("Instrument Background Falloff");
+                const mask_id = build_svg_mask($(".glow"), 60, 20, blur_multiplier || 1, custom_mask_els);
+                background_container.style.mask = `url(#${mask_id})`;
 
-        prevent_scroll_containers.forEach(scroll_container => {
-        Array.from(scroll_container.querySelectorAll("a")).filter(anchor => anchor.href.includes("#")).forEach(anchor => {
-            anchor.addEventListener("click", (e) => {
-                e.preventDefault();
-                scroll_to_el(document.getElementById((anchor.href.split("#").pop())));
-            })
-        })
-    })
+                const glow_els = $(".glow");
+
+                fade_in(background_container);
+                glows.forEach(glow_container => fade_in(glow_container));
+                glow_els.forEach(el => fade_in(el));
+
+                const images = Array.from(background_container.querySelectorAll("img"));
+
+                await Promise.all(images.map(img => {
+                    if(img.complete) {
+                        return img.naturalWidth > 0
+                            ? Promise.resolve()
+                            : Promise.reject(new Error(`Image failed to load: ${img.src}`));
+                    }
+
+                    return new Promise((resolve_image, reject_image) => {
+                        img.addEventListener("load", resolve_image, { once: true });
+                        img.addEventListener("error", () => {
+                            reject_image(new Error(`Image failed to load: ${img.src}`));
+                        }, { once: true });
+                    });
+                }));
+
+                resolve();
+            } catch(error) {
+                reject(error);
+            }
+        }, 50);
+    });
+
+    prevent_scroll_containers.forEach(scroll_container => {
+        Array.from(scroll_container.querySelectorAll("a"))
+            .filter(anchor => anchor.href.includes("#"))
+            .forEach(anchor => {
+                anchor.addEventListener("click", e => {
+                    e.preventDefault();
+                    scroll_to_el(document.getElementById(anchor.href.split("#").pop()));
+                });
+            });
+    });
 }
 
 function scroll_to_el(el, scroll_margin = 40) {
@@ -1038,7 +1089,6 @@ function fullscreen_img_container_logic() {
 }
 
 function generate_glows(glows) {
-    console.log(glows)
     const viewport_width = document.documentElement.offsetWidth;
 
     const rules = {
@@ -1049,6 +1099,7 @@ function generate_glows(glows) {
     };
     
     glows.forEach(glow_container => {
+        void glow_container.offsetWidth; void glow_container.offsetHeight;
         const container_size = {width: glow_container.offsetWidth, height: glow_container.offsetHeight}
         const glow_el = $el(".glow");
         const glow_wrapper = $el(".bg-glow-wrapper")
