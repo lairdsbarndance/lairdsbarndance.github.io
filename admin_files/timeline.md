@@ -763,6 +763,19 @@
 
     - ### Time Spent: 15 hours
 
+- ## 24/10/2026
+    - [x] Created scroll-snap style scrolljacking functionality, where the focused event is expanded after a short timeout
+    - [x] Implemented 3D styling
+        - [x] Controlled styling based on distance from focused event, rather than scroll container's vertical center
+            - [x] Abandoned reusing update_styles() function, since it would be cheaper and safer to update styles every scroll event rather than every animationFrame. Variables like styles_intensity didn't carry across to y-axis version.
+            - [x] Invented much neater solution where javsacript conveys the relative event index, then css uses calc functions to control all other transform effects
+    - [x] Fixed timeout bug where events could open before the timeout had surpassed (caused by old timeouts that hadn't been removed)
+    - [x] Many more UX improvements to scrolling, focusing, expanding
+    - [ ] Mobile UX for scrolling
+    - [ ] Aligned timeline
+    - ### Time Spent (so far): 5 hours 30 minutes
+
 - ## To Do
+    - [ ] Fix packages bug
 
    

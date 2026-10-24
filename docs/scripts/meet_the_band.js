@@ -161,38 +161,9 @@ async function main() {
     })
 
     const band_member_els = band_container.querySelectorAll(".band-member");
-    const document_width = document.documentElement.clientWidth;
     const styles_intensity = .5;
 
-    function update_styles(axis = "x", container = document_width) {
-        const is_horizontal = axis === "x";
-        const container_size = typeof container === "number"
-            ? container
-            : container.getBoundingClientRect()[is_horizontal ? "width" : "height"];
-
-        band_member_els.forEach((el, index) => {
-            const rect = el.getBoundingClientRect();
-            const offset = (
-                rect[is_horizontal ? "left" : "top"] +
-                rect[is_horizontal ? "width" : "height"] / 2 -
-                container_size / 2
-            );
-
-            const distance = Math.min(
-                Math.abs(offset) * styles_intensity / (container_size / 2),
-                1
-            );
-
-            const interpolated_val = (1 + Math.cos(distance * Math.PI)) / 2;
-
-            el.style.opacity = Math.min(1, interpolated_val + 0.25);
-            el.style.transform = `perspective(500px) rotate${is_horizontal ? "Y" : "X"}(${scale_val(interpolated_val, 10 / styles_intensity, 0) * Math.sign(offset)}deg) scale(${scale_val(interpolated_val, 0.4 / styles_intensity, 1)})`;
-        });
-
-        requestAnimationFrame(() => update_styles("x", document_width));
-    }
-
-    requestAnimationFrame(update_styles);
+    requestAnimationFrame(() => update_styles(band_member_els, styles_intensity));
 
     activate(band_container);
     const band_background_promise = generate_background(0.3, [band_container]);

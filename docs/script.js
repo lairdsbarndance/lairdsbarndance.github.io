@@ -65,6 +65,7 @@ const svg_defs = `
 const header = $("header")[0];
 const dom_main = $("main")[0];
 const prevent_scroll_containers = $("[data-prevent-default-scroll-navigation]");
+const document_width = document.documentElement.clientWidth;
 
 document.body.insertAdjacentHTML("afterbegin", svg_defs);
 
@@ -395,6 +396,34 @@ async function get_website_variable(var_name, attempt = 0) {
         console.error("Please reset LocalStorage")
         return undefined;
     }
+}
+
+function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", container = document_width, rotation_intensity = 0.5) {
+    const is_horizontal = axis === "x";
+    const container_size = typeof container === "number"
+        ? container
+        : container.getBoundingClientRect()[is_horizontal ? "width" : "height"];
+
+    band_member_els.forEach((el, index) => {
+        const rect = el.getBoundingClientRect();
+        const offset = (
+            rect[is_horizontal ? "left" : "top"] +
+            rect[is_horizontal ? "width" : "height"] / 2 -
+            container_size / 2
+        );
+
+        const distance = Math.min(
+            Math.abs(offset) * styles_intensity / (container_size / 2),
+            1
+        );
+
+        const interpolated_val = (1 + Math.cos(distance * Math.PI)) / 2;
+
+        el.style.opacity = Math.min(1, interpolated_val + 0.25);
+        el.style.transform = `perspective(500px) rotate${is_horizontal ? "Y" : "X"}(${is_horizontal ? "" : "-"}${scale_val(interpolated_val, 10 / rotation_intensity, 0) * Math.sign(offset)}deg) scale(${scale_val(interpolated_val, 0.4 / styles_intensity, 1)})`;
+    });
+
+    requestAnimationFrame(() => update_styles(band_member_els, styles_intensity, axis, document_width, rotation_intensity));
 }
 
 async function populate_dyn_containers(data) {
