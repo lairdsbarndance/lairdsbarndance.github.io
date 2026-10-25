@@ -13,8 +13,17 @@ main {padding-bottom: unset; padding-top: 0}
     gap: 1rem;
     color: var(--white);
     height: 100vh;
-    overflow-y: scroll;
+    overflow-y: hidden;
     /* scroll-snap-type: y mandatory; */
+
+    @media (any-pointer: coarse) {
+        overflow-y: scroll;
+        scroll-snap-type: y proximity;
+
+        & > .event {
+            scroll-snap-align: center;
+        }
+    }
 
     transition: padding-top 1s ease;
 }
@@ -30,11 +39,30 @@ main {padding-bottom: unset; padding-top: 0}
     transform: translateX(-50%) translateY(12.5%);
 }
 
+.events {
+    mask-image: radial-gradient(300% 50% at 50% 50%, white 0%, white 50%, transparent);
+    mask-position: center;
+    mask-size: auto 100%;
+
+    transition: mask-size 250ms ease;
+}
+
+.events:has(.expanded) {
+    mask-size: auto 300%;
+}
+
 .events > .timeline {
     position: fixed;
     inset: 0;
-    transform: translateX(-.5rem);
+    transform: translateX(.5rem);
+    color: rgba(255,255,255,0.5);
+    opacity: 0;
+    stroke-width: 2px;
+    pointer-events: none;
+    transition: opacity 250ms ease;
 }
+
+.timeline.active {opacity: 1;}
 
 .event, .event * {transition: 250ms ease all}
 
@@ -57,6 +85,7 @@ main {padding-bottom: unset; padding-top: 0}
     gap: var(--gap);
     margin-top: 2rem;
     border-radius: .75rem;
+    opacity: 0;
     /* scroll-snap-align: center; */
 
     background: radial-gradient(130% 130% at 50% 50%, hsl(from var(--background) h s calc(l + 10)) 0%, hsl(from var(--background) h s calc(l)) 100%);
@@ -67,12 +96,17 @@ main {padding-bottom: unset; padding-top: 0}
             pow(abs(var(--rotation)) / 90, 1.5) *
             200%
         ))
+        translateX(calc(
+            pow(abs(var(--rotation)) / 90, 2) *
+            10%
+        ))
         rotateX(calc(var(--rotation) * 1deg))
         scale(calc(
             1 - 0.5 * pow(abs(var(--rotation)) / 90, 1)
         ));
-    opacity: calc(2 / (abs(var(--relative-event-index))) * 0.75);
 }
+
+.event.active {opacity: 1;}
 
 .events > .event:first-of-type {
     margin-top: 2rem;

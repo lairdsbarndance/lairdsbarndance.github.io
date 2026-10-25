@@ -426,6 +426,10 @@ function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", cont
     requestAnimationFrame(() => update_styles(band_member_els, styles_intensity, axis, document_width, rotation_intensity));
 }
 
+function stagger_activate_els(els, timeout) {
+    Array.from(els).forEach((el, i) => activate(el, timeout * i))
+}
+
 async function populate_dyn_containers(data) {
     const containers = $(".dyn-container");
     containers.forEach(container => {

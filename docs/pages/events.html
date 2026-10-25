@@ -33,22 +33,42 @@
     <div class="scroll-wrapper" data-prevent-default-scroll-navigation>
         <main class="banner-padding">
             <section class="events bg-glow" data-glow-pos="center" data-glow-size="100%" data-min-package-aspect-ratio="1.25" data-glow-mask-content="false">
-                <svg
-                    id="timeline-svg"
-                    class="timeline"
-                    xmlns="http://www.w3.org/2000/svg"
+            <svg
+                id="timeline-svg"
+                class="timeline"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <defs>
+                    <filter id="circle-blur">
+                        <feGaussianBlur stdDeviation="16" />
+                    </filter>
+
+                    <mask
+                        id="timeline-mask"
+                        maskUnits="userSpaceOnUse"
+                        x="0"
+                        y="0"
+                        width="100%"
+                        height="100%"
+                        style="mask-type: luminance"
                     >
-                    <path
-                        id="timeline-curve"
-                        d="M 200 40 C 200 100, 200 200, 200 260"
-                        fill="none"
-                        stroke="white"
-                        stroke-width="1"
-                    />
-                    <circle id="top" cx="0" cy="0" r="3" fill="blue" />
-                    <circle id="median" cx="0" cy="0" r="3" fill="red" />
-                    <circle id="bottom" cx="0" cy="0" r="3" fill="green" />
-                </svg>
+                        <rect width="100%" height="100%" fill="white"/>
+
+                        <g filter="url(#circle-blur)" fill="black">
+                            <circle id="mask-top" cx="0" cy="0" r="128"/>
+                            <circle id="mask-bottom" cx="0" cy="0" r="128"/>
+                        </g>
+                    </mask>
+                </defs>
+
+                <path
+                    id="timeline-curve"
+                    d="M 200 40 C 200 100, 200 200, 200 260"
+                    fill="none"
+                    stroke="currentColor"
+                    mask="url(#timeline-mask)"
+                />
+            </svg>
 
                 <article class="event custom-scrollbar">
                     <div class="date">

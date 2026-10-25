@@ -1,4 +1,5 @@
 const timeline_svg = $(".timeline")[0];
+const is_mobile = (navigator.maxTouchPoints > 0 || 'ontouchstart' in document.documentElement);
 
 function handle_click_event(event, is_expanded, events_container, events) {
     const package_type = event.querySelector(".package-type");
@@ -12,8 +13,6 @@ function handle_click_event(event, is_expanded, events_container, events) {
             correct_scroll_top(event, events_container, min_height);
             update_timeline(events);
         }, 250);
-    } else {
-        update_timeline(events);
     }
 }
 
@@ -31,7 +30,7 @@ function correct_scroll_top(target_el, scroll_el, min_height, attempts = 0, marg
     requestAnimationFrame(() => correct_scroll_top(target_el, scroll_el, min_height, attempts = attempts + 1));
 }
 
-async function focus_event(events, index, direction = 1, events_container, preserve_event = null) {
+async function focus_event(events, index, direction = 1, events_container, preserve_event = null, prevent_scroll = false) {
     const focused_event = events[index];
     const scroll_el = events[0].parentElement;
 
@@ -46,7 +45,7 @@ async function focus_event(events, index, direction = 1, events_container, prese
 
     focused_event.classList.add("focused");
 
-    if (!direction) return;
+    if (!direction || prevent_scroll) return;
 
     const target_top = scroll_el.scrollTop + focused_event.getBoundingClientRect().height * direction;
 
@@ -148,20 +147,31 @@ function resize_timeline_svg(timeline_svg) {
     );
 }
 
-function update_timeline(events, x_offset = 0) {
+function update_timeline(events, x_offset = 10, y_offset = 50) {
     const client_height = document.documentElement.clientHeight;
-    const top_event = Array.from(events).filter(el => el.getBoundingClientRect().top < 0).pop() || events[0];
+    const top_event = [...Array.from(events)].filter(el => el.getBoundingClientRect().top < 0).pop() || events[0];
     const container_rect = events[0].parentElement.getBoundingClientRect();
     const median_coord = {x: container_rect.left, y: container_rect.top + container_rect.height / 2};
-    const bottom_event = Array.from(events).filter(el => el.getBoundingClientRect().bottom > client_height)[0] || events[0];
+    const bottom_event = [...Array.from(events)].filter(el => el.getBoundingClientRect().bottom > client_height)[0] || events[events.length - 1];
+
+    let top_corners = get_transformed_corners(top_event);
+    let bottom_corners = get_transformed_corners(bottom_event);
+
+    if(top_event === events[0]) top_corners.p1.y = top_corners.p1.y - y_offset;
+    if(bottom_event === events[events.length - 1]) bottom_corners.p4.y = bottom_corners.p4.y + y_offset;
+
 
     const timeline_coords = {
-        top: {x: get_transformed_corners(top_event).p1.x + x_offset, y: get_transformed_corners(top_event).p1.y},
+        top: {
+            x: top_corners.p1.x + x_offset,
+            y: top_corners.p1.y - y_offset
+        },
         median: median_coord,
-        bottom: {x: get_transformed_corners(bottom_event).p4.x + x_offset, y: get_transformed_corners(bottom_event).p4.y}   
-    }
-
-    console.log(timeline_coords);
+        bottom: {
+            x: bottom_corners.p4.x + x_offset,
+            y: bottom_corners.p4.y + y_offset
+        }
+    };
     
     update_timeline_svg({...timeline_coords, handleLength: 300});
 }
@@ -171,16 +181,75 @@ function update_timeline_svg({
   median,
   bottom,
   handleLength = 100,
+  duration = 300,
 }) {
   const svg = document.getElementById("timeline-svg");
+  const curve = svg.querySelector("#timeline-curve");
 
-  for (const [id, point] of Object.entries({ top, median, bottom })) {
-    const vertex = svg.querySelector(`#${id}`);
-    vertex.setAttribute("cx", point.x);
-    vertex.setAttribute("cy", point.y);
+  const start_points = {};
+
+  for (const id of ["top", "median", "bottom"]) {
+    const point = id === "top" ? top : id === "bottom" ? bottom : median;
+    start_points[id] = point;
   }
 
-  // Direction of the tangent through the median.
+  // Capture the current geometry.
+  const current_path = curve.getAttribute("d");
+  const previous_points = svg._timeline_points;
+
+  if (!previous_points || !current_path) {
+    svg._timeline_points = structuredClone(start_points);
+    update_timeline_frame(svg, start_points, handleLength);
+    return;
+  }
+
+  // Cancel any animation currently in progress.
+  if (svg._timeline_animation) {
+    cancelAnimationFrame(svg._timeline_animation);
+  }
+
+  const from_points = structuredClone(svg._timeline_current_points || previous_points);
+  const start_time = performance.now();
+
+  function animate(now) {
+    const progress = Math.min((now - start_time) / duration, 1);
+
+    // Smooth ease-in-out.
+    const eased = progress * progress * (3 - 2 * progress);
+
+    const points = {};
+
+    for (const id of ["top", "median", "bottom"]) {
+      points[id] = {
+        x: from_points[id].x + (start_points[id].x - from_points[id].x) * eased,
+        y: from_points[id].y + (start_points[id].y - from_points[id].y) * eased,
+      };
+    }
+
+    update_timeline_frame(svg, points, handleLength);
+    svg._timeline_current_points = points;
+
+    if (progress < 1) {
+      svg._timeline_animation = requestAnimationFrame(animate);
+    } else {
+      svg._timeline_points = structuredClone(start_points);
+      svg._timeline_animation = null;
+    }
+  }
+
+  svg._timeline_animation = requestAnimationFrame(animate);
+}
+
+function update_timeline_frame(svg, { top, median, bottom }, handleLength) {
+  for (const [id, point] of Object.entries({ top, bottom })) {
+    for (const vertex of [
+      svg.querySelector(`#mask-${id}`),
+    ]) {
+      vertex.setAttribute("cx", point.x);
+      vertex.setAttribute("cy", point.y);
+    }
+  }
+
   const dx = bottom.x - top.x;
   const dy = bottom.y - top.y;
   const length = Math.hypot(dx, dy) || 1;
@@ -188,26 +257,23 @@ function update_timeline_svg({
   const ux = dx / length;
   const uy = dy / length;
 
-
-    const maxHandleLength = Math.min(
+  const max_handle_length = Math.min(
     Math.hypot(median.x - top.x, median.y - top.y),
     Math.hypot(bottom.x - median.x, bottom.y - median.y)
-    );
+  );
 
-    handleLength = Math.min(handleLength, maxHandleLength);
+  const handle_length = Math.min(handleLength, max_handle_length);
 
-  // Two handles extending from the median.
   const cp1 = {
-    x: median.x - ux * handleLength,
-    y: median.y - uy * handleLength,
+    x: median.x - ux * handle_length,
+    y: median.y - uy * handle_length,
   };
 
   const cp2 = {
-    x: median.x + ux * handleLength,
-    y: median.y + uy * handleLength,
+    x: median.x + ux * handle_length,
+    y: median.y + uy * handle_length,
   };
 
-  // Two cubic segments, joined at the median.
   svg.querySelector("#timeline-curve").setAttribute(
     "d",
     `M ${top.x} ${top.y}
@@ -235,7 +301,7 @@ async function main() {
 
     // generate events here
 
-    const events = $(".event");
+    let events = $(".event");
     const original_padding_top = getComputedStyle(main_el).getPropertyValue("--padding-top");
     const scroll_height = (document.documentElement.clientHeight - banner.getBoundingClientRect().bottom - 100);
     banner.classList.add("minimise"); banner.style.transitionDuration = "0ms";
@@ -256,21 +322,58 @@ async function main() {
         update_relative_index(events, focused_event_index);
     })
 
+    update_timeline(events);
+
     events.forEach((event, index) => {
-        event.addEventListener("click", () => {
+        event.addEventListener("click", async () => {
             const is_expanded = !event.classList.contains("expanded");
 
             if (is_expanded) {
                 focused_event_index = index;
                 update_relative_index(events, focused_event_index);
-                focus_event(events, focused_event_index, 0, events_container, event);
                 event.classList.add("expanded");
+                await focus_event(events, focused_event_index, 0, events_container, event);
             } else {
                 event.classList.remove("expanded");
+                setTimeout(() => {
+                    update_timeline(events);
+                }, 250);
             }
 
-            const original_scroll_top = events_container.scrollTop;
             handle_click_event(event, is_expanded, events_container, events);
+        });
+
+        let scroll_tolerance = 2;
+        let scroll_timeout;
+        let boundary_scroll_detected = false;
+        let boundary_detected_this_gesture = false;
+
+        event.addEventListener("wheel", (e) => {
+            clearTimeout(scroll_timeout);
+
+            if (event.classList.contains("expanded")) {
+                const at_top =
+                    event.scrollTop <= scroll_tolerance && e.deltaY < 0;
+
+                const at_bottom =
+                    event.scrollTop >= event.scrollHeight - event.clientHeight - scroll_tolerance &&
+                    e.deltaY > 0;
+
+                if ((at_top || at_bottom) && !boundary_detected_this_gesture) {
+                    boundary_detected_this_gesture = true;
+
+                    if (boundary_scroll_detected) {
+                        focus_event(events, index, Math.sign(e.deltaY), events_container)
+                        boundary_scroll_detected = false;
+                    } else {
+                        boundary_scroll_detected = true;
+                    }
+                }
+            }
+
+            scroll_timeout = setTimeout(() => {
+                boundary_detected_this_gesture = false;
+            }, 50);
         });
     });
 
@@ -280,6 +383,64 @@ async function main() {
     update_relative_index(events, focused_event_index);
 
     focus_event(events, focused_event_index, 0, events_container);
+
+    activate(timeline_svg);
+    stagger_activate_els(events, 125);
+
+    let scroll_center = 1/2 * ($(".banner")[0].getBoundingClientRect().bottom + document.documentElement.clientHeight);
+
+    // if(is_mobile) {
+    //     const filler_el = events[events.length - 1].cloneNode(true);
+    //     filler_el.classList.add("filler-el");
+        
+    //     Object.assign(filler_el.style, {
+    //         opacity: 0,
+    //         pointerEvents: "none"
+    //     })
+        
+    //     events_container.appendChild(filler_el);
+    //     events = $(".event");
+    // }
+
+    if(supports_scrollsnapchange = "onscrollsnapchanging" in window) {
+        events_container.addEventListener("scrollsnapchanging", async (e) => {
+        focused_event_index = Array.from(events).indexOf(e.snapTargetBlock);
+        try {
+            await focus_event(events, focused_event_index, 0, events_container, null, prevent_scroll = true);
+            update_timeline(events);
+        } finally {
+            const focused_el = Array.from(events).find(el => el.classList.contains("focused"));
+            const timeout_id = setTimeout(() => {
+                if(focused_el.classList.contains("focused")) {
+                    focused_el.classList.add("expanded");
+                    handle_click_event(focused_el, true, events_container, events);
+                }
+            }, 1000);
+            timeouts.push({el: focused_el, timeout_id: timeout_id});
+            await_scroll = false;
+        }
+        })
+    } else {
+        window.addEventListener("touchmove", async (e) => {
+            let i = find_closest_el(events, scroll_center);
+            if(i === focused_event_index) return;
+            focused_event_index = i;
+            try {
+                await focus_event(events, focused_event_index, 0, events_container, null, prevent_scroll = true);
+                update_timeline(events);
+            } finally {
+                const focused_el = Array.from(events).find(el => el.classList.contains("focused"));
+                const timeout_id = setTimeout(() => {
+                    if(focused_el.classList.contains("focused")) {
+                        focused_el.classList.add("expanded");
+                        handle_click_event(focused_el, true, events_container, events);
+                    }
+                }, 1000);
+                timeouts.push({el: focused_el, timeout_id: timeout_id});
+                await_scroll = false;
+            }
+        })
+    }
 
     window.addEventListener("keydown", async (e) => {
         if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
@@ -295,10 +456,10 @@ async function main() {
         await_scroll = true;
         focused_event_index = next_index;
 
-        update_timeline(events);
-
+        
         try {
             await focus_event(events, focused_event_index, direction, events_container);
+            update_timeline(events);
         } finally {
             const focused_el = Array.from(events).find(el => el.classList.contains("focused"));
             const timeout_id = setTimeout(() => {
@@ -350,10 +511,9 @@ async function main() {
         await_scroll = true;
         focused_event_index = next_index;
 
-        update_timeline(events);
-
         try {
             await focus_event(events, focused_event_index, direction, events_container);
+            update_timeline(events);
         } finally {
             const focused_el = Array.from(events).find(el => el.classList.contains("focused"));
             const timeout_id = setTimeout(() => {
@@ -366,6 +526,24 @@ async function main() {
             await_scroll = false;
         }
     }, { passive: false });
+}
+
+function find_closest_el(els, target_y) {
+    let closest_index = null;
+    let closest_distance = Infinity;
+
+    els.forEach((el, i) => {
+        const rect = el.getBoundingClientRect();
+        const el_y = rect.bottom;
+        const distance = Math.abs(el_y - target_y);
+
+        if (distance < closest_distance && !el.classList.contains("filler-el")) {
+            closest_distance = distance;
+            closest_index = i;
+        }
+    });
+
+    return closest_index;
 }
 
 promise__initial_page_rendering.then(() => main())
