@@ -771,11 +771,17 @@
             - [x] Invented much neater solution where javsacript conveys the relative event index, then css uses calc functions to control all other transform effects
     - [x] Fixed timeout bug where events could open before the timeout had surpassed (caused by old timeouts that hadn't been removed)
     - [x] Many more UX improvements to scrolling, focusing, expanding
+    - ### Time Spent: 6 hours
+
+- ## 25/10/2026
+    - [x] Improved scrolling alignment for expanded events (centred horizontally, then correct scroll top)
+    - [ ] Created dynamically generated and updating timeline svg, using custom function to use in place of experimental getBoxQuads() values from the highest, median and lowest visible event elements to determine its curvature.
+    - [ ] Added arrow keys to scrolljacking to ensure full accessibility coverage
     - [ ] Mobile UX for scrolling
     - [ ] Aligned timeline
-    - ### Time Spent (so far): 5 hours 30 minutes
 
 - ## To Do
     - [ ] Fix packages bug
+    - [ ] Add blurred background to expanded events with attached images to improve colour contrast and hierarchy on the page.
 
    

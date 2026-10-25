@@ -2,7 +2,7 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
-const OFFLINE_MODE = false;
+const OFFLINE_MODE = DEV_MODE && true;
 const CACHE = true;
 const CACHE_REFRESH = 6 // in hours
 let main_promise;

@@ -33,11 +33,23 @@
     <div class="scroll-wrapper" data-prevent-default-scroll-navigation>
         <main class="banner-padding">
             <section class="events bg-glow" data-glow-pos="center" data-glow-size="100%" data-min-package-aspect-ratio="1.25" data-glow-mask-content="false">
-                <div class="timeline">
-                    <img src="/assets/events/timeline-top.svg" class="top">
-                    <img src="/assets/events/timeline-join.svg" class="join">
-                    <img src="/assets/events/timeline-bottom.svg" class="bottom">
-                </div>
+                <svg
+                    id="timeline-svg"
+                    class="timeline"
+                    xmlns="http://www.w3.org/2000/svg"
+                    >
+                    <path
+                        id="timeline-curve"
+                        d="M 200 40 C 200 100, 200 200, 200 260"
+                        fill="none"
+                        stroke="white"
+                        stroke-width="1"
+                    />
+                    <circle id="top" cx="0" cy="0" r="3" fill="blue" />
+                    <circle id="median" cx="0" cy="0" r="3" fill="red" />
+                    <circle id="bottom" cx="0" cy="0" r="3" fill="green" />
+                </svg>
+
                 <article class="event custom-scrollbar">
                     <div class="date">
                         <span>17<sup>th</sup> May 2025</span>
