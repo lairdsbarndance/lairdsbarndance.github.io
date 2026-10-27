@@ -1,33 +1,42 @@
 const timeline_svg = $(".timeline")[0];
 const is_mobile = (navigator.maxTouchPoints > 0 || 'ontouchstart' in document.documentElement);
+let event_expanded = false;
 
-function handle_click_event(event, is_expanded, events_container, events) {
+function handle_click_event(event, is_expanded, events_container, events, prevent_scroll = false) {
     const package_type = event.querySelector(".package-type");
     package_type.textContent = package_type.textContent.replace(is_expanded ? "," : ":", is_expanded ? ":" : ",");
     if(is_expanded) {
+        event_expanded = true;
         event.style.setProperty("--transition-overflow", "hidden");
         event.scrollTop = 0;
+        initialise_read_mores(Array.from(event.querySelectorAll(".quote > .content")));
         const min_height = $(".banner")[0].getBoundingClientRect().bottom;
         setTimeout(() => {
-            event.style.setProperty("--transition-overflow", "auto")
-            correct_scroll_top(event, events_container, min_height);
+            event.style.setProperty("--transition-overflow", "auto");
+            if(!prevent_scroll) correct_scroll_top(event, events_container, min_height);
             update_timeline(events);
         }, 250);
+    } else {
+        event_expanded = false;
     }
 }
 
-function correct_scroll_top(target_el, scroll_el, min_height, attempts = 0, margin = 16) {
+async function correct_scroll_top(target_el, scroll_el, min_height = $(".banner")[0].getBoundingClientRect().bottom, attempts = 0, margin = 16) {
+    scroll_el.style.setProperty("--scroll-snap-type", "none");
     const rect = target_el.getBoundingClientRect();
+    let scroll_top = target_el.offsetTop - min_height;
+    await scroll_el.scrollTo({top: scroll_top, behavior: "smooth"});
 
-    if(rect.top < min_height + margin) {
-        scroll_el.scrollTop -= 5;
-    } else if(rect.bottom > document.documentElement.clientHeight - margin) {
-        scroll_el.scrollTop += 5;
-    } else {
-        return;
-    }
+    // if(rect.top < min_height + margin) {
+    //     scroll_el.scrollTop -= 3;
+    // } else if(rect.bottom > document.documentElement.clientHeight - margin) {
+    //     scroll_el.scrollTop += 3;
+    // } else {
+    //     scroll_el.style.setProperty("--scroll-snap-type", "y mandatory");
+    //     return;
+    // }
 
-    requestAnimationFrame(() => correct_scroll_top(target_el, scroll_el, min_height, attempts = attempts + 1));
+    // requestAnimationFrame(async () => correct_scroll_top(target_el, scroll_el, min_height, attempts = attempts + 1));
 }
 
 async function focus_event(events, index, direction = 1, events_container, preserve_event = null, prevent_scroll = false) {
@@ -39,6 +48,7 @@ async function focus_event(events, index, direction = 1, events_container, prese
 
         if (el !== preserve_event) {
             el.classList.remove("expanded");
+            scroll_el.style.setProperty("--scroll-snap-type", "y mandatory");
             handle_click_event(el, false, events_container, events);
         }
     });
@@ -311,30 +321,46 @@ async function main() {
     
     banner.style.transitionDuration = "";
 
+    let banner_first_minimised = false;
+
     events_container.addEventListener("scroll", (e) => {
-        if(events_container.scrollTop !== 0) {
+        if(events_container.scrollTop > 0) {
+            banner_first_minimised = true && is_mobile;
             main_el.style.setProperty("--padding-top", banner.getBoundingClientRect().bottom + "px");
             banner.classList.add("minimise");
-        } else {
+        } else if (!banner_first_minimised) {
             main_el.style.setProperty("--padding-top", original_padding_top);
             banner.classList.remove("minimise")
         }
         update_relative_index(events, focused_event_index);
+        if(event_expanded) {
+            events_container.style.setProperty("--scroll-snap-type", "y mandatory");
+        }
     })
 
     update_timeline(events);
 
     events.forEach((event, index) => {
-        event.addEventListener("click", async () => {
+        event.addEventListener("click", async (e) => {
             const is_expanded = !event.classList.contains("expanded");
-
+            const read_more = event.querySelector(".read-more")
+            let is_read_more = e.target.closest(".read-more");
             if (is_expanded) {
                 focused_event_index = index;
                 update_relative_index(events, focused_event_index);
                 event.classList.add("expanded");
+                
                 await focus_event(events, focused_event_index, 0, events_container, event);
+            } else if(read_more && is_read_more) {
+                read_more.classList.toggle("expanded");
+                setTimeout(() => {
+                    correct_scroll_top(event, events_container)
+                }, 250);
             } else {
                 event.classList.remove("expanded");
+                event_expanded = false;
+                events_container.style.setProperty("--scroll-snap-type", "y mandatory");
+                read_more?.classList.remove("expanded");
                 setTimeout(() => {
                     update_timeline(events);
                 }, 250);
@@ -363,6 +389,7 @@ async function main() {
                     boundary_detected_this_gesture = true;
 
                     if (boundary_scroll_detected) {
+                        
                         focus_event(events, index, Math.sign(e.deltaY), events_container)
                         boundary_scroll_detected = false;
                     } else {
@@ -388,58 +415,255 @@ async function main() {
     stagger_activate_els(events, 125);
 
     let scroll_center = 1/2 * ($(".banner")[0].getBoundingClientRect().bottom + document.documentElement.clientHeight);
+    let scroll_tolerance = 2;
 
-    // if(is_mobile) {
-    //     const filler_el = events[events.length - 1].cloneNode(true);
-    //     filler_el.classList.add("filler-el");
-        
-    //     Object.assign(filler_el.style, {
-    //         opacity: 0,
-    //         pointerEvents: "none"
-    //     })
-        
-    //     events_container.appendChild(filler_el);
-    //     events = $(".event");
-    // }
+    if (supports_scrollsnapchange = "onscrollsnapchanging" in window) {
+        let touch_start_y = null;
+        let boundary_scroll_el = null;
+        let boundary_scroll_detected = false;
+        let boundary_detected_this_gesture = false;
+        let gesture_boundary = null;
 
-    if(supports_scrollsnapchange = "onscrollsnapchanging" in window) {
-        events_container.addEventListener("scrollsnapchanging", async (e) => {
-        focused_event_index = Array.from(events).indexOf(e.snapTargetBlock);
-        try {
-            await focus_event(events, focused_event_index, 0, events_container, null, prevent_scroll = true);
-            update_timeline(events);
-        } finally {
-            const focused_el = Array.from(events).find(el => el.classList.contains("focused"));
-            const timeout_id = setTimeout(() => {
-                if(focused_el.classList.contains("focused")) {
-                    focused_el.classList.add("expanded");
-                    handle_click_event(focused_el, true, events_container, events);
+        events_container.addEventListener("touchstart", (e) => {
+            touch_start_y = e.touches[0].clientY;
+            boundary_detected_this_gesture = false;
+
+            const expanded_el = Array.from(events).find(el =>
+                el.classList.contains("expanded")
+            );
+
+            if (!expanded_el) {
+                boundary_scroll_el = null;
+                boundary_scroll_detected = false;
+                gesture_boundary = null;
+                return;
+            }
+
+            if (boundary_scroll_el && boundary_scroll_el !== expanded_el) {
+                boundary_scroll_el = null;
+                boundary_scroll_detected = false;
+            }
+
+            gesture_boundary = {
+                el: expanded_el,
+                at_top: expanded_el.scrollTop <= scroll_tolerance,
+                at_bottom:
+                    expanded_el.scrollTop >=
+                    expanded_el.scrollHeight -
+                    expanded_el.clientHeight -
+                    scroll_tolerance
+            };
+        }, { passive: true });
+
+        events_container.addEventListener("touchmove", (e) => {
+            if (
+                touch_start_y === null ||
+                !gesture_boundary ||
+                boundary_detected_this_gesture
+            ) return;
+
+            const delta_y = touch_start_y - e.touches[0].clientY;
+
+            if (Math.abs(delta_y) < 3) return;
+
+            const { el, at_top, at_bottom } = gesture_boundary;
+
+            const at_boundary =
+                (at_top && delta_y < 0) ||
+                (at_bottom && delta_y > 0);
+
+            if (!at_boundary) return;
+
+            boundary_detected_this_gesture = true;
+
+            const events = Array.from(events_container.querySelectorAll(".event"));
+            const target_index = events.indexOf(e.target.closest(".event"));
+            const direction = Math.sign(delta_y)
+            if(!((target_index === 0 && direction === -1) || (target_index === events.length  -1  && direction === 1))) boundary_scroll_detected = false;
+
+
+            if (boundary_scroll_detected && boundary_scroll_el === el) {
+                el.classList.remove("expanded");
+                events_container.style.setProperty("--scroll-snap-type", "y mandatory");
+
+                for (let i = timeouts.length - 1; i >= 0; i--) {
+                    if (timeouts[i].el === el) {
+                        clearTimeout(timeouts[i].timeout_id);
+                        timeouts.splice(i, 1);
+                    }
                 }
-            }, 1000);
-            timeouts.push({el: focused_el, timeout_id: timeout_id});
-            await_scroll = false;
-        }
-        })
-    } else {
-        window.addEventListener("touchmove", async (e) => {
-            let i = find_closest_el(events, scroll_center);
-            if(i === focused_event_index) return;
-            focused_event_index = i;
+
+                boundary_scroll_detected = false;
+                boundary_scroll_el = null;
+            } else {
+                boundary_scroll_detected = true;
+                boundary_scroll_el = el;
+            }
+        }, { passive: true });
+
+        const reset_touch_gesture = () => {
+            touch_start_y = null;
+            gesture_boundary = null;
+            boundary_detected_this_gesture = false;
+        };
+
+        events_container.addEventListener("touchend", reset_touch_gesture, {
+            passive: true
+        });
+
+        events_container.addEventListener("touchcancel", reset_touch_gesture, {
+            passive: true
+        });
+
+        events_container.addEventListener("scrollsnapchanging", async (e) => {
+            focused_event_index = Array.from(events).indexOf(e.snapTargetBlock);
+
             try {
-                await focus_event(events, focused_event_index, 0, events_container, null, prevent_scroll = true);
+                await focus_event(
+                    events,
+                    focused_event_index,
+                    0,
+                    events_container,
+                    null,
+                    prevent_scroll = false
+                );
+                
                 update_timeline(events);
             } finally {
-                const focused_el = Array.from(events).find(el => el.classList.contains("focused"));
+                const focused_el = Array.from(events).find(el =>
+                    el.classList.contains("focused")
+                );
+
                 const timeout_id = setTimeout(() => {
-                    if(focused_el.classList.contains("focused")) {
+                    if (focused_el.classList.contains("focused")) {
                         focused_el.classList.add("expanded");
-                        handle_click_event(focused_el, true, events_container, events);
+                        handle_click_event(
+                            focused_el,
+                            true,
+                            events_container,
+                            events,
+                            prevent_scroll = false
+                        );
                     }
                 }, 1000);
-                timeouts.push({el: focused_el, timeout_id: timeout_id});
+
+                timeouts.push({ el: focused_el, timeout_id: timeout_id });
                 await_scroll = false;
             }
-        })
+        });
+    } else {
+        let touch_start_y = null;
+        let scroll_direction = 0;
+        let boundary_scroll_detected = false;
+        let boundary_detected_this_gesture = false;
+
+        events_container.addEventListener("touchstart", (e) => {
+            touch_start_y = e.touches[0].clientY;
+            scroll_direction = 0;
+            boundary_detected_this_gesture = false;
+        }, { passive: true });
+
+        events_container.addEventListener("touchmove", (e) => {
+            if (touch_start_y === null) return;
+
+            const delta_y = touch_start_y - e.touches[0].clientY;
+
+            if (!scroll_direction && Math.abs(delta_y) > 2) {
+                scroll_direction = Math.sign(delta_y);
+            }
+
+            if (!scroll_direction || boundary_detected_this_gesture) return;
+
+            const expanded_el = Array.from(events).find(el =>
+                el.classList.contains("expanded")
+            );
+
+            if (!expanded_el) return;
+
+            const at_top = expanded_el.scrollTop <= scroll_tolerance;
+
+            const at_bottom =
+                expanded_el.scrollTop >=
+                expanded_el.scrollHeight -
+                expanded_el.clientHeight -
+                scroll_tolerance;
+
+            if (
+                (at_top && scroll_direction < 0) ||
+                (at_bottom && scroll_direction > 0)
+            ) {
+                boundary_detected_this_gesture = true;
+
+                if (boundary_scroll_detected) {
+                    expanded_el.classList.remove("expanded");
+                    events_container.style.setProperty("--scroll-snap-type", "y mandatory");
+                    boundary_scroll_detected = false;
+
+                    for (let i = timeouts.length - 1; i >= 0; i--) {
+                        if (timeouts[i].el === expanded_el) {
+                            clearTimeout(timeouts[i].timeout_id);
+                            timeouts.splice(i, 1);
+                        }
+                    }
+                } else {
+                    boundary_scroll_detected = true;
+                }
+            }
+        }, { passive: true });
+
+        const reset_touch_gesture = () => {
+            touch_start_y = null;
+            scroll_direction = 0;
+            boundary_detected_this_gesture = false;
+        };
+
+        events_container.addEventListener("touchend", reset_touch_gesture, {
+            passive: true
+        });
+
+        events_container.addEventListener("touchcancel", reset_touch_gesture, {
+            passive: true
+        });
+
+        window.addEventListener("touchmove", async (e) => {
+            let i = find_closest_el(events, scroll_center);
+
+            if (i === focused_event_index) return;
+
+            focused_event_index = i;
+
+            try {
+                await focus_event(
+                    events,
+                    focused_event_index,
+                    0,
+                    events_container,
+                    null,
+                    prevent_scroll = true
+                );
+                
+                update_timeline(events);
+            } finally {
+                const focused_el = Array.from(events).find(el =>
+                    el.classList.contains("focused")
+                );
+
+                const timeout_id = setTimeout(() => {
+                    if (focused_el.classList.contains("focused")) {
+                        focused_el.classList.add("expanded");
+                        handle_click_event(
+                            focused_el,
+                            true,
+                            events_container,
+                            events
+                        );
+                    }
+                }, 1000);
+
+                timeouts.push({ el: focused_el, timeout_id: timeout_id });
+                await_scroll = false;
+            }
+        });
     }
 
     window.addEventListener("keydown", async (e) => {
@@ -465,6 +689,7 @@ async function main() {
             const timeout_id = setTimeout(() => {
                 if(focused_el.classList.contains("focused")) {
                     focused_el.classList.add("expanded");
+                    
                     handle_click_event(focused_el, true, events_container, events);
                 }
             }, 1000);

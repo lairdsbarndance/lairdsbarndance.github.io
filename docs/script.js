@@ -419,11 +419,23 @@ function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", cont
 
         const interpolated_val = (1 + Math.cos(distance * Math.PI)) / 2;
 
-        el.style.opacity = Math.min(1, interpolated_val + 0.25);
+        // el.style.opacity = Math.min(1, interpolated_val + 0.25);
         el.style.transform = `perspective(500px) rotate${is_horizontal ? "Y" : "X"}(${is_horizontal ? "" : "-"}${scale_val(interpolated_val, 10 / rotation_intensity, 0) * Math.sign(offset)}deg) scale(${scale_val(interpolated_val, 0.4 / styles_intensity, 1)})`;
     });
 
     requestAnimationFrame(() => update_styles(band_member_els, styles_intensity, axis, document_width, rotation_intensity));
+}
+
+function initialise_read_mores(els) {
+    els.forEach(el => {
+        deactivate(el)
+        el.style.overflowY = "auto";
+        if(el.offsetHeight < el.scrollHeight) {
+            el.classList.add("read-more")
+            el.style.overflowY = "hidden"
+        }
+        activate(el)
+    })
 }
 
 function stagger_activate_els(els, timeout) {

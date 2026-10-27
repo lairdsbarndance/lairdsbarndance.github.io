@@ -779,12 +779,23 @@
     - [x] Created dynamically generated and updating timeline svg, using custom function to use in place of experimental getBoxQuads() values from the highest, median and lowest visible event elements to determine its curvature.
     - [x] Added arrow keys to scrolljacking to ensure full accessibility coverage
     - [x] Fixed scrolling bug where the user could scroll within the parent container when the focused event was expanded, thus recking the scrolljacking functionality.
-    - [x] Mobile UX for scrolling
 
     - ### Time Spent: 4 hours
 
+- ## 26/10/2026
+    - [x] Mobile UX for scrolling
+    - [x] Minor visual improvement: changed updating opacity value of Meet the Band members to a containing image mask for a smoother falloff
+    - [x] More tweaking of scroll snap behaviour and correct event expansion
+    - [x] Improved correct_scroll_top function by first scrolling to the offsetTop of the selected element, then performing corrections if necessary.
+    - [x] Changed scroll-snap-align to end when element is expanded
+    - [x] Once banner is minimised on touch devices, remove event listener.
+    - [x] Fixed bug where users on mobile could scroll within the events container without the necessary 3D effects updating, since the expanded event was open.
+    - [ ] Visual styling of events for mobile
+
+    - ### Time Spent (so far): 3 hours
+
 - ## To Do
-    - [ ] More tweaking of scroll snap behaviour and correct event expansion
+    - [ ] Improve Meet the band trackpad UX
     - [ ] Fix packages bug
     - [ ] Add blurred background to expanded events with attached images to improve colour contrast and hierarchy on the page.
 

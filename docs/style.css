@@ -134,6 +134,36 @@ button.accent-btn {
     cursor: pointer;
 }
 
+.read-more {
+    --line-height: 1.45;
+    --max-lines: 5;
+    --line-fade: 1.5;
+    font-size: 1rem;
+    max-height: calc(
+        (1em + ((var(--line-height) - 1) * 1em)) * var(--max-lines)
+    );
+    line-height: var(--line-height);
+
+    overflow-y: hidden;
+
+    mask-image: linear-gradient(
+        var(--white) calc(
+            (1em + ((var(--line-height) - 1) * 1em)) * (var(--max-lines) - var(--line-fade)) + 50%
+        ),
+        transparent calc(
+            (1em + ((var(--line-height) - 1) * 1em)) * var(--max-lines) + 50%
+        )
+    );
+    mask-size: 100% 200%;
+    mask-position: 0% 100%;
+    text-overflow: elipses;
+}
+
+.read-more.expanded {
+    mask-position: 0% 0%;
+    max-height: 100vh;
+}
+
 .loading {
     position: absolute;
     left: 50%;
