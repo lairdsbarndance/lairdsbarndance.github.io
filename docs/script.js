@@ -2,10 +2,12 @@ const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
 const DEV_MODE = window.location.href.includes("127.0.0.1");
-const OFFLINE_MODE = DEV_MODE && true;
+const OFFLINE_MODE = DEV_MODE;
 const CACHE = true;
 const CACHE_REFRESH = 6 // in hours
 let main_promise;
+
+const is_mobile = (navigator.maxTouchPoints > 0 || 'ontouchstart' in document.documentElement);
 
 const svg_defs = `
 <svg style="position:absolute; width:0; height:0; overflow:hidden"
@@ -709,6 +711,7 @@ async function fetch_image(img_id, {max_width, max_height} = {}) {
 
         img.onload = resolve;
         img.onerror = () => reject(new Error(`Failed to load image: ${img_url}`));
+        // img.onerror = resolve;
 
         img.src = img_url;
     });
@@ -759,6 +762,86 @@ async function generate_header(this_page, pages) {
     if(header.classList.contains("mobile-view")) $("nav")[0].style.transition = "500ms ease transform, 500ms ease filter";
     
     console.log("Header Generated Sucessfully!")
+}
+
+async function generate_carousel_items({files, 
+    carousel_item_class_name = "carousel-item",
+    random_rotation_strength = 2,
+}) {
+    return await Promise.all(files.map(async file => {
+        const carousel_item = $el(`.${carousel_item_class_name}`);
+        carousel_item.style.transform = `rotate(${Math.random() * random_rotation_strength - (random_rotation_strength / 2)}deg)`;
+
+        const is_video = file.mime_type?.startsWith("video/");
+        const media = is_video ? $el("iframe") : $el("img");
+
+        if (file.width && file.height) {
+            carousel_item.style.aspectRatio = `${file.width} / ${file.height}`;
+        }
+
+        if (is_video) {
+            media.src = `https://drive.google.com/file/d/${file.file_id}/preview`;
+            media.allow = "autoplay";
+            media.allowFullscreen = true;
+            media.loading = "lazy";
+            carousel_item.appendChild(media);
+        } else {
+            try {
+                media.src = await fetch_image(file.file_id);
+                media.alt = "";
+                media.loading = "lazy";
+                media.decoding = "async";
+                carousel_item.appendChild(media);
+            } catch(err) {
+                console.warn("Carousel Item not appended: id=" + file.file_id)
+            }
+        }
+
+        return carousel_item;
+    }));
+}
+
+async function generate_carousel_items({
+    files,
+    carousel_item_class_name = "carousel-item",
+    random_rotation_strength = 2,
+}) {
+    return (await Promise.all(files.map(async file => {
+        const is_video = file.mime_type?.startsWith("video/");
+        const media = $el(is_video ? "iframe" : "img");
+
+        media.className = carousel_item_class_name;
+
+        const rotation = Math.random() * random_rotation_strength
+            - (random_rotation_strength / 2);
+
+        media.style.setProperty("--random-rotation", `${rotation}deg`);
+
+        if (file.width && file.height) {
+            media.style.aspectRatio = `${file.width} / ${file.height}`;
+        }
+
+        media.ariaLabel = file["description"] ?? "";
+
+        if (is_video) {
+            media.src = `https://drive.google.com/file/d/${file.file_id}/preview`;
+            media.allow = "autoplay";
+            media.allowFullscreen = true;
+            media.loading = "lazy";
+        } else {
+            try {
+                media.src = await fetch_image(file.file_id);
+                media.alt = "";
+                media.loading = "lazy";
+                media.decoding = "async";
+            } catch (err) {
+                console.warn("Carousel Item not appended: id=" + file.file_id);
+                return null;
+            }
+        }
+
+        return media;
+    }))).filter(Boolean);
 }
 
 async function get_package_types() {
@@ -963,6 +1046,17 @@ function build_svg_mask(
     return mask.id;
 }
 
+function generate_polaroid(link, info_text, index = 0, rotation_strength = 1.5) {
+    const polaroid = $el(".polaroid,pre-render,paper-overlay,toggle-fullscreen");
+    polaroid.style.setProperty("--random-rotation", (Math.random() * rotation_strength * (index % 2 === 0 ? 1 : -1)) + "deg")
+    const img = $el("img");
+    img.src = link; img.alt = info_text;
+    const span = $el("span.info");
+    span.textContent = info_text;
+    polaroid.appendChildren(img, span);
+    return polaroid;
+}
+
 function generate_post_it(heading, content, index, rotation_strength = 1.5, colour_arr = ["#FFFFFF", "#FFF8EF", "#EEF6FF"], post_it_obj = null, page_link = null) {
     const container = $el(".post-it,pre-render");
 
@@ -1137,6 +1231,300 @@ function generate_paper_overlays() {
     })
 }
 
+function initialise_scroll_draggable() {
+    $(".scroll-draggable").forEach(el => {
+        let is_dragging = false;
+        let has_moved = false;
+        let start_x = 0;
+        let scroll_left = 0;
+
+        let click_target = null;
+        let release_target = null;
+
+        const drag_threshold = 5;
+
+        el.addEventListener("pointerdown", e => {
+            if (e.button !== 0) return;
+
+            is_dragging = true;
+            has_moved = false;
+
+            click_target = e.target.closest(".toggle-fullscreen");
+            release_target = null;
+
+            start_x = e.clientX;
+            scroll_left = el.scrollLeft;
+
+            el.style.scrollSnapType = "none";
+            el.style.cursor = "grabbing";
+
+            el.setPointerCapture(e.pointerId);
+        });
+
+        el.addEventListener("pointermove", e => {
+            if (!is_dragging) return;
+
+            const movement = e.clientX - start_x;
+
+            if (Math.abs(movement) > drag_threshold) {
+                has_moved = true;
+            }
+
+            if (has_moved) {
+                el.scrollLeft = scroll_left - movement;
+            }
+        });
+
+        function stop_dragging() {
+            if (!is_dragging) return;
+
+            is_dragging = false;
+            el.style.cursor = "grab";
+
+            if (!has_moved) return;
+
+            const container_style = getComputedStyle(el);
+
+            const padding_left = parseFloat(container_style.scrollPaddingLeft) || 0;
+            const padding_right = parseFloat(container_style.scrollPaddingRight) || 0;
+
+            const snapport_width = el.clientWidth - padding_left - padding_right;
+
+            const scrollport_left = el.getBoundingClientRect().left + el.clientLeft;
+
+            const max_scroll = el.scrollWidth - el.clientWidth;
+
+            let nearest_target = null;
+            let nearest_distance = Infinity;
+
+            el.querySelectorAll("*").forEach(target => {
+                const target_style = getComputedStyle(target);
+
+                const align_values = target_style.scrollSnapAlign.trim().split(/\s+/);
+                const align = align_values[align_values.length - 1];
+
+                if (align === "none") return;
+
+                const rect = target.getBoundingClientRect();
+
+                const margin_left = parseFloat(target_style.scrollMarginLeft) || 0;
+                const margin_right = parseFloat(target_style.scrollMarginRight) || 0;
+
+                const target_left = el.scrollLeft +
+                    rect.left - scrollport_left - margin_left;
+
+                const target_right = el.scrollLeft +
+                    rect.right - scrollport_left + margin_right;
+
+                let target_scroll_left;
+
+                switch (align) {
+                    case "start":
+                        target_scroll_left = target_left - padding_left;
+                        break;
+
+                    case "center":
+                        target_scroll_left = (target_left + target_right) / 2 -
+                            (padding_left + snapport_width / 2);
+                        break;
+
+                    case "end":
+                        target_scroll_left = target_right -
+                            (el.clientWidth - padding_right);
+                        break;
+
+                    default:
+                        return;
+                }
+
+                target_scroll_left = Math.max(0, Math.min(max_scroll, target_scroll_left));
+
+                const distance = Math.abs(target_scroll_left - el.scrollLeft);
+
+                if (distance < nearest_distance) {
+                    nearest_distance = distance;
+                    nearest_target = target_scroll_left;
+                }
+            });
+
+            if (nearest_target !== null) {
+                el.scrollTo({
+                    left: nearest_target,
+                    behavior: "smooth"
+                });
+            }
+        }
+
+        el.addEventListener("pointerup", e => {
+            release_target = document.elementFromPoint(
+                e.clientX,
+                e.clientY
+            )?.closest(".toggle-fullscreen") ?? null;
+
+            stop_dragging();
+        });
+
+        el.addEventListener("click", e => {
+            if (has_moved) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                click_target = null;
+                release_target = null;
+                has_moved = false;
+
+                return;
+            }
+
+            if (
+                !click_target ||
+                click_target !== release_target ||
+                !el.contains(click_target)
+            ) {
+                click_target = null;
+                release_target = null;
+                return;
+            }
+
+            if (typeof click_target.onclick === "function") {
+                click_target.onclick.call(click_target, e);
+            }
+
+            click_target = null;
+            release_target = null;
+        }, true);
+
+        el.addEventListener("pointercancel", () => {
+            stop_dragging();
+
+            click_target = null;
+            release_target = null;
+        });
+
+        el.addEventListener("lostpointercapture", () => {
+            stop_dragging();
+        });
+    });
+}
+
+function debug_scroll_draggable(el = document.querySelector(".scroll-draggable"), {
+    move_log_interval = 120
+} = {}) {
+    console.log("Hello")
+    if (!el) {
+        console.warn("[scroll-draggable] No matching element found.");
+        return () => {};
+    }
+
+    const nodes = [];
+
+    for (let node = el; node; node = node.parentNode) {
+        nodes.push(node);
+        if (node === document) break;
+    }
+
+    if (!nodes.includes(window)) nodes.push(window);
+
+    const handlers = [];
+    const last_move_logs = new Map();
+
+    function node_label(node) {
+        if (node === window) return "window";
+        if (node === document) return "document";
+
+        if (node.nodeType === 11) return "shadow-root";
+
+        if (!node.tagName) return node.nodeName;
+
+        const id = node.id ? `#${node.id}` : "";
+        const classes = Array.from(node.classList || [])
+            .map(class_name => `.${class_name}`)
+            .join("");
+
+        return `${node.tagName.toLowerCase()}${id}${classes}`;
+    }
+
+    const event_types = [
+        "pointerdown",
+        "pointermove",
+        "pointerup",
+        "pointercancel",
+        "gotpointercapture",
+        "lostpointercapture",
+        "scroll"
+    ];
+
+    nodes.forEach(node => {
+        ["capture", "bubble"].forEach(phase => {
+            const capture = phase === "capture";
+
+            event_types.forEach(type => {
+                const handler = e => {
+                    // Throttle pointermove logging to avoid flooding the console
+                    if (type === "pointermove") {
+                        const key = `${node_label(node)}-${phase}`;
+                        const now = performance.now();
+
+                        if (now - (last_move_logs.get(key) || 0) < move_log_interval) {
+                            return;
+                        }
+
+                        last_move_logs.set(key, now);
+                    }
+
+                    console.log(
+                        `[scroll-draggable] ${type} | ${phase} | ${node_label(node)}`,
+                        {
+                            target: node_label(e.target),
+                            current_target: node_label(e.currentTarget),
+                            event_phase: e.eventPhase,
+                            default_prevented: e.defaultPrevented,
+                            propagation_stopped: e.cancelBubble,
+
+                            pointer_id: e.pointerId,
+                            pointer_type: e.pointerType,
+                            button: e.button,
+                            buttons: e.buttons,
+
+                            client_x: e.clientX,
+                            client_y: e.clientY,
+
+                            has_pointer_capture: Number.isInteger(e.pointerId)
+                                ? el.hasPointerCapture(e.pointerId)
+                                : undefined,
+
+                            scroll_left: el.scrollLeft,
+                            scroll_top: el.scrollTop
+                        }
+                    );
+                };
+
+                node.addEventListener(type, handler, {
+                    capture,
+                    passive: true
+                });
+
+                handlers.push({ node, type, handler, capture });
+            });
+        });
+    });
+
+    console.log("[scroll-draggable] Debugging enabled:", el);
+    console.log("[scroll-draggable] Event propagation path:", nodes.map(node_label));
+
+    // Return a function to remove all diagnostic listeners
+    return function stop_debugging() {
+        handlers.forEach(({ node, type, handler, capture }) => {
+            node.removeEventListener(type, handler, capture);
+        });
+
+        console.log("[scroll-draggable] Debugging stopped.");
+    };
+}
+
+// Later, when finished:
+// stop_debugging();
+
 function fullscreen_img_container_logic() {
     $(".fullscreen-img-container").forEach(old => old.remove());
     const fullscreen_img_container = $el(".fullscreen-img-container");
@@ -1151,8 +1539,18 @@ function fullscreen_img_container_logic() {
         el.onclick = () => {
             fullscreen_img_container.querySelectorAll("*:not(.close, .close > *)").forEach(el => el.remove());
             const img_clone = el.cloneNode(true);
-            img_clone.classList.remove("toggle-fullscreen")
-            fullscreen_img_container.appendChild(img_clone);
+            img_clone.style.setProperty("--random-rotation", "0deg");
+            img_clone.classList.remove("toggle-fullscreen");
+
+            if(img_clone.ariaLabel) {
+                const polaroid = generate_polaroid(el.src, el.ariaLabel);
+                polaroid.style.setProperty("--aspect-ratio", el.offsetWidth / el.offsetHeight);
+                fullscreen_img_container.appendChild(polaroid);
+                fade_in(polaroid)
+            } else { 
+                fullscreen_img_container.appendChild(img_clone);
+                fade_in(img_clone)
+            }
             activate(fullscreen_img_container)
         }
     })

@@ -1,5 +1,5 @@
 const timeline_svg = $(".timeline")[0];
-const is_mobile = (navigator.maxTouchPoints > 0 || 'ontouchstart' in document.documentElement);
+const events_container_gap = parseFloat((getComputedStyle($(".events")[0]).rowGap).split("px")[0]);
 let event_expanded = false;
 
 function get_outward_boundary(event, direction, tolerance = 2) {
@@ -44,13 +44,40 @@ function clear_event_timeouts(event, timeouts) {
     }
 }
 
+function regenerate_iframes(event) {
+    const iframes = event.parentElement.querySelectorAll("iframe");
+    if(!iframes) return;
+    iframes.forEach(iframe => {
+        const src = iframe.getAttribute("src");
+
+        const replacement = iframe.cloneNode(false);
+        replacement.removeAttribute("src");
+
+        iframe.replaceWith(replacement);
+        if (src) replacement.src = src;
+    });
+}
+
+function regenerate_iframes_after_minimising(event, delay = 500) {
+    if (!event) return;
+
+    setTimeout(() => {
+        if (!event.classList.contains("expanded")) {
+            regenerate_iframes(event);
+        }
+    }, delay);
+}
+
 function collapse_expanded_event(event, events_container, events, timeouts) {
     if (!event.classList.contains("expanded")) return;
-
     event.classList.remove("expanded");
     handle_click_event(event, false, events_container, events);
     events_container.style.setProperty("--scroll-snap-type", "y mandatory");
     clear_event_timeouts(event, timeouts);
+    setTimeout(() => {
+        update_timeline(events)
+    }, 500);
+    regenerate_iframes_after_minimising(event)
 }
 
 function handle_click_event(event, is_expanded, events_container, events, prevent_scroll = false) {
@@ -60,7 +87,7 @@ function handle_click_event(event, is_expanded, events_container, events, preven
         event_expanded = true;
         event.style.setProperty("--transition-overflow", "hidden");
         event.scrollTop = 0;
-        initialise_read_mores([event.querySelector(".quote > .content"), event.querySelector(".band-container > p")]);
+        initialise_read_mores(event.parentElement.querySelectorAll(".might-read-more"));
         const min_height = $(".banner")[0].getBoundingClientRect().bottom;
         setTimeout(() => {
             event.style.setProperty("--transition-overflow", "auto");
@@ -98,9 +125,15 @@ async function focus_event(events, index, direction = 1, events_container, prese
         el.classList.remove("focused");
 
         if (el !== preserve_event) {
+            const was_expanded = el.classList.contains("expanded");
+
             el.classList.remove("expanded");
             scroll_el.style.setProperty("--scroll-snap-type", "y mandatory");
             handle_click_event(el, false, events_container, events);
+
+            if (was_expanded) {
+                regenerate_iframes_after_minimising(el);
+            }
         }
     });
 
@@ -108,7 +141,7 @@ async function focus_event(events, index, direction = 1, events_container, prese
 
     if (!direction || prevent_scroll) return;
 
-    const target_top = scroll_el.scrollTop + focused_event.getBoundingClientRect().height * direction;
+    const target_top = scroll_el.scrollTop + (focused_event.getBoundingClientRect().height + events_container_gap * 3) * direction;
 
     if (Math.abs(scroll_el.scrollTop - target_top) < 1) return;
 
@@ -342,6 +375,208 @@ function update_timeline_frame(svg, { top, median, bottom }, handleLength) {
   );
 }
 
+function get_ordinal_suffix(day) {
+    if (day >= 11 && day <= 13) return "th";
+
+    switch (day % 10) {
+        case 1: return "st";
+        case 2: return "nd";
+        case 3: return "rd";
+        default: return "th";
+    }
+}
+
+function generate_event_date(timestamp) {
+    const date = new Date(timestamp);
+
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "Europe/London"
+    }).formatToParts(date);
+
+    const day = Number(parts.find(part => part.type === "day").value);
+    const month = parts.find(part => part.type === "month").value;
+    const year = parts.find(part => part.type === "year").value;
+
+    const date_container = $el("div");
+    date_container.className = "date";
+
+    const date_text = $el("span");
+    const day_text = document.createTextNode(day);
+
+    const suffix = $el("sup");
+    suffix.textContent = get_ordinal_suffix(day);
+
+    date_text.appendChild(day_text);
+    date_text.appendChild(suffix);
+    date_text.appendChild(document.createTextNode(` ${month} ${year}`));
+
+    date_container.appendChild(date_text);
+
+    return date_container;
+}
+
+async function generate_events(events_obj, package_colours) {
+    return await Promise.all(events_obj.map(async event => {
+        const files = event.files ?? [];
+        const has_media = files.length > 0;
+
+        const event_container = $el("div.event-container");
+
+        // Event article
+        const article = $el(
+            `article.event,custom-scrollbar${has_media && files.find(file => file.mime_type?.startsWith("image/")) ? ",custom-background" : ""}`
+        );
+
+        // Date
+        const date = new Date(event.Date);
+
+        const date_parts = new Intl.DateTimeFormat("en-GB", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            timeZone: "Europe/London"
+        }).formatToParts(date);
+
+        const day = Number(date_parts.find(part => part.type === "day").value);
+        const month = date_parts.find(part => part.type === "month").value;
+        const year = date_parts.find(part => part.type === "year").value;
+
+        const date_container = $el("div.date");
+        const date_text = $el("span");
+
+        date_text.appendChild(document.createTextNode(day));
+
+        const suffix = $el("sup");
+        suffix.textContent = get_ordinal_suffix(day);
+
+        date_text.appendChild(suffix);
+        date_text.appendChild(
+            document.createTextNode(` ${month} ${year}`)
+        );
+
+        date_container.appendChild(date_text);
+        article.appendChild(date_container);
+
+        // Location
+        const location = $el("div.location");
+        const location_text = $el("span");
+
+        location_text.textContent = event.Venue;
+
+        location.appendChild(location_text);
+        article.appendChild(location);
+
+        // Event description
+        const heading = $el("h3");
+        heading.textContent = event["Description of Event"];
+
+        article.appendChild(heading);
+
+        // Band information
+        const band_container = $el("div.band-container");
+
+        const package_image = $el("img");
+        package_image.src = "/assets/events/default_package.svg";
+
+        band_container.appendChild(package_image);
+
+        const band_info = $el("p.might-read-more");
+
+        // Package type
+        const package_type = $el("span.package-type");
+
+        const package_colour = package_colours.find(
+            item => item.package === event["Band Type"]
+        );
+
+        if (package_colour) {
+            package_type.style.color = package_colour.colour;
+        }
+
+        package_type.textContent = `${event["Band Type"]}, `;
+
+        band_info.appendChild(package_type);
+
+        // Measure location
+        const measure_location = $el("span.measure-location");
+        measure_location.textContent = event.Venue.split(",")[0].trim();
+
+        band_info.appendChild(measure_location);
+
+        // Band members
+        const band_members = $el("span.band-members");
+
+        band_members.textContent = event["Players (comma-separated)"]
+            .map(player => player.trim())
+            .join(", ");
+
+        band_info.appendChild(band_members);
+
+        band_container.appendChild(band_info);
+        article.appendChild(band_container);
+
+        // Review / feedback
+        if (event["Reviews / Feedback"]) {
+            const quote = $el("div.quote");
+
+            const quote_image = $el("img");
+            quote_image.src = "/assets/events/quotation_marks.svg";
+
+            quote.appendChild(quote_image);
+
+            const content = $el("div.content,might-read-more");
+            const text_arr = event["Reviews / Feedback"].split("<br>");
+
+            text_arr.forEach((str, i) => {
+                const paragraph = $el("p");
+                paragraph.textContent = (i === 0 ? "“" : "") + str + (i === text_arr.length - 1 ? "”" : "");
+                content.appendChild(paragraph);
+            })
+
+            quote.appendChild(content);
+
+            article.appendChild(quote);
+        }
+
+        event_container.appendChild(article);
+
+        // Media and carousel
+        if (has_media) {
+            const media_items = await generate_carousel_items({
+                files,
+                carousel_item_class_name: "postcard toggle-fullscreen",
+                random_rotation_strength: 2
+            });
+
+            // Set article background using the first available image
+            const background_image = media_items.find(
+                item => item.tagName === "IMG"
+            );
+
+            if (background_image) {
+                article.style.setProperty(
+                    "--src",
+                    `url("${background_image.src}")`
+                );
+            }
+
+            const media = $el("div.media");
+            const carousel = $el("div.carousel,custom-scrollbar,scroll-draggable");
+
+            carousel.appendChildren(...media_items);
+            media.appendChild(carousel);
+
+            event_container.appendChild(media);
+        }
+
+        return event_container;
+    }));
+}
+
+
 async function main() {
     const events_obj = await fetch_events();
     const events_container = $(".events")[0];
@@ -359,17 +594,25 @@ async function main() {
         {package: "Bluegrass and caller", colour: "#82FFF0"}
     ];
 
-    // generate events here
+    const generated_events = await generate_events(
+        events_obj,
+        package_colours
+    );
+
+    events_container.appendChildren(...generated_events);
 
     generate_background(0.3, [events_container]);
 
     let events = $(".event");
+    const media = $(".media");
     const original_padding_top = getComputedStyle(main_el).getPropertyValue("--padding-top");
     const scroll_height = (document.documentElement.clientHeight - banner.getBoundingClientRect().bottom - 100);
     banner.classList.add("minimise"); banner.style.transitionDuration = "0ms";
     events_container.style.setProperty("--max-height", scroll_height + "px");
     events_container.style.setProperty("--extra-overflow", events[events.length - 1].offsetHeight + "px");
     banner.classList.remove("minimise");
+
+    fullscreen_img_container_logic();
 
     banner.style.transitionDuration = "";
 
@@ -393,6 +636,10 @@ async function main() {
     update_timeline(events);
 
     events.forEach((event, index) => {
+        const update_height = () => {
+            event.style.setProperty("--scroll-height", `${event.scrollHeight}px`);
+        };
+
         event.addEventListener("click", async (e) => {
             const is_expanded = !event.classList.contains("expanded");
             const read_more = e.target.closest(".read-more");
@@ -400,15 +647,18 @@ async function main() {
                 focused_event_index = index;
                 update_relative_index(events, focused_event_index);
                 event.classList.add("expanded");
-
                 await focus_event(events, focused_event_index, 0, events_container, event);
             } else if(read_more) {
                 read_more.classList.toggle("expanded");
                 setTimeout(() => {
                     correct_scroll_top(event, events_container)
                 }, 250);
+                setTimeout(() => {
+                    update_height();
+                }, 500);
             } else {
                 event.classList.remove("expanded");
+                regenerate_iframes_after_minimising(event)
                 event_expanded = false;
                 events_container.style.setProperty("--scroll-snap-type", "y mandatory");
                 read_more?.classList.remove("expanded");
@@ -432,6 +682,8 @@ async function main() {
 
             const direction = Math.sign(e.deltaY);
             const check_id = ++boundary_check_id;
+
+            update_height();
 
             if (direction && last_wheel_direction && direction !== last_wheel_direction || e.target.closest(".media")) {
                 boundary_scroll_state = null;
@@ -514,6 +766,8 @@ async function main() {
     activate(timeline_svg);
     stagger_activate_els(events, 125);
 
+    if(!is_mobile) initialise_scroll_draggable();
+    
     let scroll_center = 1/2 * ($(".banner")[0].getBoundingClientRect().bottom + document.documentElement.clientHeight);
     let scroll_tolerance = 2;
 
@@ -864,7 +1118,6 @@ async function main() {
             return;
         }
 
-        console.log(e.target.closest(".media"))
         if(e.target.closest(".media")) return;
 
         events.forEach(event => {
@@ -872,6 +1125,8 @@ async function main() {
 
             event.classList.remove("expanded");
             handle_click_event(event, false, events_container, events);
+
+            regenerate_iframes_after_minimising(event);
         });
 
         timeouts = timeouts.filter(timeout => {

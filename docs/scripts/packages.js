@@ -2,82 +2,125 @@ async function generate_packages(packages_obj, events_obj, images_per_package, v
     const packages_container = $(".packages")[0];
     const leather_colours = ["#4F3B53", "#4D2F1F", "#6E3628", "#673F2E", "#0C464C"];
 
-    packages_obj.forEach((package_obj, index) => {
-        const events = events_obj
-            .filter(event =>
-                event["Band Type"] === package_obj.heading &&
-                event.files?.length > 0
-            )
-            .map(event => [...event.files].sort((a, b) =>
-                parse_gb_date(b.folder.split("root/")[1].split(" ")[0]) -
-                parse_gb_date(a.folder.split("root/")[1].split(" ")[0])
-            ));
+    images_per_package = Math.max(0, Number(images_per_package) || 0);
+    videos_per_package = Math.max(0, Number(videos_per_package) || 0);
 
-        const files = [];
-        let images_count = 0;
-        let videos_count = 0;
-        let added_files = true;
+    const generated_packages = await Promise.all(
+        packages_obj.map(async (package_obj, index) => {
+            // Get and sort events, newest first.
+            const events = events_obj
+                .filter(event =>
+                    event["Band Type"] === package_obj.heading &&
+                    Array.isArray(event.files) &&
+                    event.files.length > 0
+                )
+                .sort((a, b) => {
+                    const date_a = parse_gb_date(a.files[0].folder.split("root/")[1].split(" ")[0]);
+                    const date_b = parse_gb_date(b.files[0].folder.split("root/")[1].split(" ")[0]);
 
-        while (
-            added_files &&
-            (images_count < images_per_package ||
-                videos_count < videos_per_package)
-        ) {
-            added_files = false;
+                    return date_b - date_a;
+                })
+                .map(event => ({
+                    files: [...event.files].sort((a, b) => {
+                        const date_a = parse_gb_date(a.folder.split("root/")[1].split(" ")[0]);
+                        const date_b = parse_gb_date(b.folder.split("root/")[1].split(" ")[0]);
 
-            events.forEach(event_files => {
-                if (
-                    images_count >= images_per_package &&
-                    videos_count >= videos_per_package
-                ) return;
+                        return date_b - date_a;
+                    })
+                }));
 
-                const file_index = event_files.findIndex(obj => {
-                    const is_video = obj.mime_type.includes("video");
-                    const is_image = obj.mime_type.includes("image");
+            const files = [];
+            let images_count = 0;
+            let videos_count = 0;
 
-                    if (is_video) return videos_count < videos_per_package;
-                    if (is_image) return images_count < images_per_package;
+            // Track the next file to select from each event.
+            const event_indices = new Array(events.length).fill(0);
 
-                    return false;
+            // Continue until both quotas are fulfilled or no files remain.
+            let added_files = true;
+
+            while (
+                added_files &&
+                (images_count < images_per_package ||
+                    videos_count < videos_per_package)
+            ) {
+                added_files = false;
+
+                events.forEach((event, event_index) => {
+                    const event_files = event.files;
+
+                    if (
+                        images_count >= images_per_package &&
+                        videos_count >= videos_per_package
+                    ) return;
+
+                    // Find the next eligible file in this event.
+                    let file_index = -1;
+
+                    for (
+                        let i = event_indices[event_index];
+                        i < event_files.length;
+                        i++
+                    ) {
+                        const mime_type = event_files[i].mime_type || "";
+
+                        const is_image = mime_type.startsWith("image/");
+                        const is_video = mime_type.startsWith("video/");
+
+                        if (
+                            (is_image && images_count < images_per_package) ||
+                            (is_video && videos_count < videos_per_package)
+                        ) {
+                            file_index = i;
+                            break;
+                        }
+                    }
+
+                    if (file_index === -1) return;
+
+                    const obj = event_files[file_index];
+
+                    // Advance the event's selection position.
+                    event_indices[event_index] = file_index + 1;
+
+                    const is_video = obj.mime_type.startsWith("video/");
+
+                    if (is_video) videos_count++;
+                    else images_count++;
+
+                    files.push({
+                        file_id: obj.file_id,
+                        mime_type: obj.mime_type,
+                        width: obj.width,
+                        height: obj.height
+                    });
+
+                    added_files = true;
                 });
+            }
 
-                if (file_index === -1) return;
+            // Images first, videos second.
+            files.sort((a, b) =>
+                Number(a.mime_type.startsWith("video/")) -
+                Number(b.mime_type.startsWith("video/"))
+            );
 
-                const obj = event_files.splice(file_index, 1)[0];
-                const is_video = obj.mime_type.includes("video");
+            const package_el = await generate_package(
+                package_obj,
+                files,
+                leather_colours[index % leather_colours.length]
+            );
 
-                if (is_video) videos_count++;
-                else images_count++;
+            return package_el;
+        })
+    );
 
-                files.push({
-                    file_id: obj.file_id,
-                    mime_type: obj.mime_type,
-                    width: obj.width,
-                    height: obj.height
-                });
+    packages_container.append(...generated_packages);
 
-                added_files = true;
-            });
-        }
-
-        files.sort((a, b) =>
-            Number(a.mime_type.includes("video")) -
-            Number(b.mime_type.includes("video"))
-        );
-
-        const package_el = generate_package(
-            package_obj,
-            files,
-            leather_colours[index % leather_colours.length]
-        );
-
-        packages_container.appendChild(package_el);
-    });
-
-    return Promise.resolve();
+    return;
 }
 
-function generate_package(package_obj, files, leather_colour = "#3f3042") {
+async function generate_package(package_obj, files, leather_colour = "#3f3042") {
     const package_el = $el(".package,pre-render,no-mask");
     package_el.dataset.packageType = package_obj.heading;
 
@@ -92,6 +135,7 @@ function generate_package(package_obj, files, leather_colour = "#3f3042") {
     const front_img = $el("img");
     front_img.src = `/assets/packages/${package_obj.tag}.png`;
     front_img.alt = package_obj.heading;
+    front_img.loading = "lazy";
 
     front.appendChildren(front_heading, front_img);
 
@@ -100,48 +144,36 @@ function generate_package(package_obj, files, leather_colour = "#3f3042") {
     left.dataset.leatherColor = leather_colour;
 
     const left_btn = $el("button.left-btn");
+    left_btn.type = "button";
+
     const left_arrow = $el("img");
     left_arrow.src = "/assets/arrow.png";
     left_arrow.alt = "Previous image";
+
     left_btn.appendChild(left_arrow);
 
     const custom_content = $el(".custom,content");
     const plastic_overlay = $el(".plastic-overlay");
     const carousel = $el(".carousel-container");
 
-    files.forEach(file => {
-        const carousel_item = $el(".carousel-item");
-        carousel_item.style.transform = `rotate(${Math.random() * 2 - 0.5}deg)`;
-        const is_video = file.mime_type?.startsWith("video/");
-        const media = is_video ? $el("iframe") : $el("img");
+    // if(!is_mobile) carousel.classList.add("scroll-draggable");
 
-        media.src = is_video
-            ? `https://drive.google.com/file/d/${file.file_id}/preview`
-            : fetch_image(file.file_id);
-
-        if (is_video) {
-            if (file.width && file.height) {
-                carousel_item.style.aspectRatio = `${file.width} / ${file.height}`;
-            }
-
-            media.allow = "autoplay";
-            media.allowFullscreen = true;
-            media.loading = "lazy";
-        } else {
-            media.alt = "";
-            media.loading = "lazy";
-        }
-
-        carousel_item.appendChild(media);
-        carousel.appendChild(carousel_item);
-    });
+    // Generate carousel items concurrently.
+    
+    // files.push({file_id: "test", mime_type: "image/jpeg"})
+    const carousel_items = await generate_carousel_items({files: files});
+    console.log(carousel_items)
+    carousel.append(...carousel_items);
 
     custom_content.appendChildren(plastic_overlay, carousel);
 
     const right_btn = $el("button.right-btn");
+    right_btn.type = "button";
+
     const right_arrow = $el("img");
     right_arrow.src = "/assets/arrow.png";
     right_arrow.alt = "Next image";
+
     right_btn.appendChild(right_arrow);
 
     left.appendChildren(left_btn, custom_content, right_btn);
@@ -163,17 +195,19 @@ function generate_package(package_obj, files, leather_colour = "#3f3042") {
     });
 
     const accent_btn = $el("button.accent-btn");
+
     const booking_link = $el("a");
-    booking_link.href =
-        `/pages/contact.html?selected_package=${encodeURIComponent(package_obj.tag)}`;
+    booking_link.href = `/pages/contact.html?selected_package=${encodeURIComponent(package_obj.tag)}`;
     booking_link.textContent = "Book us";
 
     accent_btn.appendChild(booking_link);
+
     right.appendChildren(heading, description, accent_btn);
 
     // Assemble package
     const turnable = $el(".turnable");
     turnable.appendChildren(front, left);
+
     package_el.appendChildren(turnable, right);
 
     return package_el;
@@ -188,7 +222,9 @@ async function main() {
     h4.innerHTML = packages_obj.find(el => el.heading === "General Information")["content"].join("<br>");
     
     const events_obj = await fetch_events();
-    await generate_packages(f_packages, events_obj, get_website_variable("Images per package"), get_website_variable("Videos per package"))
+    const images_per_package = await get_website_variable("Images per package");
+    const videos_per_package = await get_website_variable("Videos per package");
+    await generate_packages(f_packages, events_obj, images_per_package, videos_per_package)
     fade_in(h4);
     
     const packages_container = $(".packages")[0];
@@ -412,6 +448,7 @@ async function main() {
     }
 
     function handle_carousel(carousel, carousel_items, e, scroll_index) {
+        if(!e.target.closest("button")) return scroll_index;
         scroll_index += e.target.closest("button").classList.contains("left-btn") ? -1 : 1;
         scroll_index = (scroll_index + carousel_items.length) % carousel_items.length;
         scroll_to_carousel_el(carousel, carousel_items[scroll_index]);

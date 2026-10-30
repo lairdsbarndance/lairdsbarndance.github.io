@@ -23,6 +23,7 @@
     --subtle-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.2);
     --harsh-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.75);
     --polaroid-shadow: 0 .75rem .5rem -.25rem rgba(0,0,0,0.75);
+    --postcard-shadow: 0 .75rem .5rem -.25rem rgba(0,0,0,0.25);
     --h4-text-shadow: 0 .25rem .125rem rgba(0,0,0,0.33);
     --soft-text-shadow: 0 .125rem .125rem rgba(0,0,0,0.25);
 }
@@ -159,11 +160,25 @@ button.accent-btn {
     mask-size: 100% 200%;
     mask-position: 0% 100%;
     text-overflow: elipses;
+
+    transition: 250ms ease all;
 }
 
 .read-more.expanded {
     mask-position: 0% 0%;
     max-height: 100vh;
+}
+
+.scroll-draggable {
+    overflow: auto;
+    cursor: grab;
+    touch-action: pan-x;
+}
+
+.scroll-draggable * {user-select: none; -webkit-user-drag: none;}
+
+.scroll-draggable:active {
+    cursor: grabbing;
 }
 
 .loading {
@@ -215,6 +230,39 @@ button.accent-btn {
 .break {
     display: inline-block;
     width: 100%;
+}
+
+.polaroid {
+    --border-width: .5rem;
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    border: var(--border-width) var(--white) solid;
+    gap: .5rem;
+    font-family: "Caveat", cursive;
+    grid-row: 1 / -1;
+    height: fit-content;
+    margin-top: calc(-1 * var(--spacer-height));
+    box-shadow: var(--polaroid-shadow);
+    cursor: pointer;
+    transform: rotate(var(--random-rotation));
+}
+
+.polaroid > span.info {
+    --max-lines: 4;
+    padding-inline: 2rem;
+    padding-bottom: .25rem;
+    text-align: center;
+    text-wrap-style: balance;
+    color: black;
+    font-size: 1.125rem;
+}
+
+.polaroid > img {
+    width: 100%;
+    max-width: 30em;
 }
 
 .visible:not(.bg-container, .post-it, .glow, .no-mask) {
@@ -628,8 +676,8 @@ nav.mobile-view:not(.open) {
 
 .fullscreen-img-container > .polaroid > img {
     max-width: unset;
-    width: min(85vw, calc(85vh * var(--aspect-ratio)));
-    aspect-ratio: var(--aspect-ratio);
+    width: min(85vw, calc(85vh * var(--aspect-ratio, 1)));
+    aspect-ratio: var(--aspect-ratio, 1);
     object-fit: cover;
 }
 
@@ -677,6 +725,16 @@ nav.mobile-view:not(.open) {
 
     .fullscreen-img-container > .polaroid > span.info {
         font-size: 1rem;
+    }
+
+    article > .polaroid {
+        margin-inline: auto;
+        width: 100%;
+        height: fit-content;
+    }
+
+    article > .polaroid > img {
+        width: 100%;
     }
 }
 

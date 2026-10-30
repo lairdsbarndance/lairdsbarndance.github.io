@@ -19,17 +19,6 @@ function get_image_link(url) {
     return f_link;
 }
 
-function generate_polaroid(link, info_text, index, rotation_strength = 1.5) {
-    const polaroid = $el(".polaroid,pre-render,paper-overlay,toggle-fullscreen");
-    polaroid.style.setProperty("--random-rotation", (Math.random() * rotation_strength * (index % 2 === 0 ? 1 : -1)) + "deg")
-    const img = $el("img");
-    img.src = link; img.alt = info_text;
-    const span = $el("span.info");
-    span.textContent = info_text;
-    polaroid.appendChildren(img, span);
-    return polaroid;
-}
-
 async function main() {
     const history_res = await fetch_data("history", ignore_blank_cells = false);
     const history_obj = parse_table(history_res);

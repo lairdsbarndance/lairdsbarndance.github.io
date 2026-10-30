@@ -16,8 +16,8 @@ main {padding-bottom: unset; padding-top: 0}
     color: var(--white);
     height: 100vh;
     overflow-y: hidden;
-    width: 90%;
     overflow-x: clip;
+    width: 90%;
 
     @media (any-pointer: coarse) {
         overflow-y: scroll;
@@ -32,19 +32,43 @@ main {padding-bottom: unset; padding-top: 0}
 }
 
 .event-container > .media {
+    position: relative;
+    overflow-x: visible;
+}
+
+.event-container > .media > .carousel {
+    position: absolute;
+    --carousel-extra-width: 5rem;
+    inset: 0 0 0 calc(-1 * var(--carousel-extra-width));
+    --gap: 1rem;
+    --img-size: 80%;
     overflow-x: scroll;
     scroll-snap-type: x mandatory;
-    mask-image: radial-gradient(50% 500% at 50% 50%, white 70%, transparent 95%);
+    mask-image: radial-gradient(50% 500% at 50% 50%, white 80%, transparent 95%);
     display: flex;
+    align-items: center;
     gap: var(--gap);
 }
 
-.media > * {
+.carousel > * {
+    flex-shrink: 0;
     scroll-snap-align: center;
-    max-width: 100%;
-    max-height: 100%;
+    max-width: calc(var(--img-size) - 2 * var(--gap));
+    max-height: var(--img-size);
     object-fit: contain;
+    object-position: center;
 }
+
+.carousel * {user-select: none; -webkit-user-drag: none;}
+
+.carousel > .polaroid {
+    --polaroid-shadow: var(--postcard-shadow);
+    --border-width: var(--postcard-border-width);
+    max-height: 100%;
+    flex-shrink: 1;
+}
+
+.polaroid > span.info {--max-lines: 3; --line-fade: .75; font-weight: 900;}
 
 .events::-webkit-scrollbar {visibility: hidden;}
 
@@ -57,7 +81,7 @@ main {padding-bottom: unset; padding-top: 0}
     transform: translateX(-50%) translateY(12.5%);
 }
 
-.events {
+.events, .timeline {
     mask-image: radial-gradient(300% 50% at 50% 50%, white 0%, white 50%, transparent);
     mask-position: center;
     mask-size: auto 100%;
@@ -81,12 +105,6 @@ main {padding-bottom: unset; padding-top: 0}
 
 /* flex sizing start */
 
-
-/* Allow queries based on the available width */
-.events {
-    container-type: inline-size;
-}
-
 /* Default: side by side */
 .event-container {
     display: flex;
@@ -98,10 +116,8 @@ main {padding-bottom: unset; padding-top: 0}
 }
 
 .event-container:has(.event.expanded) {
-    max-height: 70vh;
+    max-height: 90%;
     flex-shrink: 0;
-    overflow-y: hidden;
-    overflow-x: clip;
 }
 
 .event-container > .event {
@@ -129,7 +145,6 @@ main {padding-bottom: unset; padding-top: 0}
     opacity: 0;
     height: 0;
     transform: translate(-30vw, 0);
-    z-index: -1;
 }
 
 .event-container:has(.event.expanded) > .media {
@@ -142,38 +157,26 @@ main {padding-bottom: unset; padding-top: 0}
     transform 500ms 500ms ease;
 }
 
-/* Narrow layout: stack vertically */
-@container (max-width: 1000px) {
-    .event-container:has(.event.expanded) {
-        width: 100%;
-        flex-flow: column nowrap;
-        height: auto;
-        max-width: calc(1.125 * var(--max-event-width));
-    }
-
-    .event-container:has(.media) {
-        max-height: 70vh;
-    }
-
-    .event-container > .media {
-        transform: translate(0, -30vh);
-    }
-
-    .event-container:not(:has(.media)) > .event.expanded {
-        max-height: 55vh;
-    }
-
-    .event-container:has(.event.expanded) > .media {
-        transform: translate(0, 0vh);
-        max-width: var(--max-event-width);
-    }
-
-    .event-container:has(.event.expanded) > .media:hover {
-        background: green;
-    }
+.postcard {
+    --postcard-border-width: .5rem;
+    border: var(--postcard-border-width) solid var(--white);
+    transform: rotate(var(--random-rotation));
+    box-shadow: var(--postcard-shadow);
 }
 
-/* flex sizing end */
+.carousel > .postcard:first-of-type {
+    margin-left: max(10%, calc(0.5 * var(--carousel-extra-width)));
+}
+
+.carousel > .postcard:last-of-type {
+    margin-right: max(10%, calc(0.5 * var(--carousel-extra-width)));
+}
+
+.fullscreen-img-container > .postcard {
+    --random-rotation: 0;
+    max-width: 90%;
+    max-height: 90%;
+}
 
 .timeline {
     position: fixed;
@@ -228,6 +231,36 @@ main {padding-bottom: unset; padding-top: 0}
         ));
 }
 
+.event.custom-background.expanded::after {
+    opacity: 1;
+    height: var(--scroll-height, 100%);
+}
+
+.event.custom-background.expanded > .date {
+    background: rgba(255,255,255,0.175);
+}
+
+.event.custom-background::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: var(--src);
+    background-position: -25% 0%;
+    background-repeat: no-repeat;
+    background-size: auto 150%;
+    background-attachment: fixed;
+    mask-image: radial-gradient(300vw 30vw at 50% 0%, white, transparent);
+    mask-position: center top;
+    filter: blur(5rem) brightness(.65) saturate(2) contrast(.75);
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 250ms 250ms ease,
+                height 250ms ease;
+}
+
 .event.active {opacity: 1;}
 
 .events > .event-container:first-of-type {
@@ -246,7 +279,6 @@ main {padding-bottom: unset; padding-top: 0}
 .event.expanded {
     flex-shrink: 0;
     overflow-y: var(--transition-overflow);
-    scrollbar-gutter: stable;
 }
 
 .event > .location {
@@ -390,6 +422,66 @@ main {padding-bottom: unset; padding-top: 0}
     font-style: italic;
 }
 
+/* Narrow layout: stack vertically */
+@media (max-width: 1240px) {
+    .events {
+        max-width: 40rem;
+    }
+    .event-container:has(.event.expanded) {
+        width: 100%;
+        flex-flow: column nowrap;
+        height: auto;
+        max-width: calc(1.125 * var(--max-event-width));
+    }
+
+    .event-container:has(.media, .event.expanded) {
+        max-height: 95%;
+    }
+
+    .event-container > .media {
+        transform: translate(0, -30vh);
+    }
+
+    .event-container:not(:has(.media)) > .event.expanded {
+        max-height: 55vh;
+    }
+
+    .event-container:has(.event.expanded) > .media {
+        transform: translate(0, 0vh);
+        max-width: var(--max-event-width);
+        height: 100%;
+    }
+
+    .event-container > .media > .carousel {
+        --carousel-extra-width: 0rem;
+        inset: 0;
+        top: calc(-1*var(--carousel-extra-width));
+        height: calc(var(--carousel-extra-width) * 100%);
+        width: 100%;
+        transition: all 250ms ease;
+    }
+
+    .event-container:not(:has(.event:hover)) > .media:hover > .carousel {
+        --carousel-extra-width: 5rem;
+    }
+
+    .carousel > * {
+        max-height: var(--img-size);
+        max-width: unset;
+    }
+
+    .carousel > .polaroid > span.info {
+        padding-inline: .125rem;
+    }
+
+    .event-container > .event.expanded {
+        flex-basis: auto;
+        height: auto;
+    }
+}
+
+/* flex sizing end */
+
 @media (max-width: 560px) {
     .event > h3 {
         width: 100%;
@@ -409,6 +501,7 @@ main {padding-bottom: unset; padding-top: 0}
 
     .event.expanded > .date, .event.expanded > .location {
         position: initial;
+        text-align: center;
     }
 
     .event.expanded > .date {
@@ -421,4 +514,8 @@ main {padding-bottom: unset; padding-top: 0}
         --line-fade: 3;
     }
 
+}
+
+@keyframes in-front {
+    to {z-index: 0;}
 }

@@ -797,9 +797,23 @@
     - [x] Visual styling of events for mobile
     - [x] Corrections to double scroll interaction system
     - [x] Implemented flex sizing for media panel
+
+    - ### Time Spent: 3 hours
+
+- ## 30/10/2026
+    - [x] Uninterrupted interaction with media panel (prevent automatic minimising of event due to scroll event)
+    - [x] Scroll snapping, draggable image carousel
+    - [x] Packages: Prevent stale image path from breaking page initialisation
+    - [x] Many minor visual tweaks to Packages and Events
+    - [x] Fully dynamic events content generation
+    - [x] Better .media and .event flex sizing on smaller displays
+    - [x] Fix scroll drift
+
+    - ### Time Spent: 8 hours 30 minutes
+    
 - ## To Do
+    - [ ] Parsed image description metadata to be presented in fullscreen postcard view
     - [ ] Improve Meet the band trackpad UX
-    - [ ] Fix packages bug
     - [ ] Add blurred background to expanded events with attached images to improve colour contrast and hierarchy on the page.
 
    
