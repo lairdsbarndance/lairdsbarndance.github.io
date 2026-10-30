@@ -761,7 +761,7 @@
         - [x] Begun javascript variable injection for height of container, timeline etc.
     - [x] Created auto banner minimising functionality to allow for a greater vertical height to be used during scrolling.
 
-    - ### Time Spent: 15 hours
+    - ### Time Spent: 14 hours 30 minutes
 
 - ## 24/10/2026
     - [x] Created scroll-snap style scrolljacking functionality, where the focused event is expanded after a short timeout
@@ -790,10 +790,13 @@
     - [x] Changed scroll-snap-align to end when element is expanded
     - [x] Once banner is minimised on touch devices, remove event listener.
     - [x] Fixed bug where users on mobile could scroll within the events container without the necessary 3D effects updating, since the expanded event was open.
-    - [ ] Visual styling of events for mobile
 
-    - ### Time Spent (so far): 3 hours
+    - ### Time Spent: 4 hours
 
+- ## 29/10/2026
+    - [x] Visual styling of events for mobile
+    - [x] Corrections to double scroll interaction system
+    - [x] Implemented flex sizing for media panel
 - ## To Do
     - [ ] Improve Meet the band trackpad UX
     - [ ] Fix packages bug

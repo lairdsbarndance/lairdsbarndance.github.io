@@ -2,6 +2,57 @@ const timeline_svg = $(".timeline")[0];
 const is_mobile = (navigator.maxTouchPoints > 0 || 'ontouchstart' in document.documentElement);
 let event_expanded = false;
 
+function get_outward_boundary(event, direction, tolerance = 2) {
+    const max_scroll_top = Math.max(0, event.scrollHeight - event.clientHeight);
+
+    if (direction < 0 && event.scrollTop <= tolerance) return "top";
+    if (direction > 0 && event.scrollTop >= max_scroll_top - tolerance) return "bottom";
+
+    return null;
+}
+
+function process_boundary_scroll(state, event, boundary, direction, event_index, event_count) {
+    const is_outer_boundary =
+        (event_index === 0 && boundary === "top" && direction === -1) ||
+        (event_index === event_count - 1 && boundary === "bottom" && direction === 1);
+
+    // At the outermost ends, scrolling outwards must never collapse the card.
+    if (is_outer_boundary) return { state: null, action: "ignore" };
+
+    // A second input only counts when it targets the same edge in the same direction.
+    if (
+        state &&
+        state.el === event &&
+        state.boundary === boundary &&
+        state.direction === direction
+    ) {
+        return { state: null, action: "collapse" };
+    }
+
+    return {
+        state: { el: event, boundary, direction },
+        action: "arm"
+    };
+}
+
+function clear_event_timeouts(event, timeouts) {
+    for (let i = timeouts.length - 1; i >= 0; i--) {
+        if (timeouts[i].el === event) {
+            clearTimeout(timeouts[i].timeout_id);
+            timeouts.splice(i, 1);
+        }
+    }
+}
+
+function collapse_expanded_event(event, events_container, events, timeouts) {
+    if (!event.classList.contains("expanded")) return;
+
+    event.classList.remove("expanded");
+    handle_click_event(event, false, events_container, events);
+    events_container.style.setProperty("--scroll-snap-type", "y mandatory");
+    clear_event_timeouts(event, timeouts);
+}
+
 function handle_click_event(event, is_expanded, events_container, events, prevent_scroll = false) {
     const package_type = event.querySelector(".package-type");
     package_type.textContent = package_type.textContent.replace(is_expanded ? "," : ":", is_expanded ? ":" : ",");
@@ -9,7 +60,7 @@ function handle_click_event(event, is_expanded, events_container, events, preven
         event_expanded = true;
         event.style.setProperty("--transition-overflow", "hidden");
         event.scrollTop = 0;
-        initialise_read_mores(Array.from(event.querySelectorAll(".quote > .content")));
+        initialise_read_mores([event.querySelector(".quote > .content"), event.querySelector(".band-container > p")]);
         const min_height = $(".banner")[0].getBoundingClientRect().bottom;
         setTimeout(() => {
             event.style.setProperty("--transition-overflow", "auto");
@@ -24,7 +75,7 @@ function handle_click_event(event, is_expanded, events_container, events, preven
 async function correct_scroll_top(target_el, scroll_el, min_height = $(".banner")[0].getBoundingClientRect().bottom, attempts = 0, margin = 16) {
     scroll_el.style.setProperty("--scroll-snap-type", "none");
     const rect = target_el.getBoundingClientRect();
-    let scroll_top = target_el.offsetTop - min_height;
+    let scroll_top = target_el.offsetTop - min_height - margin;
     await scroll_el.scrollTo({top: scroll_top, behavior: "smooth"});
 
     // if(rect.top < min_height + margin) {
@@ -41,7 +92,7 @@ async function correct_scroll_top(target_el, scroll_el, min_height = $(".banner"
 
 async function focus_event(events, index, direction = 1, events_container, preserve_event = null, prevent_scroll = false) {
     const focused_event = events[index];
-    const scroll_el = events[0].parentElement;
+    const scroll_el = $(".events")[0];
 
     events.forEach(el => {
         el.classList.remove("focused");
@@ -157,11 +208,11 @@ function resize_timeline_svg(timeline_svg) {
     );
 }
 
-function update_timeline(events, x_offset = 10, y_offset = 50) {
+function update_timeline(events, x_offset = 10, y_offset = 50, master_offset = 8) {
     const client_height = document.documentElement.clientHeight;
     const top_event = [...Array.from(events)].filter(el => el.getBoundingClientRect().top < 0).pop() || events[0];
-    const container_rect = events[0].parentElement.getBoundingClientRect();
-    const median_coord = {x: container_rect.left, y: container_rect.top + container_rect.height / 2};
+    const container_rect = $(".events")[0].getBoundingClientRect();
+    const median_coord = {x: container_rect.left + master_offset, y: container_rect.top + container_rect.height / 2};
     const bottom_event = [...Array.from(events)].filter(el => el.getBoundingClientRect().bottom > client_height)[0] || events[events.length - 1];
 
     let top_corners = get_transformed_corners(top_event);
@@ -170,19 +221,18 @@ function update_timeline(events, x_offset = 10, y_offset = 50) {
     if(top_event === events[0]) top_corners.p1.y = top_corners.p1.y - y_offset;
     if(bottom_event === events[events.length - 1]) bottom_corners.p4.y = bottom_corners.p4.y + y_offset;
 
-
     const timeline_coords = {
         top: {
-            x: top_corners.p1.x + x_offset,
-            y: top_corners.p1.y - y_offset
+            x: top_corners.p1.x + x_offset + master_offset,
+            y: top_corners.p1.y - y_offset 
         },
         median: median_coord,
         bottom: {
-            x: bottom_corners.p4.x + x_offset,
+            x: bottom_corners.p4.x + x_offset + master_offset,
             y: bottom_corners.p4.y + y_offset
         }
     };
-    
+
     update_timeline_svg({...timeline_coords, handleLength: 300});
 }
 
@@ -311,6 +361,8 @@ async function main() {
 
     // generate events here
 
+    generate_background(0.3, [events_container]);
+
     let events = $(".event");
     const original_padding_top = getComputedStyle(main_el).getPropertyValue("--padding-top");
     const scroll_height = (document.documentElement.clientHeight - banner.getBoundingClientRect().bottom - 100);
@@ -318,14 +370,14 @@ async function main() {
     events_container.style.setProperty("--max-height", scroll_height + "px");
     events_container.style.setProperty("--extra-overflow", events[events.length - 1].offsetHeight + "px");
     banner.classList.remove("minimise");
-    
+
     banner.style.transitionDuration = "";
 
     let banner_first_minimised = false;
 
     events_container.addEventListener("scroll", (e) => {
         if(events_container.scrollTop > 0) {
-            banner_first_minimised = true && is_mobile;
+            banner_first_minimised = true;
             main_el.style.setProperty("--padding-top", banner.getBoundingClientRect().bottom + "px");
             banner.classList.add("minimise");
         } else if (!banner_first_minimised) {
@@ -343,15 +395,14 @@ async function main() {
     events.forEach((event, index) => {
         event.addEventListener("click", async (e) => {
             const is_expanded = !event.classList.contains("expanded");
-            const read_more = event.querySelector(".read-more")
-            let is_read_more = e.target.closest(".read-more");
+            const read_more = e.target.closest(".read-more");
             if (is_expanded) {
                 focused_event_index = index;
                 update_relative_index(events, focused_event_index);
                 event.classList.add("expanded");
-                
+
                 await focus_event(events, focused_event_index, 0, events_container, event);
-            } else if(read_more && is_read_more) {
+            } else if(read_more) {
                 read_more.classList.toggle("expanded");
                 setTimeout(() => {
                     correct_scroll_top(event, events_container)
@@ -371,36 +422,81 @@ async function main() {
 
         let scroll_tolerance = 2;
         let scroll_timeout;
-        let boundary_scroll_detected = false;
+        let boundary_scroll_state = null;
         let boundary_detected_this_gesture = false;
+        let boundary_check_id = 0;
+        let last_wheel_direction = 0;
 
         event.addEventListener("wheel", (e) => {
             clearTimeout(scroll_timeout);
 
-            if (event.classList.contains("expanded")) {
-                const at_top =
-                    event.scrollTop <= scroll_tolerance && e.deltaY < 0;
+            const direction = Math.sign(e.deltaY);
+            const check_id = ++boundary_check_id;
 
-                const at_bottom =
-                    event.scrollTop >= event.scrollHeight - event.clientHeight - scroll_tolerance &&
-                    e.deltaY > 0;
+            if (direction && last_wheel_direction && direction !== last_wheel_direction || e.target.closest(".media")) {
+                boundary_scroll_state = null;
+                boundary_detected_this_gesture = false;
+            }
+            if (direction) last_wheel_direction = direction;
 
-                if ((at_top || at_bottom) && !boundary_detected_this_gesture) {
-                    boundary_detected_this_gesture = true;
+            if (!event.classList.contains("expanded")) {
+                boundary_scroll_state = null;
+                boundary_detected_this_gesture = false;
+                last_wheel_direction = 0;
+            } else if (direction) {
+                const boundary = get_outward_boundary(event, direction, scroll_tolerance);
 
-                    if (boundary_scroll_detected) {
-                        
-                        focus_event(events, index, Math.sign(e.deltaY), events_container)
-                        boundary_scroll_detected = false;
-                    } else {
-                        boundary_scroll_detected = true;
+                if (boundary) {
+                    if (!boundary_detected_this_gesture) {
+                        boundary_detected_this_gesture = true;
+
+                        const result = process_boundary_scroll(
+                            boundary_scroll_state,
+                            event,
+                            boundary,
+                            direction,
+                            index,
+                            events.length
+                        );
+
+                        boundary_scroll_state = result.state;
+
+                        if (result.action === "collapse") {
+                            // Let the same wheel event bubble to .events, which moves focus once.
+                            collapse_expanded_event(event, events_container, events, timeouts);
+                        }
                     }
+                } else {
+                    // The wheel event runs before native scrolling. Check the resulting scrollTop
+                    // on the next frame so the input that reaches an edge is counted as the first one.
+                    boundary_scroll_state = null;
+                    requestAnimationFrame(() => {
+                        if (
+                            check_id !== boundary_check_id ||
+                            !event.classList.contains("expanded")
+                        ) return;
+
+                        const reached_boundary = get_outward_boundary(event, direction, scroll_tolerance);
+                        if (!reached_boundary) return;
+
+                        const result = process_boundary_scroll(
+                            null,
+                            event,
+                            reached_boundary,
+                            direction,
+                            index,
+                            events.length
+                        );
+
+                        boundary_scroll_state = result.state;
+                        boundary_detected_this_gesture = true;
+                    });
                 }
             }
 
             scroll_timeout = setTimeout(() => {
                 boundary_detected_this_gesture = false;
-            }, 50);
+            }, 100);
         });
     });
 
@@ -408,6 +504,10 @@ async function main() {
     let await_scroll = false;
     let timeouts = [];
     update_relative_index(events, focused_event_index);
+
+    setTimeout(() => {
+        update_timeline(events)
+    }, 250);
 
     focus_event(events, focused_event_index, 0, events_container);
 
@@ -419,104 +519,131 @@ async function main() {
 
     if (supports_scrollsnapchange = "onscrollsnapchanging" in window) {
         let touch_start_y = null;
-        let boundary_scroll_el = null;
-        let boundary_scroll_detected = false;
+        let touch_event = null;
+        let touch_direction = 0;
+        let boundary_scroll_state = null;
         let boundary_detected_this_gesture = false;
         let gesture_boundary = null;
 
         events_container.addEventListener("touchstart", (e) => {
             touch_start_y = e.touches[0].clientY;
+            touch_event = Array.from(events).find(el => el.classList.contains("expanded")) || null;
+            touch_direction = 0;
             boundary_detected_this_gesture = false;
 
-            const expanded_el = Array.from(events).find(el =>
-                el.classList.contains("expanded")
-            );
-
-            if (!expanded_el) {
-                boundary_scroll_el = null;
-                boundary_scroll_detected = false;
+            if (!touch_event) {
+                boundary_scroll_state = null;
                 gesture_boundary = null;
                 return;
             }
 
-            if (boundary_scroll_el && boundary_scroll_el !== expanded_el) {
-                boundary_scroll_el = null;
-                boundary_scroll_detected = false;
-            }
-
+            const max_scroll_top = Math.max(0, touch_event.scrollHeight - touch_event.clientHeight);
             gesture_boundary = {
-                el: expanded_el,
-                at_top: expanded_el.scrollTop <= scroll_tolerance,
-                at_bottom:
-                    expanded_el.scrollTop >=
-                    expanded_el.scrollHeight -
-                    expanded_el.clientHeight -
-                    scroll_tolerance
+                el: touch_event,
+                at_top: touch_event.scrollTop <= scroll_tolerance,
+                at_bottom: touch_event.scrollTop >= max_scroll_top - scroll_tolerance
             };
-        }, { passive: true });
 
-        events_container.addEventListener("touchmove", (e) => {
-            if (
-                touch_start_y === null ||
-                !gesture_boundary ||
-                boundary_detected_this_gesture
-            ) return;
-
-            const delta_y = touch_start_y - e.touches[0].clientY;
-
-            if (Math.abs(delta_y) < 3) return;
-
-            const { el, at_top, at_bottom } = gesture_boundary;
-
-            const at_boundary =
-                (at_top && delta_y < 0) ||
-                (at_bottom && delta_y > 0);
-
-            if (!at_boundary) return;
-
-            boundary_detected_this_gesture = true;
-
-            const events = Array.from(events_container.querySelectorAll(".event"));
-            const target_index = events.indexOf(e.target.closest(".event"));
-            const direction = Math.sign(delta_y)
-            if(!((target_index === 0 && direction === -1) || (target_index === events.length  -1  && direction === 1))) boundary_scroll_detected = false;
-
-
-            if (boundary_scroll_detected && boundary_scroll_el === el) {
-                el.classList.remove("expanded");
-                events_container.style.setProperty("--scroll-snap-type", "y mandatory");
-
-                for (let i = timeouts.length - 1; i >= 0; i--) {
-                    if (timeouts[i].el === el) {
-                        clearTimeout(timeouts[i].timeout_id);
-                        timeouts.splice(i, 1);
-                    }
-                }
-
-                boundary_scroll_detected = false;
-                boundary_scroll_el = null;
-            } else {
-                boundary_scroll_detected = true;
-                boundary_scroll_el = el;
+            if (boundary_scroll_state && boundary_scroll_state.el !== touch_event) {
+                boundary_scroll_state = null;
             }
         }, { passive: true });
 
-        const reset_touch_gesture = () => {
+        const handle_snap_touch_end = () => {
+            // If this gesture reached an edge from within the content, record it here.
+            // The next outward gesture can then collapse the card.
+            if (
+                !boundary_detected_this_gesture &&
+                touch_event?.classList.contains("expanded") &&
+                touch_direction
+            ) {
+                const boundary = get_outward_boundary(touch_event, touch_direction, scroll_tolerance);
+
+                if (boundary && !e.target.closest(".media")) {
+                    const result = process_boundary_scroll(
+                        boundary_scroll_state,
+                        touch_event,
+                        boundary,
+                        touch_direction,
+                        Array.from(events).indexOf(touch_event),
+                        events.length
+                    );
+
+                    boundary_scroll_state = result.state;
+
+                    if (result.action === "collapse") {
+                        collapse_expanded_event(touch_event, events_container, events, timeouts);
+                    }
+                } else {
+                    boundary_scroll_state = null;
+                }
+            }
+
             touch_start_y = null;
+            touch_event = null;
+            touch_direction = 0;
             gesture_boundary = null;
             boundary_detected_this_gesture = false;
         };
 
-        events_container.addEventListener("touchend", reset_touch_gesture, {
-            passive: true
-        });
+        const reset_snap_touch_gesture = () => {
+            touch_start_y = null;
+            touch_event = null;
+            touch_direction = 0;
+            gesture_boundary = null;
+            boundary_detected_this_gesture = false;
+        };
 
-        events_container.addEventListener("touchcancel", reset_touch_gesture, {
-            passive: true
-        });
+        events_container.addEventListener("touchmove", (e) => {
+            if (touch_start_y === null) return;
 
+            const delta_y = touch_start_y - e.touches[0].clientY;
+            if (Math.abs(delta_y) < 3) return;
+
+            if (!touch_direction) touch_direction = Math.sign(delta_y);
+            if (!gesture_boundary || boundary_detected_this_gesture) return;
+
+            const { el, at_top, at_bottom } = gesture_boundary;
+            const boundary =
+                (touch_direction < 0 && at_top) ? "top" :
+                (touch_direction > 0 && at_bottom) ? "bottom" : null;
+
+            if (!boundary) {
+                boundary_scroll_state = null;
+                return;
+            }
+
+            boundary_detected_this_gesture = true;
+
+            if(e.target.closest(".media")) {
+                boundary_scroll_state = null;
+                return;
+            };
+
+            const result = process_boundary_scroll(
+                boundary_scroll_state,
+                el,
+                boundary,
+                touch_direction,
+                Array.from(events).indexOf(el),
+                events.length
+            );
+
+            boundary_scroll_state = result.state;
+
+            if (result.action === "collapse") {
+                collapse_expanded_event(el, events_container, events, timeouts);
+            }
+        }, { passive: true });
+
+        events_container.addEventListener("touchend", handle_snap_touch_end, { passive: true });
+        events_container.addEventListener("touchcancel", reset_snap_touch_gesture, { passive: true });
         events_container.addEventListener("scrollsnapchanging", async (e) => {
-            focused_event_index = Array.from(events).indexOf(e.snapTargetBlock);
+            const snap_index = Array.from(events_container.querySelectorAll(".event-container")).indexOf(e.snapTargetBlock);
+            if (boundary_scroll_state && boundary_scroll_state.el !== e.snapTargetBlock) {
+                boundary_scroll_state = null;
+            }
+            focused_event_index = snap_index;
 
             try {
                 await focus_event(
@@ -527,7 +654,7 @@ async function main() {
                     null,
                     prevent_scroll = false
                 );
-                
+
                 update_timeline(events);
             } finally {
                 const focused_el = Array.from(events).find(el =>
@@ -545,7 +672,7 @@ async function main() {
                             prevent_scroll = false
                         );
                     }
-                }, 1000);
+                }, 4000);
 
                 timeouts.push({ el: focused_el, timeout_id: timeout_id });
                 await_scroll = false;
@@ -553,15 +680,63 @@ async function main() {
         });
     } else {
         let touch_start_y = null;
+        let touch_event = null;
         let scroll_direction = 0;
-        let boundary_scroll_detected = false;
+        let boundary_scroll_state = null;
         let boundary_detected_this_gesture = false;
 
         events_container.addEventListener("touchstart", (e) => {
             touch_start_y = e.touches[0].clientY;
+            touch_event = Array.from(events_container.querySelectorAll(".event-container")).find(el => el.classList.contains("expanded")) || null;
             scroll_direction = 0;
             boundary_detected_this_gesture = false;
+
+            if (!touch_event || (boundary_scroll_state && boundary_scroll_state.el !== touch_event)) {
+                boundary_scroll_state = null;
+            }
         }, { passive: true });
+
+        const handle_fallback_touch_end = () => {
+            // Record a boundary reached during this gesture, even if it was not at the edge on touchstart.
+            if (
+                !boundary_detected_this_gesture &&
+                touch_event?.classList.contains("expanded") &&
+                scroll_direction
+            ) {
+                const boundary = get_outward_boundary(touch_event, scroll_direction, scroll_tolerance);
+
+                if (boundary && !e.target.closest(".media")) {
+                    const result = process_boundary_scroll(
+                        boundary_scroll_state,
+                        touch_event,
+                        boundary,
+                        scroll_direction,
+                        Array.from(events).indexOf(touch_event),
+                        events.length
+                    );
+
+                    boundary_scroll_state = result.state;
+
+                    if (result.action === "collapse") {
+                        collapse_expanded_event(touch_event, events_container, events, timeouts);
+                    }
+                } else {
+                    boundary_scroll_state = null;
+                }
+            }
+
+            touch_start_y = null;
+            touch_event = null;
+            scroll_direction = 0;
+            boundary_detected_this_gesture = false;
+        };
+
+        const reset_fallback_touch_gesture = () => {
+            touch_start_y = null;
+            touch_event = null;
+            scroll_direction = 0;
+            boundary_detected_this_gesture = false;
+        };
 
         events_container.addEventListener("touchmove", (e) => {
             if (touch_start_y === null) return;
@@ -574,56 +749,40 @@ async function main() {
 
             if (!scroll_direction || boundary_detected_this_gesture) return;
 
-            const expanded_el = Array.from(events).find(el =>
-                el.classList.contains("expanded")
+            const expanded_el = Array.from(events).find(el => el.classList.contains("expanded"));
+
+            if (!expanded_el) {
+                boundary_scroll_state = null;
+                return;
+            }
+
+            const boundary = get_outward_boundary(expanded_el, scroll_direction, scroll_tolerance);
+
+            if (!boundary || e.target.closest(".media")) {
+                boundary_scroll_state = null;
+                return;
+            }
+
+            boundary_detected_this_gesture = true;
+
+            const result = process_boundary_scroll(
+                boundary_scroll_state,
+                expanded_el,
+                boundary,
+                scroll_direction,
+                Array.from(events).indexOf(expanded_el),
+                events.length
             );
 
-            if (!expanded_el) return;
+            boundary_scroll_state = result.state;
 
-            const at_top = expanded_el.scrollTop <= scroll_tolerance;
-
-            const at_bottom =
-                expanded_el.scrollTop >=
-                expanded_el.scrollHeight -
-                expanded_el.clientHeight -
-                scroll_tolerance;
-
-            if (
-                (at_top && scroll_direction < 0) ||
-                (at_bottom && scroll_direction > 0)
-            ) {
-                boundary_detected_this_gesture = true;
-
-                if (boundary_scroll_detected) {
-                    expanded_el.classList.remove("expanded");
-                    events_container.style.setProperty("--scroll-snap-type", "y mandatory");
-                    boundary_scroll_detected = false;
-
-                    for (let i = timeouts.length - 1; i >= 0; i--) {
-                        if (timeouts[i].el === expanded_el) {
-                            clearTimeout(timeouts[i].timeout_id);
-                            timeouts.splice(i, 1);
-                        }
-                    }
-                } else {
-                    boundary_scroll_detected = true;
-                }
+            if (result.action === "collapse") {
+                collapse_expanded_event(expanded_el, events_container, events, timeouts);
             }
         }, { passive: true });
 
-        const reset_touch_gesture = () => {
-            touch_start_y = null;
-            scroll_direction = 0;
-            boundary_detected_this_gesture = false;
-        };
-
-        events_container.addEventListener("touchend", reset_touch_gesture, {
-            passive: true
-        });
-
-        events_container.addEventListener("touchcancel", reset_touch_gesture, {
-            passive: true
-        });
+        events_container.addEventListener("touchend", handle_fallback_touch_end, { passive: true });
+        events_container.addEventListener("touchcancel", reset_fallback_touch_gesture, { passive: true });
 
         window.addEventListener("touchmove", async (e) => {
             let i = find_closest_el(events, scroll_center);
@@ -641,7 +800,7 @@ async function main() {
                     null,
                     prevent_scroll = true
                 );
-                
+
                 update_timeline(events);
             } finally {
                 const focused_el = Array.from(events).find(el =>
@@ -680,7 +839,7 @@ async function main() {
         await_scroll = true;
         focused_event_index = next_index;
 
-        
+
         try {
             await focus_event(events, focused_event_index, direction, events_container);
             update_timeline(events);
@@ -689,7 +848,7 @@ async function main() {
             const timeout_id = setTimeout(() => {
                 if(focused_el.classList.contains("focused")) {
                     focused_el.classList.add("expanded");
-                    
+
                     handle_click_event(focused_el, true, events_container, events);
                 }
             }, 1000);
@@ -701,9 +860,12 @@ async function main() {
     events_container.addEventListener("wheel", async (e) => {
         const closest_event = e.target.closest(".event");
 
-        if (closest_event?.classList.contains("expanded") && closest_event?.scrollHeight > closest_event?.offsetHeight) {
+        if (closest_event?.classList.contains("expanded")) {
             return;
         }
+
+        console.log(e.target.closest(".media"))
+        if(e.target.closest(".media")) return;
 
         events.forEach(event => {
             if (!event.classList.contains("expanded")) return;

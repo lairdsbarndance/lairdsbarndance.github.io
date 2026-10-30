@@ -134,7 +134,7 @@ button.accent-btn {
     cursor: pointer;
 }
 
-.read-more {
+.might-read-more {
     --line-height: 1.45;
     --max-lines: 5;
     --line-fade: 1.5;
@@ -143,7 +143,9 @@ button.accent-btn {
         (1em + ((var(--line-height) - 1) * 1em)) * var(--max-lines)
     );
     line-height: var(--line-height);
+}
 
+.read-more {
     overflow-y: hidden;
 
     mask-image: linear-gradient(
@@ -640,7 +642,7 @@ nav.mobile-view:not(.open) {
 
 @media (max-width: 1000px) {
     .instrument-container {
-        --instruments-bleed: 4rem;
+        --instruments-bleed: 20vw;
     }
 }
 

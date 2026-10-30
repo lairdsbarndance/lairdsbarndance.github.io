@@ -428,7 +428,7 @@ function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", cont
 
 function initialise_read_mores(els) {
     els.forEach(el => {
-        deactivate(el)
+        deactivate(el);
         el.style.overflowY = "auto";
         if(el.offsetHeight < el.scrollHeight) {
             el.classList.add("read-more")
