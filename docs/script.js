@@ -1,9 +1,9 @@
 const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
-const DEV_MODE = window.location.href.includes("127.0.0.1");
-const OFFLINE_MODE = DEV_MODE;
-const CACHE = true;
+const DEV_MODE = window.location.href.includes("127.0.0.1") || window.location.href.includes("?=DEVMODE");
+const OFFLINE_MODE = false;
+const CACHE = !DEV_MODE;
 const CACHE_REFRESH = 6 // in hours
 let main_promise;
 
@@ -1129,7 +1129,7 @@ function generate_post_its(post_its_container, obj, colour_arr = ["#FFFFFF", "#F
     post_its_container.style.setProperty("--column-width", post_its_container.querySelector(".post-it").offsetWidth + "px");
 }
 
-async function generate_background(parallax = 0.3, glows = $(".bg-glow"), custom_mask_els = null) {
+async function generate_background(parallax = 0.3, glows = $(".bg-glow"), custom_mask_els = null, fade_in_container = true) {
     const background_container = $el(".bg-container,pre-render");
     const instrument_container = $el(".instrument-container,scroll-transfer");
     let rand = Math.random();
@@ -1169,7 +1169,11 @@ async function generate_background(parallax = 0.3, glows = $(".bg-glow"), custom
                 const glow_els = $(".glow");
 
                 fade_in(background_container);
-                glows.forEach(glow_container => fade_in(glow_container));
+
+                if(fade_in_container) {
+                    glows.forEach(glow_container => fade_in(glow_container));
+                }
+
                 glow_els.forEach(el => fade_in(el));
 
                 const images = Array.from(background_container.querySelectorAll("img"));

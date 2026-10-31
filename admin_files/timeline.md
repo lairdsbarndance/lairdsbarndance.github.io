@@ -810,6 +810,14 @@
     - [x] Fix scroll drift
 
     - ### Time Spent: 8 hours 30 minutes
+
+- ## 31/10/2026
+    - [x] Better Initial Page loading to longer loading pages
+        - [x] Packages: Render initial h4, then show a loader below before the packages are revealed
+        - [x] Events: Since there's no initial text, render each event in as soon as they are generated; have skeleton events with loaders inside before they are generated.
+    - [x] DEVMODE based on url addition and Database portal
+
+    - ### Time Spent (so far): 1 hour
     
 - ## To Do
     - [ ] Parsed image description metadata to be presented in fullscreen postcard view

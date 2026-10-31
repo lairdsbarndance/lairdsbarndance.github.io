@@ -220,12 +220,13 @@ async function main() {
     
     const f_packages = packages_obj.filter(el => el.heading !== "General Information");
     h4.innerHTML = packages_obj.find(el => el.heading === "General Information")["content"].join("<br>");
+    fade_in(h4);
     
     const events_obj = await fetch_events();
     const images_per_package = await get_website_variable("Images per package");
     const videos_per_package = await get_website_variable("Videos per package");
+
     await generate_packages(f_packages, events_obj, images_per_package, videos_per_package)
-    fade_in(h4);
     
     const packages_container = $(".packages")[0];
     const min_aspect_ratio = parseFloat(packages_container.dataset.minPackageAspectRatio);

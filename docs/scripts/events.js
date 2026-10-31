@@ -68,6 +68,23 @@ function regenerate_iframes_after_minimising(event, delay = 500) {
     }, delay);
 }
 
+function generate_loading_container() {
+    const container = $el("div.event-container,loading-container");
+    const event_container = $el("article.event,custom-scrollbar");
+    const date = $el("div.date");
+    const span = $el("span");
+
+    date.appendChild(span);
+
+    const loading = $el("img.loading,active");
+    loading.src = "/assets/loading.svg";
+
+    event_container.appendChildren(date, loading);
+    container.appendChild(event_container);
+
+    return {container, event_container, date, span, loading};
+}
+
 function collapse_expanded_event(event, events_container, events, timeouts) {
     if (!event.classList.contains("expanded")) return;
     event.classList.remove("expanded");
@@ -418,17 +435,36 @@ function generate_event_date(timestamp) {
     return date_container;
 }
 
-async function generate_events(events_obj, package_colours) {
-    return await Promise.all(events_obj.map(async event => {
+async function generate_events(events_obj, package_colours, events_container, interval = 250) {
+    const loading_containers = events_obj.map(() =>
+        generate_loading_container()
+    );
+
+    events_container.appendChildren(
+        ...loading_containers.map(item => item.container)
+    );
+
+    setTimeout(() => {
+        stagger_activate_els(Array.from(events_container.children), 125);
+    }, 1000);
+
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    const generated_events = [];
+
+    for (const [index, event] of events_obj.entries()) {
+        const event_start = performance.now();
+
+        const {
+            container,
+            event_container: article,
+            date: date_container,
+            span: date_text,
+            loading
+        } = loading_containers[index];
+
         const files = event.files ?? [];
         const has_media = files.length > 0;
-
-        const event_container = $el("div.event-container");
-
-        // Event article
-        const article = $el(
-            `article.event,custom-scrollbar${has_media && files.find(file => file.mime_type?.startsWith("image/")) ? ",custom-background" : ""}`
-        );
 
         // Date
         const date = new Date(event.Date);
@@ -440,13 +476,19 @@ async function generate_events(events_obj, package_colours) {
             timeZone: "Europe/London"
         }).formatToParts(date);
 
-        const day = Number(date_parts.find(part => part.type === "day").value);
-        const month = date_parts.find(part => part.type === "month").value;
-        const year = date_parts.find(part => part.type === "year").value;
+        const day = Number(date_parts.find(
+            part => part.type === "day"
+        ).value);
 
-        const date_container = $el("div.date");
-        const date_text = $el("span");
+        const month = date_parts.find(
+            part => part.type === "month"
+        ).value;
 
+        const year = date_parts.find(
+            part => part.type === "year"
+        ).value;
+
+        // Populate the existing date span
         date_text.appendChild(document.createTextNode(day));
 
         const suffix = $el("sup");
@@ -456,9 +498,6 @@ async function generate_events(events_obj, package_colours) {
         date_text.appendChild(
             document.createTextNode(` ${month} ${year}`)
         );
-
-        date_container.appendChild(date_text);
-        article.appendChild(date_container);
 
         // Location
         const location = $el("div.location");
@@ -474,6 +513,10 @@ async function generate_events(events_obj, package_colours) {
         heading.textContent = event["Description of Event"];
 
         article.appendChild(heading);
+
+        // Finish converting the loading container
+        loading.remove();
+        container.classList.remove("loading-container");
 
         // Band information
         const band_container = $el("div.band-container");
@@ -532,16 +575,18 @@ async function generate_events(events_obj, package_colours) {
 
             text_arr.forEach((str, i) => {
                 const paragraph = $el("p");
-                paragraph.textContent = (i === 0 ? "“" : "") + str + (i === text_arr.length - 1 ? "”" : "");
+
+                paragraph.textContent =
+                    (i === 0 ? "“" : "") +
+                    str +
+                    (i === text_arr.length - 1 ? "”" : "");
+
                 content.appendChild(paragraph);
-            })
+            });
 
             quote.appendChild(content);
-
             article.appendChild(quote);
         }
-
-        event_container.appendChild(article);
 
         // Media and carousel
         if (has_media) {
@@ -557,6 +602,8 @@ async function generate_events(events_obj, package_colours) {
             );
 
             if (background_image) {
+                article.classList.add("custom-background");
+
                 article.style.setProperty(
                     "--src",
                     `url("${background_image.src}")`
@@ -569,13 +616,23 @@ async function generate_events(events_obj, package_colours) {
             carousel.appendChildren(...media_items);
             media.appendChild(carousel);
 
-            event_container.appendChild(media);
+            container.appendChild(media);
         }
 
-        return event_container;
-    }));
-}
+        generated_events.push(container);
 
+        // Maintain the minimum interval between the first five events
+        if (index < 4) {
+            const remaining = interval - (performance.now() - event_start);
+
+            if (remaining > 0) {
+                await new Promise(resolve => setTimeout(resolve, remaining));
+            }
+        }
+    }
+
+    return generated_events;
+}
 
 async function main() {
     const events_obj = await fetch_events();
@@ -594,14 +651,13 @@ async function main() {
         {package: "Bluegrass and caller", colour: "#82FFF0"}
     ];
 
-    const generated_events = await generate_events(
+    await generate_events(
         events_obj,
-        package_colours
+        package_colours,
+        events_container
     );
 
-    events_container.appendChildren(...generated_events);
-
-    generate_background(0.3, [events_container]);
+    generate_background(0.3, [events_container], null, false);
 
     let events = $(".event");
     const media = $(".media");
@@ -764,7 +820,6 @@ async function main() {
     focus_event(events, focused_event_index, 0, events_container);
 
     activate(timeline_svg);
-    stagger_activate_els(events, 125);
 
     if(!is_mobile) initialise_scroll_draggable();
     

@@ -48,24 +48,6 @@ article > .spacer {
     background: transparent;
 }
 
-.polaroid {
-    --border-width: .5rem;
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    background: var(--white);
-    border: var(--border-width) var(--white) solid;
-    gap: .5rem;
-    font-family: "Caveat", cursive;
-    grid-row: 1 / -1;
-    height: fit-content;
-    margin-top: calc(-1 * var(--spacer-height));
-    box-shadow: var(--polaroid-shadow);
-    cursor: pointer;
-    transform: rotate(var(--random-rotation));
-}
-
 .history > * > * > * {
     transition: opacity 500ms ease,
                 transform 500ms ease;
@@ -84,20 +66,6 @@ article > .spacer {
     grid-template-rows: auto 1fr;
 }
 
-.polaroid > span.info {
-    padding-inline: 2rem;
-    padding-bottom: .25rem;
-    text-align: center;
-    text-wrap-style: balance;
-    color: black;
-    font-size: 1.125rem;
-}
-
-.polaroid > img {
-    width: 100%;
-    max-width: 30em;
-}
-
 @media (max-width: 950px) {
     .history article {
         column-gap: 2.125rem;
@@ -112,12 +80,6 @@ article > .spacer {
         flex-direction: column;
         justify-content: center;
         gap: 1.5rem;
-    }
-
-    article > .polaroid {
-        margin-inline: auto;
-        width: 100%;
-        height: fit-content;
     }
 
     .history > * > article > h2 {
@@ -135,8 +97,5 @@ article > .spacer {
 
     article:has(h2) > p {
         margin-top: -.75rem;
-    }
-    article > .polaroid > img {
-        width: 100%;
     }
 }
