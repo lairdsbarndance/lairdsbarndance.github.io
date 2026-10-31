@@ -109,6 +109,10 @@
     mix-blend-mode: overlay;
 }
 
+nav .leather-background > .displacement {
+    background-size: calc(var(--texture-scale) * 500%) auto;
+}
+
 .leather-background > .dimples, .sheen {
     background-image: url(../assets/leather_dimples.png);
     background-size: calc(400px * var(--texture-scale));

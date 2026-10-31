@@ -808,6 +808,7 @@
     - [x] Fully dynamic events content generation
     - [x] Better .media and .event flex sizing on smaller displays
     - [x] Fix scroll drift
+    - [x] Added blurred background to expanded events with attached images to improve colour contrast and hierarchy on the page.
 
     - ### Time Spent: 8 hours 30 minutes
 
@@ -816,12 +817,12 @@
         - [x] Packages: Render initial h4, then show a loader below before the packages are revealed
         - [x] Events: Since there's no initial text, render each event in as soon as they are generated; have skeleton events with loaders inside before they are generated.
     - [x] DEVMODE based on url addition and Database portal
-
+    - [x] Improve Meet the band trackpad UX
+    - [x] Parsed image description metadata to be presented in fullscreen postcard view
+    - [x] Fixed fullscreen_img_logic() and draggable() timing and logic
+    - [ ] Added autoplay music to events with audio
     - ### Time Spent (so far): 1 hour
     
 - ## To Do
-    - [ ] Parsed image description metadata to be presented in fullscreen postcard view
-    - [ ] Improve Meet the band trackpad UX
-    - [ ] Add blurred background to expanded events with attached images to improve colour contrast and hierarchy on the page.
 
    

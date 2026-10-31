@@ -12,9 +12,8 @@ async function main() {
 
     if(window.location.href.includes("selected_package")) {
         selected_package = package_options.find(package => window.location.href.split("?selected_package=").pop() === package.split(" ").join("_").toLowerCase());
+        select.parentElement.classList.add("autofilled")
     }
-
-    console.log(selected_package)
 
     select.innerHTML = 
     `<option value="" disabled selected>Select a package</option>` +

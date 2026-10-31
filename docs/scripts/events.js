@@ -203,7 +203,9 @@ async function focus_event(events, index, direction = 1, events_container, prese
 
 function update_relative_index(events, focused_event_index) {
     events.forEach((event, index) => {
-        event.style.setProperty("--relative-event-index", focused_event_index - index);
+        let relative_index = focused_event_index - index;
+        event.style.setProperty("--relative-event-index", relative_index);
+        // event.style.display = Math.abs(relative_index) > 9 ? "none" : "flex";
     })
 }
 
@@ -435,7 +437,7 @@ function generate_event_date(timestamp) {
     return date_container;
 }
 
-async function generate_events(events_obj, package_colours, events_container, interval = 250) {
+async function generate_events(events_obj, package_colours, events_container, interval = 250, concurrent_events = 5) {
     const loading_containers = events_obj.map(() =>
         generate_loading_container()
     );
@@ -452,9 +454,8 @@ async function generate_events(events_obj, package_colours, events_container, in
 
     const generated_events = [];
 
-    for (const [index, event] of events_obj.entries()) {
-        const event_start = performance.now();
-
+    // Generate an individual event
+    async function generate_event(event, index) {
         const {
             container,
             event_container: article,
@@ -595,33 +596,46 @@ async function generate_events(events_obj, package_colours, events_container, in
                 carousel_item_class_name: "postcard toggle-fullscreen",
                 random_rotation_strength: 2
             });
-
+            
             // Set article background using the first available image
             const background_image = media_items.find(
                 item => item.tagName === "IMG"
             );
-
+            
             if (background_image) {
                 article.classList.add("custom-background");
-
+                
                 article.style.setProperty(
                     "--src",
                     `url("${background_image.src}")`
                 );
             }
-
+            
             const media = $el("div.media");
             const carousel = $el("div.carousel,custom-scrollbar,scroll-draggable");
-
+            
+            const audio = files.find(file => file.mime_type.includes("audio"));
+            if(audio) {
+                carousel.appendChild(generate_audio_player(audio.file_id));
+            }
+            
             carousel.appendChildren(...media_items);
             media.appendChild(carousel);
 
             container.appendChild(media);
         }
 
-        generated_events.push(container);
+        generated_events[index] = container;
 
-        // Maintain the minimum interval between the first five events
+        return container;
+    }
+
+    // First five events: sequential generation with minimum interval
+    for (let index = 0; index < Math.min(concurrent_events, events_obj.length); index++) {
+        const event_start = performance.now();
+
+        await generate_event(events_obj[index], index);
+
         if (index < 4) {
             const remaining = interval - (performance.now() - event_start);
 
@@ -630,6 +644,22 @@ async function generate_events(events_obj, package_colours, events_container, in
             }
         }
     }
+
+    // Remaining events: generate concurrently
+    const remaining_events = [];
+
+    events_obj.slice(concurrent_events).forEach((event, offset) => {
+        remaining_events.push(
+            generate_event(event, offset + concurrent_events)
+        );
+    });
+
+    Promise.all(remaining_events).then(() => {
+        fullscreen_img_container_logic();
+        if(!is_mobile) {
+            initialise_scroll_draggable();
+        }
+    })
 
     return generated_events;
 }
@@ -640,6 +670,8 @@ async function main() {
     const banner = $(".banner")[0];
     const main_el = $("main")[0];
     const timeline = $(".timeline")[0];
+
+    console.log(events_obj)
 
     resize_timeline_svg(timeline);
 
@@ -667,8 +699,6 @@ async function main() {
     events_container.style.setProperty("--max-height", scroll_height + "px");
     events_container.style.setProperty("--extra-overflow", events[events.length - 1].offsetHeight + "px");
     banner.classList.remove("minimise");
-
-    fullscreen_img_container_logic();
 
     banner.style.transitionDuration = "";
 
@@ -814,14 +844,11 @@ async function main() {
     update_relative_index(events, focused_event_index);
 
     setTimeout(() => {
+        focus_event(events, focused_event_index, 0, events_container);
         update_timeline(events)
     }, 250);
 
-    focus_event(events, focused_event_index, 0, events_container);
-
     activate(timeline_svg);
-
-    if(!is_mobile) initialise_scroll_draggable();
     
     let scroll_center = 1/2 * ($(".banner")[0].getBoundingClientRect().bottom + document.documentElement.clientHeight);
     let scroll_tolerance = 2;
@@ -981,7 +1008,7 @@ async function main() {
                             prevent_scroll = false
                         );
                     }
-                }, 4000);
+                }, 2000);
 
                 timeouts.push({ el: focused_el, timeout_id: timeout_id });
                 await_scroll = false;

@@ -40,7 +40,7 @@ async function generate_member(obj, biography_length, img_max_width) {
 }
 
 async function synchronous_member_generation(band_container, members_obj, biography_length) {
-    const interactive_container = $el(".interactive-container");
+    const interactive_container = $el(".interactive-container,scroll-draggable");
     band_container.appendChild(interactive_container);
 
     const band_sub_container = $el(".wrapper");
@@ -150,8 +150,8 @@ async function main() {
 
     band_container.classList.add("measuring");
     const {band_sub_container, clone__band_sub_container, interactive_container} = await synchronous_member_generation(band_container, members_obj, biography_length);
-    band_container.classList.remove("measuring")
 
+    band_container.classList.remove("measuring")
 
     grid_clone.appendChildren(...Array.from(band_sub_container.querySelectorAll(".band-member")).map(el => el.cloneNode(true)));
     main_el.appendChild(grid_clone);
@@ -193,7 +193,17 @@ async function main() {
 
     await format_pars([...band_container.querySelectorAll("p"), ...grid_clone.querySelectorAll("p")], biography_length);
 
-    deactivate(loading)
+    deactivate(loading);
+
+    if(!is_mobile) initialise_scroll_draggable("toggle-fullscreen", false);
+
+    const read_mores = interactive_container.querySelectorAll(".read-more");
+    console.log(read_mores)
+    read_mores.forEach(par => {
+        par.onclick = (e) => {
+            handle_par(e, par);
+        }
+    })
     
     const repeat_width =
     clone__band_sub_container.getBoundingClientRect().left -
@@ -257,13 +267,18 @@ async function main() {
     let wheel_target_reset_timeout_id = null;
     let native_trackpad_mode = false;
 
-    function handle_par(e) {
-        const par = e.target.closest("[data-member-index]");
-
+    function handle_par(e, par_el) {
+        let par;
+        if(!par_el) {
+            par = e.target.closest("[data-member-index]");
+        } else {
+            par = par_el;
+        }
+        
         if (!par || !interactive_container.contains(par)) return;
-
+        
         const obj = members_obj[Number(par.dataset.memberIndex)];
-
+        
         par.classList.toggle("expanded");
 
         if (biography_length === "switch") {
@@ -271,14 +286,22 @@ async function main() {
                 ? obj["Biography"]
                 : obj["Shortened Biography"];
         }
-
-        return par.classList.contains("expanded");
     }
 
-    interactive_container.addEventListener("click", (e) => {
-        pointer_is_inside = handle_par(e);
+    interactive_container.onclick = (e) => {
+        console.log("calling function")
+        const read_more = document.elementFromPoint(
+                e.clientX,
+                e.clientY
+        )?.closest(".read-more") ?? null;
+
+        if (read_more) {
+            read_more.onclick?.call(read_more, e);
+            pointer_is_inside = read_more.classList.contains("expanded");
+        }
+
         handle_user_interaction();
-    });
+    };
 
     function pause_carousel() {
         if (carousel_mode === "continuous") {

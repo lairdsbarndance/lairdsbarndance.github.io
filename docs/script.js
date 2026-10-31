@@ -313,7 +313,7 @@ async function fetch_sheet_names() {
 
 async function fetch_events() {
     const events_res = await fetch_data("events");
-    const files_res = await fetch_data("files");
+    const files_res = await fetch_data("files", ignore_blank_cells = false);
 
     return parse_events(
         parse_table(events_res, include_incomplete_rows = true), 
@@ -717,6 +717,16 @@ async function fetch_image(img_id, {max_width, max_height} = {}) {
     });
 
     return img_url;
+}
+
+function generate_audio_player(audio_id) {
+    const iframe = $el("iframe.audio-player");
+    iframe.src = `https://drive.google.com/file/d/${audio_id}/preview`;
+    iframe.allow = "autoplay";
+    iframe.loading = "lazy";
+    iframe.title = "Audio player";
+
+    return iframe;
 }
 
 async function generate_header(this_page, pages) {
@@ -1155,7 +1165,7 @@ async function generate_background(parallax = 0.3, glows = $(".bg-glow"), custom
         };
     }
 
-    glows.forEach(glow => glow.id = Date.now());
+    glows.forEach(glow => glow.dataset.glowId = Date.now());
 
     generate_glows(glows);
 
@@ -1235,7 +1245,7 @@ function generate_paper_overlays() {
     })
 }
 
-function initialise_scroll_draggable() {
+function initialise_scroll_draggable(click_target_class = "toggle-fullscreen", invoke_click_event = true) {
     $(".scroll-draggable").forEach(el => {
         let is_dragging = false;
         let has_moved = false;
@@ -1253,7 +1263,7 @@ function initialise_scroll_draggable() {
             is_dragging = true;
             has_moved = false;
 
-            click_target = e.target.closest(".toggle-fullscreen");
+            click_target = e.target.closest(`.${click_target_class}`) || el;
             release_target = null;
 
             start_x = e.clientX;
@@ -1363,7 +1373,7 @@ function initialise_scroll_draggable() {
             release_target = document.elementFromPoint(
                 e.clientX,
                 e.clientY
-            )?.closest(".toggle-fullscreen") ?? null;
+            )?.closest(`.${click_target_class}`) ?? el;
 
             stop_dragging();
         });
@@ -1372,14 +1382,14 @@ function initialise_scroll_draggable() {
             if (has_moved) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-
+                
                 click_target = null;
                 release_target = null;
                 has_moved = false;
-
+                
                 return;
             }
-
+            
             if (
                 !click_target ||
                 click_target !== release_target ||
@@ -1389,8 +1399,8 @@ function initialise_scroll_draggable() {
                 release_target = null;
                 return;
             }
-
-            if (typeof click_target.onclick === "function") {
+            
+            if (typeof click_target.onclick === "function" && invoke_click_event) {
                 click_target.onclick.call(click_target, e);
             }
 
@@ -1580,7 +1590,7 @@ function generate_glows(glows) {
         void glow_container.offsetWidth; void glow_container.offsetHeight;
         const container_size = {width: glow_container.offsetWidth, height: glow_container.offsetHeight}
         const glow_el = $el(".glow");
-        glow_el.id = glow_container.id;
+        glow_el.id = glow_container.dataset.glowId;
         const glow_wrapper = $el(".bg-glow-wrapper")
         Object.entries(container_size).forEach(([property, value]) => glow_wrapper.style.setProperty(`--content-${property}`, value + "px"));
         const positions = glow_container.dataset.glowPos.split(" ");

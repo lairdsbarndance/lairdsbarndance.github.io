@@ -153,6 +153,8 @@ main > .bg-glow-wrapper > .band-grid.measuring {
     overflow-y: hidden;
 }
 
+p.expanded {margin-inline: -1rem}
+
 button.view-switch {
     --button-margin: 5vh;
     padding-inline: 1.5rem;

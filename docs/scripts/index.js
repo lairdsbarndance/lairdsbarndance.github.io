@@ -157,9 +157,8 @@ function post_its_logic() {
     let user_scrolled = false;
 
     function trigger_post_its() {
-        post_its_container.style.height = post_its_container.offsetHeight + "px";
-        
         if (post_its_triggered) return;
+        post_its_container.style.height = post_its_container.offsetHeight + 100 + "px";
 
         post_its_triggered = true;
         stagger_post_its();
