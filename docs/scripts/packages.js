@@ -340,7 +340,7 @@ async function main() {
             );
         })
 
-        let scroll_index = 1;
+        let scroll_index = 0;
         carousel.scrollLeft += (carousel_items[scroll_index].getBoundingClientRect().left - carousel.getBoundingClientRect().left) * -1; 
         // * -1 since position is calculated before opening (hence the carousel is flipped; has negative coordinates)
 

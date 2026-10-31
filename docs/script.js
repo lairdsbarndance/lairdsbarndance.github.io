@@ -732,7 +732,7 @@ function generate_audio_player(audio_id) {
 async function generate_header(this_page, pages) {
     generate_nav(pages); // 1rem padding between title and nav
 
-    const is_home = this_page === "Home";
+    const is_home = this_page === "Homepage";
 
     const banner = $(".banner")[0];
     banner.innerHTML = ""; // Remove SEO <h1/>
@@ -1234,7 +1234,7 @@ function scroll_to_el(el, scroll_margin = 40) {
 
 function scroll_to_carousel_el(carousel, el) {
     carousel.scrollTo({
-        left: carousel.scrollLeft + el.getBoundingClientRect().x - carousel.getBoundingClientRect().x
+        left: el.offsetLeft
     });
 }
 
@@ -1682,7 +1682,7 @@ async function set_website_variables(force_refresh = false) {
 
 async function initial_page_rendering() {
     set_website_variables();
-    const this_page = document.title.split("- ").pop();
+    const this_page = document.title;
 
     let pages = JSON.parse(localStorage.getItem("sheet_names"));
     if(pages == undefined || pages.timestamp == undefined || Date.now() - pages.timestamp > CACHE_REFRESH * 60 * 60 * 1000) {

@@ -336,6 +336,7 @@ h4.page-top-description {
     display: flex;
     max-width: var(--carousel-item-width, 30vw);
     height: 100%;
+    object-fit: contain;
     scroll-snap-align: center;
     filter: drop-shadow(0 .125rem .25rem rgba(0,0,0,.75))
 }
