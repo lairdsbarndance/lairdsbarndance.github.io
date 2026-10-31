@@ -255,6 +255,7 @@ async function main() {
     let pointer_is_inside = false;
     let wheel_target_left = null;
     let wheel_target_reset_timeout_id = null;
+    let native_trackpad_mode = false;
 
     function handle_par(e) {
         const par = e.target.closest("[data-member-index]");
@@ -345,9 +346,42 @@ async function main() {
     // Mouse wheel and trackpad.
     // Translate ordinary wheel scrolling into horizontal carousel movement.
     interactive_container.addEventListener("wheel", (e) => {
-        const horizontal_dominant = Math.abs(e.deltaX) > Math.abs(e.deltaY);
 
-        let delta = horizontal_dominant ? e.deltaX : e.deltaY;
+        // Detect horizontal trackpad scrolling.
+        if (e.deltaX !== 0) {
+
+            if (!native_trackpad_mode) {
+
+                native_trackpad_mode = true;
+
+                // Stop automatic carousel movement.
+                pause_carousel();
+
+                // Cancel any pending interaction timeout.
+                clearTimeout(interaction_timeout_id);
+                interaction_timeout_id = null;
+
+                // Clear any accumulated scroll-jacking target.
+                clearTimeout(wheel_target_reset_timeout_id);
+                wheel_target_reset_timeout_id = null;
+                wheel_target_left = null;
+
+                // Enable native CSS scroll snapping.
+                interactive_container.style.scrollSnapType =
+                    "var(--custom-scroll-snap-type)";
+
+            }
+
+            // Allow the browser to handle the scroll naturally.
+            return;
+        }
+
+        // Do not intercept any further wheel events in native mode.
+        if (native_trackpad_mode) return;
+
+        // Ordinary mouse wheel scrolling: translate vertical movement
+        // into horizontal carousel movement.
+        let delta = e.deltaY;
 
         if (!delta) return;
 
@@ -355,9 +389,7 @@ async function main() {
         if (e.deltaMode === 1) {
             delta *= 8;
         } else if (e.deltaMode === 2) {
-            delta *= horizontal_dominant
-                ? interactive_container.clientWidth
-                : interactive_container.clientHeight;
+            delta *= interactive_container.clientHeight;
         }
 
         // Prevent the browser from scrolling the page vertically.
@@ -377,6 +409,7 @@ async function main() {
         // Wrap the current position instantly when crossing a boundary,
         // then animate towards the adjusted destination.
         while (desired_left >= max_scroll_left - tolerance) {
+
             interactive_container.scrollTo({
                 left: interactive_container.scrollLeft - repeat_width,
                 behavior: "instant"
@@ -386,6 +419,7 @@ async function main() {
         }
 
         while (desired_left <= tolerance) {
+
             interactive_container.scrollTo({
                 left: interactive_container.scrollLeft + repeat_width,
                 behavior: "instant"
@@ -411,6 +445,7 @@ async function main() {
 
     }, {passive: false});
 
+
     // Reset the accumulated target when smooth scrolling finishes.
     interactive_container.addEventListener("scrollend", () => {
         wheel_target_left = null;
@@ -433,6 +468,11 @@ async function main() {
         handle_user_interaction();
         }, {passive: true}
     );
+
+    if (native_trackpad_mode) {
+        interactive_container.style.scrollSnapType = "var(--custom-scroll-snap-type)";
+        return;
+    }
 
     // Mouse, pen and touch pointer interactions.
     interactive_container.addEventListener("pointerdown", () => {
