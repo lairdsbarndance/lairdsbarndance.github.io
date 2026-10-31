@@ -820,8 +820,11 @@
     - [x] Improve Meet the band trackpad UX
     - [x] Parsed image description metadata to be presented in fullscreen postcard view
     - [x] Fixed fullscreen_img_logic() and draggable() timing and logic
-    - [ ] Added autoplay music to events with audio
-    - ### Time Spent (so far): 1 hour
+    - [x] Added autoplay music to events with audio
+    - [x] Made Meet the Band carousel draggable on desktop, as scrolljacking isn't implied.
+    - [x] SEO: robots.txt, sitemap.xml, meta:desc, full favicon support.
+
+    - ### Time Spent: 5 hours
     
 - ## To Do
 
