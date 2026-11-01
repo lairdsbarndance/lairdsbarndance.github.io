@@ -1234,7 +1234,7 @@ function scroll_to_el(el, scroll_margin = 40) {
 
 function scroll_to_carousel_el(carousel, el) {
     carousel.scrollTo({
-        left: el.offsetLeft
+        left: el.offsetLeft - el.offsetWidth / 2
     });
 }
 

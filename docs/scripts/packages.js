@@ -341,7 +341,7 @@ async function main() {
         })
 
         let scroll_index = 0;
-        carousel.scrollLeft += (carousel_items[scroll_index].getBoundingClientRect().left - carousel.getBoundingClientRect().left) * -1; 
+        carousel.scrollLeft = carousel_items[scroll_index].offsetLeft; 
         // * -1 since position is calculated before opening (hence the carousel is flipped; has negative coordinates)
 
         left_container.addEventListener("click", e => {scroll_index = handle_carousel(carousel, carousel_items, e, scroll_index)});
