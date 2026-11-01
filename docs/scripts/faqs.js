@@ -93,9 +93,13 @@ async function generate_noticeboard(noticeboard, obj, heading_font_style, sort_b
         const p = post_it.querySelector(".info");
         post_it.classList.add("minimised");
 
-        post_it.onclick = () => {
+        post_it.onclick = (e) => {
+            if(e.target.closest("p")) {
+                p.classList.toggle("scroll");
+                return;
+            }
             const is_minimising = !post_it.classList.contains("minimised");
-            post_it.classList.toggle("minimised");
+            post_it.classList.toggle("minimised")
 
             if (!is_minimising) {
                 scroll_to_el(post_it, 60)
