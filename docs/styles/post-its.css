@@ -3,6 +3,7 @@
     flex-wrap: wrap;
     justify-content: center;
     align-items: flex-start;
+    align-content: flex-start;
     gap: 2rem;
     width: 80vw;
     padding-block: 2rem;

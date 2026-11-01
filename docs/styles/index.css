@@ -302,6 +302,11 @@
     min-width: 30em;
 }
 
+.background-wrapper > .loading {
+    max-width: 3rem;
+    height: auto;
+    z-index: 100;
+}
 
 @media (min-width: 1500px) {
     .background-wrapper, .background-wrapper > * {

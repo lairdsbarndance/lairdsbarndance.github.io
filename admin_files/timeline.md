@@ -256,7 +256,7 @@
 
     - ### Time Spent: 2 hours
 
-- ## 03/04/2026
+- ## 03/05/2026
     - (Sans/Serif) Font Comparisons, side by side. Viewport scale check etc.
         - Decided on PT Sans as a potential sans-serif improved-readability replacement to Lusitania
     - Responded to feedback from two new people.
@@ -826,6 +826,97 @@
 
     - ### Time Spent: 5 hours
     
-- ## To Do
+| Date | Time spent |
+|---|--:|
+| 30/12/2025 | 1 hour |
+| 11/01/2026 | 1 hour |
+| 12/01/2026 | 2 hours 20 minutes |
+| 13/01/2026 | 30 minutes |
+| 02/02/2026 | 1 hour |
+| 03/02/2026 | 50 minutes |
+| 04/02/2026 | 30 minutes |
+| 05/02/2026 | 2 hours |
+| 08/02/2026 | 4 hours |
+| 01/03/2026 | 1 hour |
+| 08/03/2026 | 1 hour |
+| 09/03/2026 | 2 hours |
+| 10/03/2026 | 1 hour |
+| 11/03/2026 | 30 minutes |
+| 15/03/2026 | 4 hours |
+| 21/03/2026 | 1 hour |
+| 22/03/2026 | 3 hours |
+| 02/04/2026 | 1 hour 30 minutes |
+| 03/04/2026 | 3 hours 30 minutes |
+| 04/04/2026 | 2 hours 15 minutes |
+| 06/04/2026 | 45 minutes |
+| 12/04/2026 | 2 hours 30 minutes |
+| 17/04/2026 | 2 hours |
+| 18/04/2026 | 1 hour |
+| 19/04/2026 | 3 hours |
+| 20/04/2026 | 1 hour 30 minutes |
+| 22/04/2026 | 1 hour |
+| 26/04/2026 | 45 minutes |
+| 30/04/2026 | 2 hours |
+| 03/05/2026 | 1 hour 30 minutes |
+| 05/05/2026 | 2 hours |
+| 06/05/2026 | 1 hour 15 minutes |
+| 07/05/2026 | 45 minutes |
+| 08/05/2026 | 2 hours 15 minutes |
+| 10/05/2026 | 3 hours |
+| 11/05/2026 | 3 hours 30 minutes |
+| 12/05/2026 | 1 hour |
+| 15/05/2026 | 30 minutes |
+| 16/05/2026 | 20 minutes |
+| 17/05/2026 | 25 minutes |
+| 26/05/2026 | 1 hour 20 minutes |
+| 27/05/2026 | 2 hours 15 minutes |
+| 28/05/2026 | 1 hour 30 minutes |
+| 29/05/2026 | 2 hours 30 minutes |
+| 30/05/2026 | 2 hours 40 minutes |
+| 31/05/2026 | 4 hours |
+| 06/06/2026 | 4 hours |
+| 09/06/2026 | 45 minutes |
+| 10/06/2026 | 1 hour |
+| 13/06/2026 | 1 hour |
+| 01/07/2026 | 2 hours |
+| 10/08/2026 | 2 hours 45 minutes |
+| 11/08/2026 | 3 hours 30 minutes |
+| 12/08/2026 | 3 hours |
+| 13/08/2026 | 7 hours |
+| 29/08/2026 | 6 hours |
+| 02/09/2026 | 2 hours |
+| 03/09/2026 | 2 hours |
+| 12/09/2026 | 8 hours |
+| 19/09/2026 | 6 hours 30 minutes |
+| 20/09/2026 | 2 hours 30 minutes |
+| 26/09/2026 | 8 hours 45 minutes |
+| 27/09/2026 | 1 hour 30 minutes |
+| 03/10/2026 | 3 hours 30 minutes |
+| 09/10/2026 | 1 hour |
+| 11/10/2026 | 4 hours |
+| 16/10/2026 | 3 hours |
+| 18/10/2026 | 10 hours 30 minutes |
+| 19/10/2026 | 6 hours 30 minutes |
+| 22/10/2026 | 7 hours |
+| 23/10/2026 | 14 hours 30 minutes |
+| 24/10/2026 | 6 hours |
+| 25/10/2026 | 4 hours |
+| 26/10/2026 | 4 hours |
+| 29/10/2026 | 3 hours |
+| 30/10/2026 | 8 hours 30 minutes |
+| 31/10/2026 | 5 hours |
+| **Total** | **221 hours 55 minutes (221.92 hours)** |
+
+
+---
+
+
+
+
+
+
+## To do
+- [ ] Loading container for homepage
+
 
    
