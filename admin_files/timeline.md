@@ -825,6 +825,25 @@
     - [x] SEO: robots.txt, sitemap.xml, meta:desc, full favicon support.
 
     - ### Time Spent: 5 hours
+
+- ## 07-08/11/2026
+    - [x] Loading icon for homepage during initial loading
+    - [x] Loading for packages
+        - [x] Package image carousels are now deferred off the critical path, so the fronts of packages are rendered asap. 
+    - [x] More robust navigation bar flex sizing
+    - [x] All band member and instrument names scaled to fit in usable width
+    - [x] Click to center band members
+    - [x] Carousel items have "click to fullscreen" functionality on Packages
+    - [x] Optimised + compressed leather generation 
+    - [x] Order of pages on navigation are now tied to the order of the tabs on the database.
+    - [x] Interactive carousel elements on homepage
+        - [x] left and right arrow buttons + swiping for mobile
+    - [x] Carousel stops when user interacts and only starts when the user's cursor is no longer inside the carousel container, or a read-more biography is contracted. 
+    - [x] Mobile interaction to read more on meet the band
+    - [x] Nav buttons light up, enlarged and increase letter spacing to imply they have been clicked; the new page is loading
+    - [x] Improved image fetching logic for package carousel -- each package has its own dedicated folder for images that will be shown first in the carousel, then automatically fetched images from events are added afterwards.
+
+    - ### Time Spent: 4 hours 30 minutes
     
 | Date | Time spent |
 |---|--:|
@@ -905,7 +924,8 @@
 | 29/10/2026 | 3 hours |
 | 30/10/2026 | 8 hours 30 minutes |
 | 31/10/2026 | 5 hours |
-| **Total** | **221 hours 55 minutes (221.92 hours)** |
+| 07-08/11/2026 | 4 hours 30 minutes |
+| **Total** | **226 hours 25 minutes (226.42 hours)** |
 
 
 ---
