@@ -1,6 +1,7 @@
 .landing-section.fullscreen {
     width: 100vw;
     max-height: 100vh;
+    position: relative;
 }
 
 .landing-section.fullscreen > * {grid-area: 1 / -1 / 1 / -1}
@@ -111,28 +112,94 @@
     position: relative;
 }
 
-.background-wrapper > * {
+.background-wrapper > *,
+.portrait-carousel > * {
     display: grid;
     width: 100%;
     height: var(--fullscreen-img-height);
     overflow: hidden;
     grid-area: 1 / -1 / 1 / -1;
-    transition: var(--carousel-interval) 100ms ease transform;
-    
+
+    transform: translateX(100vw);
+    opacity: 0;
+
+    transition: transform var(--carousel-interval) 100ms ease,
+                opacity var(--carousel-interval) 100ms ease;
+
     @media (prefers-reduced-motion: reduce) {
-        transition: 0s linear transform;
+        transition: transform 0s linear,
+                    opacity var(--carousel-interval) 100ms ease;
     }
 }
 
-.portrait-carousel {
-    z-index: 1;
+.portrait-carousel > * {
+    transition-property: transform, opacity !important;
+    transition-duration: var(--carousel-interval), var(--carousel-interval) !important;
+    transition-delay: 100ms, 100ms !important;
+    transition-timing-function: ease, ease !important;
 }
 
-.background-wrapper > *:not(.active, .deactivating) {
+.portrait-carousel > .carousel-deactivating-left,
+.portrait-carousel > .carousel-deactivating-right {
+    opacity: 0;
+}
+
+.portrait-carousel > .carousel-prep-left,
+.portrait-carousel > .carousel-prep-right {
+    transition: none !important;
+}
+
+/* Immediately position an incoming element without animating it. */
+.background-wrapper > .carousel-prep-left,
+.portrait-carousel > .carousel-prep-left,
+.background-wrapper > .carousel-offscreen-left,
+.portrait-carousel > .carousel-offscreen-left {
+    transform: translateX(-100vw);
+    opacity: 0;
+}
+
+.background-wrapper > .carousel-prep-right,
+.portrait-carousel > .carousel-prep-right,
+.background-wrapper > .carousel-offscreen-right,
+.portrait-carousel > .carousel-offscreen-right {
     transform: translateX(100vw);
     opacity: 0;
 }
 
+
+/* Prevent the preparation stage from triggering an unwanted transition. */
+.background-wrapper > .carousel-prep-left,
+.portrait-carousel > .carousel-prep-left,
+.background-wrapper > .carousel-prep-right,
+.portrait-carousel > .carousel-prep-right {
+    transition: none !important;
+}
+
+
+/* Elements leaving towards the left. */
+.background-wrapper > .carousel-deactivating-left,
+.portrait-carousel > .carousel-deactivating-left {
+    transform: translateX(-100vw);
+    opacity: 0;
+}
+
+
+/* Elements leaving towards the right. */
+.background-wrapper > .carousel-deactivating-right,
+.portrait-carousel > .carousel-deactivating-right {
+    transform: translateX(100vw);
+    opacity: 0;
+}
+
+
+/* Active element, regardless of the direction of travel. */
+.background-wrapper > .active,
+.portrait-carousel > .active {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Retain your existing additional styling. */
 .background-wrapper > .extra {
     display: none;
 }
@@ -140,15 +207,7 @@
 .background-wrapper > .extra > img {
     width: 100%;
     height: 100%;
-    object-fit: cover; 
-}
-
-.background-wrapper > .active {
-    transform: translateX(0vw);
-}
-
-.background-wrapper > .deactivating {
-    transform: translateX(-100vw);
+    object-fit: cover;
 }
 
 .background-wrapper > .carousel-item > img {
@@ -157,10 +216,49 @@
     width: 100%;
 }
 
+.carousel-controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 92.5%;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    opacity: 0;
+    transition: 250ms ease opacity;
+}
+
+.carousel-controls.active {opacity: 1;}
+
+.carousel-controls > button {
+    background: none;
+    border: none;
+    width: min(1.5rem, 5vw);
+    filter: drop-shadow(0 0.25rem 0.125rem black);
+}
+
+.carousel-controls > button > img {
+    width: 100%;
+    height: 100%;
+}
+
+.portrait-carousel {
+    z-index: 1;
+}
+
 .cleanplate, .vignette {
     z-index: -1; 
     height: 100%; 
     object-fit: fill;
+}
+
+.background-wrapper:not(.portrait-carousel) > .carousel-item.extra::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(80% 400% at 50% 50%, transparent 40%, rgba(0,0,0,1) 80%);
+    opacity: 1;
 }
 
 .cleanplate {

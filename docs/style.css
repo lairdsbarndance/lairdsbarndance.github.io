@@ -135,6 +135,8 @@ button.accent-btn {
     cursor: pointer;
 }
 
+.toggle-fullscreen {cursor: pointer;}
+
 .might-read-more {
     --line-height: 1.45;
     --max-lines: 5;
@@ -191,6 +193,7 @@ button.accent-btn {
     animation: spin 500ms cubic-bezier(.3,.1,.73,.93) infinite;
     opacity: 0;
     pointer-events: none;
+    transition: 250ms ease opacity;
 }
 
 .loading.active {opacity: 1;}
@@ -315,6 +318,16 @@ header > nav > ul {
     display: flex;
     font-size: 1.125rem;
     gap: 2rem;
+}
+
+nav > ul > a {
+    transition: all 250ms ease;
+}
+
+nav > ul > a.active {
+    letter-spacing: .025rem;
+    transform: scale(1.05);
+    filter: drop-shadow(0rem .125rem .125rem rgba(255,255,255,0.5));
 }
 
 header > .spacer {
@@ -601,8 +614,8 @@ header.mobile-view > nav.open {transform: translateX(0%)}
 header.mobile-view > nav.mobile-view > .close-btn {
     --padding: 2rem;
     position: absolute;
-    left: var(--left);
-    top: var(--top);
+    right: var(--padding);
+    top: var(--padding);
     z-index: 100;
 }
 

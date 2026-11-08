@@ -45,8 +45,7 @@ main .band.deactivating {
     opacity: 0;
     pointer-events: none;
 
-    mask-image: radial-gradient(100% 300% at 50% 50%, white 30%, transparent 70%);
-
+    mask-image: radial-gradient(100% 300% at 50% 50%, white 20%, transparent 100%);
 }
 
 .band.measuring {
@@ -126,7 +125,7 @@ main > .bg-glow-wrapper > .band-grid.measuring {
 
 .band-member > h3 {
     white-space: nowrap;
-    font-size: 1.75rem;
+    font-size: calc(1.75rem * var(--font-size-adjust, 1));
     font-family: "Cantora One", cursive;
     font-weight: 100;
     text-align: center;

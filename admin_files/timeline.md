@@ -915,8 +915,7 @@
 
 
 
-## To do
-- [ ] Loading container for homepage
+
 
 
    

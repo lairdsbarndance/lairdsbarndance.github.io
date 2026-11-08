@@ -21,9 +21,17 @@ h4.page-top-description {
     --img-size: 2rem;
 }
 
+.loading {
+    z-index: 100;
+}
+
 .fullscreen-package-container > .close {
     margin-top: var(--header-height);
     z-index: 1;
+}
+
+.fullscreen-img-container > .carousel-item {
+    max-width: 80%; max-height: 80%;
 }
 
 .packages {

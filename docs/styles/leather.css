@@ -5,7 +5,7 @@
     --brightness: 1;
     --shadow-strength: 0.5;
     background-color: var(--color);
-    background-image: url(../assets/leather_displacement.png);
+    background-image: url(../assets/leather_optimised/leather_displacement.jpg);
     background-blend-mode: overlay;
     box-shadow: 0 .45rem .25rem 0.125rem rgba(0,0,0,calc(var(--shadow-strength) * 1)),
                 inset 0 0 0.125rem 0.125rem hsl(from var(--color) h s calc(l + 5));
@@ -104,7 +104,7 @@
 }
 
 .leather-background > .displacement {
-    background-image: url(../assets/leather_displacement.png);
+    background-image: url(../assets/leather_optimised/leather_displacement.jpg);
     background-position: var(--random-position);
     mix-blend-mode: overlay;
 }
@@ -114,7 +114,7 @@ nav .leather-background > .displacement {
 }
 
 .leather-background > .dimples, .sheen {
-    background-image: url(../assets/leather_dimples.png);
+    background-image: url(../assets/leather_optimised/leather_dimples.jpg);
     background-size: calc(400px * var(--texture-scale));
     background-repeat: repeat;
     mix-blend-mode: multiply;
@@ -134,7 +134,7 @@ nav .leather-background > .displacement {
 }
 
 .leather-background > .sheen {
-    background-image: url(../assets/leather_sheen.png);
+    background-image: url(../assets/leather_optimised/leather_sheen.jpg);
     background-size: calc(1000px * var(--texture-scale));
     mix-blend-mode: hard-light;
     mask: url(#soft_mask);

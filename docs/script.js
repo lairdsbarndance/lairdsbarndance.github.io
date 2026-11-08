@@ -67,7 +67,8 @@ const svg_defs = `
 const header = $("header")[0];
 const dom_main = $("main")[0];
 const prevent_scroll_containers = $("[data-prevent-default-scroll-navigation]");
-const document_width = document.documentElement.clientWidth;
+const document_width = window.innerWidth;
+const document_height = window.innerHeight;
 
 document.body.insertAdjacentHTML("afterbegin", svg_defs);
 
@@ -534,9 +535,10 @@ function generate_nav(pages) {
         anchor.href = url + (DEV_MODE && page !== "Home" ? ".html" : "");
         anchor.textContent = page;
         ul.appendChild(anchor);
+
+        anchor.onclick = () => anchor.classList.toggle("active");
     })
 
-    const is_mobile = $("header > .spacer")[0].offsetWidth < 32;
     const menu_btn = $el("button.menu-btn");
     const close_btn = $el("button.close-btn");
     const nav = $("nav")[0];
@@ -545,7 +547,7 @@ function generate_nav(pages) {
     menu_btn.textContent = "menu" ;
     close_btn.textContent = "close";
 
-    if(is_mobile) {
+    if($("header > .spacer")[0].offsetWidth < 32 || is_mobile) {
         header.classList.add("mobile-view"); 
         nav.classList.add("mobile-view"); nav.classList.add("leather");
         nav.appendChild(close_btn)
@@ -774,43 +776,6 @@ async function generate_header(this_page, pages) {
     console.log("Header Generated Sucessfully!")
 }
 
-async function generate_carousel_items({files, 
-    carousel_item_class_name = "carousel-item",
-    random_rotation_strength = 2,
-}) {
-    return await Promise.all(files.map(async file => {
-        const carousel_item = $el(`.${carousel_item_class_name}`);
-        carousel_item.style.transform = `rotate(${Math.random() * random_rotation_strength - (random_rotation_strength / 2)}deg)`;
-
-        const is_video = file.mime_type?.startsWith("video/");
-        const media = is_video ? $el("iframe") : $el("img");
-
-        if (file.width && file.height) {
-            carousel_item.style.aspectRatio = `${file.width} / ${file.height}`;
-        }
-
-        if (is_video) {
-            media.src = `https://drive.google.com/file/d/${file.file_id}/preview`;
-            media.allow = "autoplay";
-            media.allowFullscreen = true;
-            media.loading = "lazy";
-            carousel_item.appendChild(media);
-        } else {
-            try {
-                media.src = await fetch_image(file.file_id);
-                media.alt = "";
-                media.loading = "lazy";
-                media.decoding = "async";
-                carousel_item.appendChild(media);
-            } catch(err) {
-                console.warn("Carousel Item not appended: id=" + file.file_id)
-            }
-        }
-
-        return carousel_item;
-    }));
-}
-
 async function generate_carousel_items({
     files,
     carousel_item_class_name = "carousel-item",
@@ -819,7 +784,7 @@ async function generate_carousel_items({
     return (await Promise.all(files.map(async file => {
         const is_video = file.mime_type?.startsWith("video/");
         const media = $el(is_video ? "iframe" : "img");
-
+        
         media.className = carousel_item_class_name;
 
         const rotation = Math.random() * random_rotation_strength
@@ -861,19 +826,35 @@ async function get_package_types() {
     return package_types;
 }
 
-function append_loader(container) {
+function append_loader(container, ancestor_level = 1) {
     const loading = $el("img.loading");
     loading.src = "/assets/loading.svg";
-    document.body.appendChild(loading);
-    activate(loading)
+    if(!container) document.body.appendChild(loading);
+    activate(loading);
 
     const interval_id = setInterval(() => {
-        if(!loading.classList.contains("active")) clearInterval(interval_id);
-        const {left, top, width, height} = container.getBoundingClientRect();
-        loading.style.top = height > 0 ? (top + (height / 2)) : (document.documentElement.clientHeight / 2) + "px";
-        loading.style.left = width > 0 ? ((left + (width / 2))) : (document.documentElement.clientWidth / 2) + "px";
+        if (!loading.classList.contains("active")) {
+            clearInterval(interval_id);
+            return;
+        }
+
+        const { left, top, width, height } = container.getBoundingClientRect() ?? {
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0
+        };
+
+        loading.style.top = (height > 0
+            ? Math.min(top + height / 2, document_height - 200)
+            : document_height / 2) + "px";
+
+        loading.style.left = width > 0
+            ? left + width / 2
+            : document_width / 2 + "px";
     }, 100);
 
+    if(container) Array.from({length: ancestor_level}).reduce(el => el?.parentElement, container)?.appendChild(loading);
     return loading;
 }
 
@@ -1142,6 +1123,7 @@ function generate_post_its(post_its_container, obj, colour_arr = ["#FFFFFF", "#F
 async function generate_background(parallax = 0.3, glows = $(".bg-glow"), custom_mask_els = null, fade_in_container = true) {
     const background_container = $el(".bg-container,pre-render");
     const instrument_container = $el(".instrument-container,scroll-transfer");
+
     let rand = Math.random();
 
     for(let i = 0; i < 2; i++) {
@@ -1156,14 +1138,11 @@ async function generate_background(parallax = 0.3, glows = $(".bg-glow"), custom
 
     if(!$(".bg-container")[0]) {
         $(".scroll-wrapper")[0].insertBefore(background_container, $("main")[0]);
-        window.onscroll = () => {
-            instrument_container.scrollTop = document.documentElement.scrollTop * parallax;
-        };
-    } else {
-        window.onscroll = () => {
-            $(".instrument-container")[0].scrollTop = document.documentElement.scrollTop * parallax;
-        };
     }
+
+    window.onscroll = () => {
+        instrument_container.scrollTop = document.documentElement.scrollTop * parallax;
+    };
 
     glows.forEach(glow => glow.dataset.glowId = Date.now());
 
@@ -1539,7 +1518,7 @@ function debug_scroll_draggable(el = document.querySelector(".scroll-draggable")
 // Later, when finished:
 // stop_debugging();
 
-function fullscreen_img_container_logic() {
+function fullscreen_img_container_logic(custom_els) {
     $(".fullscreen-img-container").forEach(old => old.remove());
     const fullscreen_img_container = $el(".fullscreen-img-container");
     const close_btn = $el("button.close");
@@ -1548,7 +1527,7 @@ function fullscreen_img_container_logic() {
     fullscreen_img_container.appendChild(close_btn);
     document.body.appendChild(fullscreen_img_container);
 
-    const els = $(".toggle-fullscreen");
+    const els = custom_els || $(".toggle-fullscreen");
     els.forEach(el => {
         el.onclick = () => {
             fullscreen_img_container.querySelectorAll("*:not(.close, .close > *)").forEach(el => el.remove());
@@ -1690,9 +1669,6 @@ async function initial_page_rendering() {
         pages = {pages: pages_res, timestamp: Date.now()}
     }
     
-    // const res = await fetch_data(PAGE);
-    // const data = parse_document(res, pages.pages);
-
     await generate_header(this_page, pages.pages);
     await generate_leather($(".leather"));
     const banner = $(".banner")[0];

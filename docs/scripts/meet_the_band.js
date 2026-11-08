@@ -2,6 +2,7 @@ async function generate_member(obj, biography_length, img_max_width) {
     const member_container = $el("article.band-member");
     const name = $el("h3.name");
     name.textContent = `${obj["Name"]} - ${obj["Member Type"] !== "Musician" ? obj["Member Type"].toLowerCase() : obj["Instrument"].toLowerCase()}`;
+    if(name.textContent.length > 25) member_container.style.setProperty("--font-size-adjust", window.innerWidth < 600 ? "0.75" : "0.9")
     const img_includes_border = obj["Image includes border?"];
     const img = $el("img");
 
@@ -39,6 +40,83 @@ async function generate_member(obj, biography_length, img_max_width) {
     return {member_container, par, img};
 }
 
+function focus_member(member_container, scroll_container, repeat_width) {
+
+    if (!member_container || !scroll_container || !repeat_width) return;
+
+    const member_index = Number(member_container.dataset.memberIndex);
+
+    const container_rect = scroll_container.getBoundingClientRect();
+    const member_rect = member_container.getBoundingClientRect();
+
+    // Determine how far the member is from the centre of the viewport.
+    let distance =
+        member_rect.left -
+        container_rect.left -
+        scroll_container.clientLeft +
+        member_rect.width / 2 -
+        scroll_container.clientWidth / 2;
+
+    // Reduce the distance to at most one revolution, preserving direction.
+    if (distance > 0) {
+        distance %= repeat_width;
+    } else if (distance < 0) {
+        distance = -((-distance) % repeat_width);
+    }
+
+    if (Math.abs(distance) < 1) return;
+
+    // Cancel any previous focus animation.
+    if (focus_member.animation_frame_id) {
+        cancelAnimationFrame(focus_member.animation_frame_id);
+    }
+
+    const current_left = scroll_container.scrollLeft;
+
+    const max_scroll_left =
+        scroll_container.scrollWidth - scroll_container.clientWidth;
+
+    const duration = Math.min(900, Math.max(250, Math.abs(distance) * .65));
+
+    let start_time = null;
+
+    function animate(timestamp) {
+
+        if (start_time === null) start_time = timestamp;
+
+        const progress = Math.min((timestamp - start_time) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        let next_left = current_left + distance * eased;
+
+        // Wrap around in whichever direction the animation is travelling.
+        if (distance > 0) {
+
+            while (next_left >= max_scroll_left - 1) {
+                next_left -= repeat_width;
+            }
+
+        } else {
+
+            while (next_left <= 1) {
+                next_left += repeat_width;
+            }
+
+        }
+
+        scroll_container.scrollLeft = next_left;
+
+        if (progress < 1) {
+            focus_member.animation_frame_id = requestAnimationFrame(animate);
+        } else {
+            focus_member.animation_frame_id = null;
+        }
+    }
+
+    focus_member.animation_frame_id = requestAnimationFrame(animate);
+
+}
+
 async function synchronous_member_generation(band_container, members_obj, biography_length) {
     const interactive_container = $el(".interactive-container,scroll-draggable");
     band_container.appendChild(interactive_container);
@@ -55,6 +133,7 @@ async function synchronous_member_generation(band_container, members_obj, biogra
             const {obj, member_container, par} = ready_members.get(next_member);
             ready_members.delete(next_member);
             next_member++;
+            member_container.dataset.memberIndex = next_member - 1;
             par.dataset.memberIndex = next_member - 1;
             band_sub_container.appendChild(member_container);
         }
@@ -69,6 +148,7 @@ async function synchronous_member_generation(band_container, members_obj, biogra
             undefined
         );
 
+        member_container.dataset.memberIndex = 0;
         par.dataset.memberIndex = 0;
 
         band_sub_container.appendChild(member_container);
@@ -198,7 +278,6 @@ async function main() {
     if(!is_mobile) initialise_scroll_draggable("toggle-fullscreen", false);
 
     const read_mores = interactive_container.querySelectorAll(".read-more");
-    console.log(read_mores)
     read_mores.forEach(par => {
         par.onclick = (e) => {
             handle_par(e, par);
@@ -289,15 +368,25 @@ async function main() {
     }
 
     interactive_container.onclick = (e) => {
-        console.log("calling function")
         const read_more = document.elementFromPoint(
                 e.clientX,
                 e.clientY
         )?.closest(".read-more") ?? null;
 
+        const member_container = document.elementFromPoint(
+                e.clientX,
+                e.clientY
+        )?.closest(".band-member") ?? null;
+
         if (read_more) {
-            read_more.onclick?.call(read_more, e);
+            if(!is_mobile) read_more.onclick?.call(read_more, e);
             pointer_is_inside = read_more.classList.contains("expanded");
+        } else if(member_container) {
+            const member_index = Number(member_container.dataset.memberIndex);
+
+            focus_member(member_container, interactive_container, repeat_width);
+
+            carousel_index = member_index;
         }
 
         handle_user_interaction();
@@ -364,6 +453,11 @@ async function main() {
         pointer_is_inside = false;
         handle_user_interaction();
     });
+
+    interactive_container.addEventListener("pointerup", () => {
+        pointer_is_inside = true;
+        handle_user_interaction();
+    })
 
 
     // Mouse wheel and trackpad.
@@ -619,6 +713,7 @@ async function main() {
     view_switch.addEventListener("click", () => {
         grid_clone.classList.toggle("switch-view");
         const is_grid_mode = grid_clone.classList.contains("switch-view");
+        
         const target_obj = view_switch_text.find(el => el.is_grid_mode === is_grid_mode)
         view_switch.querySelector("span").textContent = target_obj["text"];
         view_switch.querySelector("img").src = `/assets/${target_obj["img"]}`;
