@@ -7,6 +7,8 @@ const CACHE = !DEV_MODE;
 const CACHE_REFRESH = 6 // in hours
 let main_promise;
 
+let promise__website_variables;
+
 const is_mobile = (navigator.maxTouchPoints > 0 || 'ontouchstart' in document.documentElement);
 
 const svg_defs = `
@@ -379,26 +381,29 @@ function shift_dom_el(el, index) {
 }
 
 async function get_website_variable(var_name, attempt = 0) {
-    if(attempt < 3) {
-        website_variables = JSON.parse(localStorage.getItem("website_variables"));
-        let val;
-        try {
-            val = website_variables.find(el => el["Variable Name"] === var_name)["Value"]
-        } catch (err) {
-            console.warn("New Website Variable detected")
-        }
+    if (promise__website_variables) await promise__website_variables;
 
-        if(!val && attempt < 3) {
-            await set_website_variables(force_refresh = true);
-            val = await get_website_variable(var_name, attempt = attempt + 1);
-        }
+    const website_variables = JSON.parse(localStorage.getItem("website_variables") || "[]");
+    let variable = website_variables.find(el => el["Variable Name"] === var_name);
 
-        if (!Number.isNaN(parseFloat(val))) val = parseFloat(val);
-        return val;
-    } else {
-        console.error("Please reset LocalStorage")
+    if (!variable && attempt === 0) {
+        promise__website_variables = set_website_variables(true);
+        await promise__website_variables;
+        return get_website_variable(var_name, 1);
+    }
+
+    if (!variable) {
+        console.error(`Website Variable not found: ${var_name}`);
         return undefined;
     }
+
+    let val = variable["Value"];
+
+    if (val !== "" && val != null && !Number.isNaN(Number(val))) {
+        val = Number(val);
+    }
+
+    return val;
 }
 
 function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", container = document_width, rotation_intensity = 0.5) {
@@ -1660,7 +1665,9 @@ async function set_website_variables(force_refresh = false) {
 }
 
 async function initial_page_rendering() {
-    set_website_variables();
+    promise__website_variables = set_website_variables();
+    await promise__website_variables;
+
     const this_page = document.title;
 
     let pages = JSON.parse(localStorage.getItem("sheet_names"));
