@@ -457,6 +457,9 @@
 
 @media (max-width: 1075px) {
     .landing-section {
+        box-shadow: 0 10rem 10rem 1rem transparent;
+    }
+    .landing-section.active {
         box-shadow: 0 10rem 10rem 1rem hsl(from var(--glow-col) h calc(s) calc(l + 20) / 0.5);
     }
     .quotes:not(.mobile-quotes) {display: none}

@@ -224,6 +224,7 @@ async function main() {
     fade_in(portrait_wrapper);
 
     deactivate(loader);
+    activate($(".landing-section")[0]);
     
     let carousel_index = 0;
     let carousel_length = background_wrapper.children.length;
