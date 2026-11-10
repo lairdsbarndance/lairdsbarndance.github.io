@@ -56,17 +56,17 @@
 }
 
 .mobile-quotes > div:nth-child(1) {
-    display: grid;
+    /* display: grid; */
+    position: relative;
     width: 100%;
     height: 100%;
     padding: 0;
 }
 
 .mobile-quotes > div > .quote {
+    position: absolute;
+    inset: 0;
     text-align: center; 
-    grid-area: 1 / -1 / 1 / -1; 
-    justify-self: center;
-    align-self: baseline;
 }
 
 .quotes.beside-banner > div {
@@ -456,6 +456,9 @@
 }
 
 @media (max-width: 1075px) {
+    .landing-section {
+        box-shadow: 0 10rem 10rem 1rem hsl(from var(--glow-col) h calc(s) calc(l + 20) / 0.5);
+    }
     .quotes:not(.mobile-quotes) {display: none}
     .mobile-quotes {display:block}
     .mobile-quotes > div > .quote > h3 {
@@ -465,7 +468,10 @@
     }
     .call-to-action > .carousel-indicator {display: none}
     .mobile-quotes > div > .quote > span {font-size: 1.125rem;}
-    .carousel-indicator.mobile {display: flex;}
+    .carousel-indicator.mobile {display: flex; z-index: 1;}
+    .quote {
+        place-content: center;
+    }
 }
 
 @media (max-width: 850px) {
