@@ -410,8 +410,6 @@ async function get_website_variable(var_name, attempt = 0) {
 function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", container, rotation_intensity = 0.5) {
     if(update_styles_frame !== null) cancelAnimationFrame(update_styles_frame);
 
-    console.log(container)
-
     const is_horizontal = axis === "x";
     const container_size = typeof container === "number"
         ? container
