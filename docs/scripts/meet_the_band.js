@@ -243,7 +243,7 @@ async function main() {
     const band_member_els = band_container.querySelectorAll(".band-member");
     const styles_intensity = .5;
 
-    requestAnimationFrame(() => update_styles(band_member_els, styles_intensity));
+    update_styles(band_member_els, styles_intensity, "x", window.innerWidth);
 
     activate(band_container);
     const band_background_promise = generate_background(0.3, [band_container]);
@@ -728,8 +728,16 @@ async function main() {
             activate(band_container, 250);
             start_carousel();
         }
+    });
+
+    window.addEventListener("orientationchange", (e) => {
+        cancelAnimationFrame(update_styles_frame);
+        pause_carousel();
+        setTimeout(() => {
+            update_styles(band_member_els, styles_intensity, "x", window.innerWidth);
+            start_carousel();
+        }, 125);
     })
-        // }, 5000);
 }
 
 promise__initial_page_rendering.then(() => main())

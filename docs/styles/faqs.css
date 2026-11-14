@@ -1,3 +1,8 @@
+body.prevent-scroll {
+    height: 100vh;
+    overflow-y: hidden;
+}
+
 main {
     align-items: center;
     gap: 1.5rem;

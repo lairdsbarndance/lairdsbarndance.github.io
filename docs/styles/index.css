@@ -455,7 +455,7 @@
     .call-to-action > h2 {font-size: 1.3rem;}
 }
 
-@media (max-width: 1075px) {
+@media (max-width: 800px) {
     .landing-section {
         box-shadow: 0 10rem 10rem 1rem transparent;
     }

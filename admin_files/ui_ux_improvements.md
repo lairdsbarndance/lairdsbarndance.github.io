@@ -3,5 +3,5 @@
 ## To Do
 - [ ] Reset meet-the-band carousel on orientationchange
 - [ ] Remove auto expansion of events on mobile
-- [ ] Max of 1 post it open at once on FAQs
+- [ ] FAQS: a maximum of one post it note is open at once 
 - [ ] Equal column weighting for post its on Homepage (maybe reuse FAQs masonry-layout)

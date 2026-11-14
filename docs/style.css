@@ -58,11 +58,16 @@ dialog > .modal-text {
     filter: drop-shadow(var(--harsh-shadow));
 }
 
+body.prevent-scroll {
+    height: 100vh;
+    overflow-y: hidden;
+}
+
 body {
     font-family: "PT Sans", sans-serif;
-    overflow-x: clip;
     background: var(--background);
     width: 100vw;
+    overflow-x: clip;
     overflow-x: hidden;
     min-height: 100vh;
 

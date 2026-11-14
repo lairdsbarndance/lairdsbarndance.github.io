@@ -1,6 +1,11 @@
 const timeline_svg = $(".timeline")[0];
 const events_container_gap = parseFloat((getComputedStyle($(".events")[0]).rowGap).split("px")[0]);
 let event_expanded = false;
+let current_focused_event = null;
+let current_expanded_event = null;
+let timeline_update_frame = null;
+let timeline_update_request = null;
+const relative_index_cache = new WeakMap();
 
 function get_outward_boundary(event, direction, tolerance = 2) {
     const max_scroll_top = Math.max(0, event.scrollHeight - event.clientHeight);
@@ -101,6 +106,7 @@ function handle_click_event(event, is_expanded, events_container, events, preven
     const package_type = event.querySelector(".package-type");
     package_type.textContent = package_type.textContent.replace(is_expanded ? "," : ":", is_expanded ? ":" : ",");
     if(is_expanded) {
+        current_expanded_event = event;
         event_expanded = true;
         event.style.setProperty("--transition-overflow", "hidden");
         event.scrollTop = 0;
@@ -112,6 +118,7 @@ function handle_click_event(event, is_expanded, events_container, events, preven
             update_timeline(events);
         }, 250);
     } else {
+        if (current_expanded_event === event && !event.classList.contains("expanded")) current_expanded_event = null;
         event_expanded = false;
     }
 }
@@ -136,25 +143,31 @@ async function correct_scroll_top(target_el, scroll_el, min_height = $(".banner"
 
 async function focus_event(events, index, direction = 1, events_container, preserve_event = null, prevent_scroll = false) {
     const focused_event = events[index];
-    const scroll_el = $(".events")[0];
+    const scroll_el = events_container;
 
-    events.forEach(el => {
-        el.classList.remove("focused");
+    if (!focused_event) return;
 
-        if (el !== preserve_event) {
-            const was_expanded = el.classList.contains("expanded");
-
-            el.classList.remove("expanded");
-            scroll_el.style.setProperty("--scroll-snap-type", "y mandatory");
-            handle_click_event(el, false, events_container, events);
-
-            if (was_expanded) {
-                regenerate_iframes_after_minimising(el);
-            }
-        }
-    });
-
+    if (current_focused_event && current_focused_event !== focused_event) current_focused_event.classList.remove("focused");
     focused_event.classList.add("focused");
+    current_focused_event = focused_event;
+    update_relative_index(events, index);
+
+    if (scroll_el.style.getPropertyValue("--scroll-snap-type") !== "y mandatory") {
+        scroll_el.style.setProperty("--scroll-snap-type", "y mandatory");
+    }
+
+    const expanded_event = current_expanded_event;
+    if (expanded_event && expanded_event !== preserve_event) {
+        const was_expanded = expanded_event.classList.contains("expanded");
+
+        if (was_expanded) {
+            expanded_event.classList.remove("expanded");
+            handle_click_event(expanded_event, false, events_container, events);
+            regenerate_iframes_after_minimising(expanded_event);
+        } else {
+            current_expanded_event = null;
+        }
+    }
 
     if (!direction || prevent_scroll) return;
 
@@ -202,11 +215,15 @@ async function focus_event(events, index, direction = 1, events_container, prese
 }
 
 function update_relative_index(events, focused_event_index) {
+    if (relative_index_cache.get(events) === focused_event_index) return;
+
     events.forEach((event, index) => {
         let relative_index = focused_event_index - index;
         event.style.setProperty("--relative-event-index", relative_index);
         // event.style.display = Math.abs(relative_index) > 9 ? "none" : "flex";
     })
+
+    relative_index_cache.set(events, focused_event_index);
 }
 
 function get_transformed_corners(el) {
@@ -260,32 +277,77 @@ function resize_timeline_svg(timeline_svg) {
     );
 }
 
-function update_timeline(events, x_offset = 10, y_offset = 50, master_offset = 8) {
-    const client_height = document.documentElement.clientHeight;
-    const top_event = [...Array.from(events)].filter(el => el.getBoundingClientRect().top < 0).pop() || events[0];
-    const container_rect = $(".events")[0].getBoundingClientRect();
-    const median_coord = {x: container_rect.left + master_offset, y: container_rect.top + container_rect.height / 2};
-    const bottom_event = [...Array.from(events)].filter(el => el.getBoundingClientRect().bottom > client_height)[0] || events[events.length - 1];
+function find_top_timeline_event(events) {
+    let low = 0;
+    let high = events.length - 1;
+    let top_index = -1;
 
-    let top_corners = get_transformed_corners(top_event);
-    let bottom_corners = get_transformed_corners(bottom_event);
-
-    if(top_event === events[0]) top_corners.p1.y = top_corners.p1.y - y_offset;
-    if(bottom_event === events[events.length - 1]) bottom_corners.p4.y = bottom_corners.p4.y + y_offset;
-
-    const timeline_coords = {
-        top: {
-            x: top_corners.p1.x + x_offset + master_offset,
-            y: top_corners.p1.y - y_offset 
-        },
-        median: median_coord,
-        bottom: {
-            x: bottom_corners.p4.x + x_offset + master_offset,
-            y: bottom_corners.p4.y + y_offset
+    while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        if (events[mid].getBoundingClientRect().top < 0) {
+            top_index = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
         }
-    };
+    }
 
-    update_timeline_svg({...timeline_coords, handleLength: 300});
+    return events[top_index] || events[0];
+}
+
+function find_bottom_timeline_event(events, client_height) {
+    let low = 0;
+    let high = events.length - 1;
+    let bottom_index = -1;
+
+    while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        if (events[mid].getBoundingClientRect().bottom > client_height) {
+            bottom_index = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    return events[bottom_index] || events[events.length - 1];
+}
+
+function update_timeline(events, x_offset = 10, y_offset = 50, master_offset = 8, duration = 300) {
+    timeline_update_request = {events, x_offset, y_offset, master_offset, duration};
+    if (timeline_update_frame !== null) return;
+
+    timeline_update_frame = requestAnimationFrame(() => {
+        timeline_update_frame = null;
+        const {events, x_offset, y_offset, master_offset, duration} = timeline_update_request;
+        timeline_update_request = null;
+
+        const client_height = document.documentElement.clientHeight;
+        const top_event = find_top_timeline_event(events);
+        const container_rect = $(".events")[0].getBoundingClientRect();
+        const median_coord = {x: container_rect.left + master_offset, y: container_rect.top + container_rect.height / 2};
+        const bottom_event = find_bottom_timeline_event(events, client_height);
+
+        let top_corners = get_transformed_corners(top_event);
+        let bottom_corners = get_transformed_corners(bottom_event);
+
+        if(top_event === events[0]) top_corners.p1.y = top_corners.p1.y - y_offset;
+        if(bottom_event === events[events.length - 1]) bottom_corners.p4.y = bottom_corners.p4.y + y_offset;
+
+        const timeline_coords = {
+            top: {
+                x: top_corners.p1.x + x_offset + master_offset,
+                y: top_corners.p1.y - y_offset 
+            },
+            median: median_coord,
+            bottom: {
+                x: bottom_corners.p4.x + x_offset + master_offset,
+                y: bottom_corners.p4.y + y_offset
+            }
+        };
+
+        update_timeline_svg({...timeline_coords, handleLength: 300, duration});
+    });
 }
 
 function update_timeline_svg({
@@ -296,7 +358,7 @@ function update_timeline_svg({
   duration = 300,
 }) {
   const svg = document.getElementById("timeline-svg");
-  const curve = svg.querySelector("#timeline-curve");
+  const curve = svg._timeline_curve || (svg._timeline_curve = svg.querySelector("#timeline-curve"));
 
   const start_points = {};
 
@@ -311,6 +373,7 @@ function update_timeline_svg({
 
   if (!previous_points || !current_path) {
     svg._timeline_points = structuredClone(start_points);
+    svg._timeline_current_points = structuredClone(start_points);
     update_timeline_frame(svg, start_points, handleLength);
     return;
   }
@@ -318,6 +381,15 @@ function update_timeline_svg({
   // Cancel any animation currently in progress.
   if (svg._timeline_animation) {
     cancelAnimationFrame(svg._timeline_animation);
+  }
+
+  if (duration <= 0) {
+    const points = structuredClone(start_points);
+    svg._timeline_points = points;
+    svg._timeline_current_points = points;
+    svg._timeline_animation = null;
+    update_timeline_frame(svg, points, handleLength);
+    return;
   }
 
   const from_points = structuredClone(svg._timeline_current_points || previous_points);
@@ -353,14 +425,14 @@ function update_timeline_svg({
 }
 
 function update_timeline_frame(svg, { top, median, bottom }, handleLength) {
-  for (const [id, point] of Object.entries({ top, bottom })) {
-    for (const vertex of [
-      svg.querySelector(`#mask-${id}`),
-    ]) {
-      vertex.setAttribute("cx", point.x);
-      vertex.setAttribute("cy", point.y);
-    }
-  }
+  const top_mask = svg._timeline_top_mask || (svg._timeline_top_mask = svg.querySelector("#mask-top"));
+  const bottom_mask = svg._timeline_bottom_mask || (svg._timeline_bottom_mask = svg.querySelector("#mask-bottom"));
+  const curve = svg._timeline_curve || (svg._timeline_curve = svg.querySelector("#timeline-curve"));
+
+  top_mask.setAttribute("cx", top.x);
+  top_mask.setAttribute("cy", top.y);
+  bottom_mask.setAttribute("cx", bottom.x);
+  bottom_mask.setAttribute("cy", bottom.y);
 
   const dx = bottom.x - top.x;
   const dy = bottom.y - top.y;
@@ -386,7 +458,7 @@ function update_timeline_frame(svg, { top, median, bottom }, handleLength) {
     y: median.y + uy * handle_length,
   };
 
-  svg.querySelector("#timeline-curve").setAttribute(
+  curve.setAttribute(
     "d",
     `M ${top.x} ${top.y}
      C ${top.x} ${top.y}, ${cp1.x} ${cp1.y}, ${median.x} ${median.y}
@@ -693,6 +765,11 @@ async function main() {
 
     let events = $(".event");
     const media = $(".media");
+    const event_indices = new Map();
+    events.forEach((event, index) => {
+        event_indices.set(event, index);
+        event_indices.set(event.parentElement, index);
+    });
     const original_padding_top = getComputedStyle(main_el).getPropertyValue("--padding-top");
     const scroll_height = (document.documentElement.clientHeight - banner.getBoundingClientRect().bottom - 100);
     banner.classList.add("minimise"); banner.style.transitionDuration = "0ms";
@@ -703,20 +780,26 @@ async function main() {
     banner.style.transitionDuration = "";
 
     let banner_first_minimised = false;
+    let scroll_update_frame = null;
 
     events_container.addEventListener("scroll", (e) => {
-        if(events_container.scrollTop > 0) {
-            banner_first_minimised = true;
-            main_el.style.setProperty("--padding-top", banner.getBoundingClientRect().bottom + "px");
-            banner.classList.add("minimise");
-        } else if (!banner_first_minimised) {
-            main_el.style.setProperty("--padding-top", original_padding_top);
-            banner.classList.remove("minimise")
-        }
-        update_relative_index(events, focused_event_index);
-        if(event_expanded) {
-            events_container.style.setProperty("--scroll-snap-type", "y mandatory");
-        }
+        if (scroll_update_frame !== null) return;
+
+        scroll_update_frame = requestAnimationFrame(() => {
+            scroll_update_frame = null;
+
+            if(events_container.scrollTop > 0) {
+                banner_first_minimised = true;
+                main_el.style.setProperty("--padding-top", banner.getBoundingClientRect().bottom + "px");
+                if (!banner.classList.contains("minimise")) banner.classList.add("minimise");
+            } else if (!banner_first_minimised) {
+                main_el.style.setProperty("--padding-top", original_padding_top);
+                if (banner.classList.contains("minimise")) banner.classList.remove("minimise");
+            }
+            if(event_expanded && events_container.style.getPropertyValue("--scroll-snap-type") !== "y mandatory") {
+                events_container.style.setProperty("--scroll-snap-type", "y mandatory");
+            }
+        });
     })
 
     update_timeline(events);
@@ -863,7 +946,7 @@ async function main() {
 
         events_container.addEventListener("touchstart", (e) => {
             touch_start_y = e.touches[0].clientY;
-            touch_event = Array.from(events).find(el => el.classList.contains("expanded")) || null;
+            touch_event = current_expanded_event;
             touch_direction = 0;
             boundary_detected_this_gesture = false;
 
@@ -885,7 +968,7 @@ async function main() {
             }
         }, { passive: true });
 
-        const handle_snap_touch_end = () => {
+        const handle_snap_touch_end = (e) => {
             // If this gesture reached an edge from within the content, record it here.
             // The next outward gesture can then collapse the card.
             if (
@@ -901,7 +984,7 @@ async function main() {
                         touch_event,
                         boundary,
                         touch_direction,
-                        Array.from(events).indexOf(touch_event),
+                        event_indices.get(touch_event),
                         events.length
                     );
 
@@ -961,7 +1044,7 @@ async function main() {
                 el,
                 boundary,
                 touch_direction,
-                Array.from(events).indexOf(el),
+                event_indices.get(el),
                 events.length
             );
 
@@ -975,7 +1058,8 @@ async function main() {
         events_container.addEventListener("touchend", handle_snap_touch_end, { passive: true });
         events_container.addEventListener("touchcancel", reset_snap_touch_gesture, { passive: true });
         events_container.addEventListener("scrollsnapchanging", async (e) => {
-            const snap_index = Array.from(events_container.querySelectorAll(".event-container")).indexOf(e.snapTargetBlock);
+            const snap_index = event_indices.get(e.snapTargetBlock);
+            if (snap_index === undefined) return;
             if (boundary_scroll_state && boundary_scroll_state.el !== e.snapTargetBlock) {
                 boundary_scroll_state = null;
             }
@@ -991,11 +1075,11 @@ async function main() {
                     prevent_scroll = false
                 );
 
-                update_timeline(events);
+                update_timeline(events, 10, 50, 8, is_mobile ? 0 : 300);
             } finally {
-                const focused_el = Array.from(events).find(el =>
-                    el.classList.contains("focused")
-                );
+                const focused_el = current_focused_event;
+
+                if(is_mobile) return;
 
                 const timeout_id = setTimeout(() => {
                     if (focused_el.classList.contains("focused")) {
@@ -1023,7 +1107,7 @@ async function main() {
 
         events_container.addEventListener("touchstart", (e) => {
             touch_start_y = e.touches[0].clientY;
-            touch_event = Array.from(events_container.querySelectorAll(".event-container")).find(el => el.classList.contains("expanded")) || null;
+            touch_event = current_expanded_event;
             scroll_direction = 0;
             boundary_detected_this_gesture = false;
 
@@ -1032,7 +1116,7 @@ async function main() {
             }
         }, { passive: true });
 
-        const handle_fallback_touch_end = () => {
+        const handle_fallback_touch_end = (e) => {
             // Record a boundary reached during this gesture, even if it was not at the edge on touchstart.
             if (
                 !boundary_detected_this_gesture &&
@@ -1047,7 +1131,7 @@ async function main() {
                         touch_event,
                         boundary,
                         scroll_direction,
-                        Array.from(events).indexOf(touch_event),
+                        event_indices.get(touch_event),
                         events.length
                     );
 
@@ -1085,7 +1169,7 @@ async function main() {
 
             if (!scroll_direction || boundary_detected_this_gesture) return;
 
-            const expanded_el = Array.from(events).find(el => el.classList.contains("expanded"));
+            const expanded_el = current_expanded_event;
 
             if (!expanded_el) {
                 boundary_scroll_state = null;
@@ -1106,7 +1190,7 @@ async function main() {
                 expanded_el,
                 boundary,
                 scroll_direction,
-                Array.from(events).indexOf(expanded_el),
+                event_indices.get(expanded_el),
                 events.length
             );
 
@@ -1123,7 +1207,7 @@ async function main() {
         window.addEventListener("touchmove", async (e) => {
             let i = find_closest_el(events, scroll_center);
 
-            if (i === focused_event_index) return;
+            if (i === null || i === focused_event_index) return;
 
             focused_event_index = i;
 
@@ -1137,11 +1221,9 @@ async function main() {
                     prevent_scroll = true
                 );
 
-                update_timeline(events);
+                update_timeline(events, 10, 50, 8, 0);
             } finally {
-                const focused_el = Array.from(events).find(el =>
-                    el.classList.contains("focused")
-                );
+                const focused_el = current_focused_event;
 
                 const timeout_id = setTimeout(() => {
                     if (focused_el.classList.contains("focused")) {
@@ -1180,7 +1262,7 @@ async function main() {
             await focus_event(events, focused_event_index, direction, events_container);
             update_timeline(events);
         } finally {
-            const focused_el = Array.from(events).find(el => el.classList.contains("focused"));
+            const focused_el = current_focused_event;
             const timeout_id = setTimeout(() => {
                 if(focused_el.classList.contains("focused")) {
                     focused_el.classList.add("expanded");
@@ -1253,21 +1335,34 @@ async function main() {
 }
 
 function find_closest_el(els, target_y) {
-    let closest_index = null;
-    let closest_distance = Infinity;
+    let low = 0;
+    let high = els.length - 1;
 
-    els.forEach((el, i) => {
-        const rect = el.getBoundingClientRect();
-        const el_y = rect.bottom;
-        const distance = Math.abs(el_y - target_y);
+    while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const el_y = els[mid].getBoundingClientRect().bottom;
 
-        if (distance < closest_distance && !el.classList.contains("filler-el")) {
-            closest_distance = distance;
-            closest_index = i;
+        if (el_y < target_y) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
         }
-    });
+    }
 
-    return closest_index;
+    let previous_index = high;
+    let next_index = low;
+
+    while (previous_index >= 0 && els[previous_index].classList.contains("filler-el")) previous_index--;
+    while (next_index < els.length && els[next_index].classList.contains("filler-el")) next_index++;
+
+    if (previous_index < 0 && next_index >= els.length) return null;
+    if (previous_index < 0) return next_index;
+    if (next_index >= els.length) return previous_index;
+
+    const previous_distance = Math.abs(els[previous_index].getBoundingClientRect().bottom - target_y);
+    const next_distance = Math.abs(els[next_index].getBoundingClientRect().bottom - target_y);
+
+    return previous_distance <= next_distance ? previous_index : next_index;
 }
 
 promise__initial_page_rendering.then(() => main())

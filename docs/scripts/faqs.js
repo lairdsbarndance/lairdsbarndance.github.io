@@ -1,4 +1,4 @@
-async function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "heading") {
+async function generate_noticeboard(noticeboard, obj, heading_font_style, sort_by = "heading", max_faqs_open = 1) {
     const REM = 16; // no reliable way to get user-set value
     const maximised_history = [];
     const post_it_width = parseFloat(noticeboard.getAttribute("data-post-it-width").split("rem")[0]) * REM;
@@ -102,8 +102,12 @@ async function generate_noticeboard(noticeboard, obj, heading_font_style, sort_b
             post_it.classList.toggle("minimised")
 
             if (!is_minimising) {
-                scroll_to_el(post_it, 60)
                 post_it.classList.add("maximised");
+                post_it.addEventListener("transitionend", () => {
+                    if(post_it.getBoundingClientRect().bottom > window.innerHeight) {
+                        scroll_to_el(post_it, 64);
+                    }
+                }, {once: true})
                 Array.from(post_its).filter(el => el !== post_it).forEach(el => el.classList.remove("maximised"));
 
                 function handle_scroll() {
@@ -120,7 +124,7 @@ async function generate_noticeboard(noticeboard, obj, heading_font_style, sort_b
 
                 maximised_history.push(post_it);
 
-                if (maximised_history.length > 2) {
+                if (maximised_history.length > max_faqs_open) {
                     const oldest = maximised_history.shift();
                     oldest.classList.add("minimised");
                 }

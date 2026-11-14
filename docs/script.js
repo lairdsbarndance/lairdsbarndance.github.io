@@ -10,6 +10,7 @@ let main_promise;
 let promise__website_variables;
 
 const is_mobile = (navigator.maxTouchPoints > 0 || 'ontouchstart' in document.documentElement);
+let update_styles_frame = null;
 
 const svg_defs = `
 <svg style="position:absolute; width:0; height:0; overflow:hidden"
@@ -406,7 +407,11 @@ async function get_website_variable(var_name, attempt = 0) {
     return val;
 }
 
-function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", container = document_width, rotation_intensity = 0.5) {
+function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", container, rotation_intensity = 0.5) {
+    if(update_styles_frame !== null) cancelAnimationFrame(update_styles_frame);
+
+    console.log(container)
+
     const is_horizontal = axis === "x";
     const container_size = typeof container === "number"
         ? container
@@ -427,11 +432,10 @@ function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", cont
 
         const interpolated_val = (1 + Math.cos(distance * Math.PI)) / 2;
 
-        // el.style.opacity = Math.min(1, interpolated_val + 0.25);
         el.style.transform = `perspective(500px) rotate${is_horizontal ? "Y" : "X"}(${is_horizontal ? "" : "-"}${scale_val(interpolated_val, 10 / rotation_intensity, 0) * Math.sign(offset)}deg) scale(${scale_val(interpolated_val, 0.4 / styles_intensity, 1)})`;
     });
 
-    requestAnimationFrame(() => update_styles(band_member_els, styles_intensity, axis, document_width, rotation_intensity));
+    update_styles_frame = requestAnimationFrame(() => update_styles(band_member_els, styles_intensity, axis, container, rotation_intensity));
 }
 
 function initialise_read_mores(els) {

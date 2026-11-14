@@ -150,6 +150,10 @@ main > .bg-glow-wrapper > .band-grid.measuring {
     line-height: var(--line-height);
 
     overflow-y: hidden;
+
+    @media (max-width: 600px) {
+        --max-lines: 8;
+    }
 }
 
 p.expanded {margin-inline: -1rem}
