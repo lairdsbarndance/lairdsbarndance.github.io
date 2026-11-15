@@ -7,6 +7,37 @@ let timeline_update_frame = null;
 let timeline_update_request = null;
 const relative_index_cache = new WeakMap();
 
+function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", container, rotation_intensity = 0.5, first_call = true) {
+    const is_horizontal = axis === "x";
+    const container_size = typeof container === "number"
+        ? container
+        : container.getBoundingClientRect()[is_horizontal ? "width" : "height"];
+
+    console.log(container_size)
+
+    band_member_els.forEach((el, index) => {
+        const rect = el.getBoundingClientRect();
+        const offset = (
+            rect[is_horizontal ? "left" : "top"] +
+            rect[is_horizontal ? "width" : "height"] / 2 -
+            container_size / 2
+        );
+
+        const distance = Math.min(
+            Math.abs(offset) * styles_intensity / (container_size / 2),
+            1
+        );
+
+        const interpolated_val = (1 + Math.cos(distance * Math.PI)) / 2;
+
+        // el.style.opacity = Math.min(1, interpolated_val + 0.25);
+        el.style.transform = `perspective(500px) rotate${is_horizontal ? "Y" : "X"}(${is_horizontal ? "" : "-"}${scale_val(interpolated_val, 10 / rotation_intensity, 0) * Math.sign(offset)}deg) scale(${scale_val(interpolated_val, 0.4 / styles_intensity, 1)})`;
+    });
+
+    let animation_frame_id = requestAnimationFrame(() => update_styles(band_member_els, styles_intensity, axis, container, rotation_intensity, false));
+    if(first_call) return animation_frame_id;
+}
+
 function get_outward_boundary(event, direction, tolerance = 2) {
     const max_scroll_top = Math.max(0, event.scrollHeight - event.clientHeight);
 
