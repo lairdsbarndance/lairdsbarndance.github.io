@@ -4,7 +4,7 @@
     justify-content: center;
     align-items: flex-start;
     align-content: flex-start;
-    gap: 2rem;
+    gap: .25rem 1rem;
     width: 80vw;
     padding-block: 2rem;
     perspective: 3000px;
@@ -116,15 +116,26 @@
     }
     .post-its {
         display: inline-block;
-        --gap: .75rem;
         --column-count: 2;
         columns: var(--column-count);
-        column-gap: calc(var(--gap) * 2);
+        column-gap: calc(var(--gap));
         width: calc(var(--column-count) * var(--column-width));
         margin-inline: auto;
     }
 
-    .post-its > .post-it {break-inside: avoid; margin-bottom: -.5rem;}
+    .post-its > .post-it {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        /* Alternative if translateZ causes z-index issues: */
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+    }
+
+    .post-its > .post-it {
+        break-inside: avoid; 
+        page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+    }
 }
 
 @media (max-width: 1200px) {

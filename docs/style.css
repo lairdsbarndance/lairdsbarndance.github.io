@@ -63,8 +63,6 @@ body.prevent-scroll {
     overflow-y: hidden;
 }
 
-
-
 body {
     font-family: "PT Sans", sans-serif;
     background: var(--background);
@@ -95,10 +93,6 @@ body.radial-gradient::before {
 }
 
 /* body * {outline: red 1px solid;} */
-
-html, body {
-    overscroll-behavior-y: none;
-}
 
 html {
     overflow-x: hidden;
