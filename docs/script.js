@@ -1,7 +1,7 @@
 const κ = "AIzaSyAM07AIfBXXRU0Y8MbpzySSVtCAG3xjHr0";
 const spreadsheet_id = '1pSWHmoRA7jzdl81XBYCijammbIVrjFhTFQ6Q3Ema29s'; 
 const PAGE = "Home";
-const DEV_MODE = window.location.href.includes("127.0.0.1") || window.location.href.includes("?=DEVMODE");
+const DEV_MODE = window.location.href.includes("127.0.0.1") || window.location.href.includes("?=DEVMODE") || window.location.href.includes("192.168");
 const OFFLINE_MODE = false;
 const CACHE = !DEV_MODE;
 const CACHE_REFRESH = 6 // in hours

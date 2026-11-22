@@ -7,37 +7,6 @@ let timeline_update_frame = null;
 let timeline_update_request = null;
 const relative_index_cache = new WeakMap();
 
-function update_styles(band_member_els, styles_intensity = 0.5, axis = "x", container, rotation_intensity = 0.5, first_call = true) {
-    const is_horizontal = axis === "x";
-    const container_size = typeof container === "number"
-        ? container
-        : container.getBoundingClientRect()[is_horizontal ? "width" : "height"];
-
-    console.log(container_size)
-
-    band_member_els.forEach((el, index) => {
-        const rect = el.getBoundingClientRect();
-        const offset = (
-            rect[is_horizontal ? "left" : "top"] +
-            rect[is_horizontal ? "width" : "height"] / 2 -
-            container_size / 2
-        );
-
-        const distance = Math.min(
-            Math.abs(offset) * styles_intensity / (container_size / 2),
-            1
-        );
-
-        const interpolated_val = (1 + Math.cos(distance * Math.PI)) / 2;
-
-        // el.style.opacity = Math.min(1, interpolated_val + 0.25);
-        el.style.transform = `perspective(500px) rotate${is_horizontal ? "Y" : "X"}(${is_horizontal ? "" : "-"}${scale_val(interpolated_val, 10 / rotation_intensity, 0) * Math.sign(offset)}deg) scale(${scale_val(interpolated_val, 0.4 / styles_intensity, 1)})`;
-    });
-
-    let animation_frame_id = requestAnimationFrame(() => update_styles(band_member_els, styles_intensity, axis, container, rotation_intensity, false));
-    if(first_call) return animation_frame_id;
-}
-
 function get_outward_boundary(event, direction, tolerance = 2) {
     const max_scroll_top = Math.max(0, event.scrollHeight - event.clientHeight);
 
@@ -803,10 +772,10 @@ async function main() {
     });
     const original_padding_top = getComputedStyle(main_el).getPropertyValue("--padding-top");
     const scroll_height = (document.documentElement.clientHeight - banner.getBoundingClientRect().bottom - 100);
-    banner.classList.add("minimise"); banner.style.transitionDuration = "0ms";
+    banner.classList.add("minimised"); banner.style.transitionDuration = "0ms";
     events_container.style.setProperty("--max-height", scroll_height + "px");
     events_container.style.setProperty("--extra-overflow", events[events.length - 1].offsetHeight + "px");
-    banner.classList.remove("minimise");
+    banner.classList.remove("minimised");
 
     banner.style.transitionDuration = "";
 
@@ -822,10 +791,10 @@ async function main() {
             if(events_container.scrollTop > 0) {
                 banner_first_minimised = true;
                 main_el.style.setProperty("--padding-top", banner.getBoundingClientRect().bottom + "px");
-                if (!banner.classList.contains("minimise")) banner.classList.add("minimise");
+                if (!banner.classList.contains("minimised")) banner.classList.add("minimised");
             } else if (!banner_first_minimised) {
                 main_el.style.setProperty("--padding-top", original_padding_top);
-                if (banner.classList.contains("minimise")) banner.classList.remove("minimise");
+                if (banner.classList.contains("minimised")) banner.classList.remove("minimised");
             }
             if(event_expanded && events_container.style.getPropertyValue("--scroll-snap-type") !== "y mandatory") {
                 events_container.style.setProperty("--scroll-snap-type", "y mandatory");
@@ -964,7 +933,10 @@ async function main() {
 
     activate(timeline_svg);
     
-    let scroll_center = 1/2 * ($(".banner")[0].getBoundingClientRect().bottom + document.documentElement.clientHeight);
+   const get_scroll_center = () => {
+        const banner_bottom = banner.getBoundingClientRect().bottom;
+        return (banner_bottom + document.documentElement.clientHeight) / 2;
+    };
     let scroll_tolerance = 2;
 
     if (supports_scrollsnapchange = "onscrollsnapchanging" in window) {
@@ -1130,6 +1102,7 @@ async function main() {
             }
         });
     } else {
+
         let touch_start_y = null;
         let touch_event = null;
         let scroll_direction = 0;
@@ -1189,51 +1162,57 @@ async function main() {
             boundary_detected_this_gesture = false;
         };
 
-        events_container.addEventListener("touchmove", (e) => {
-            if (touch_start_y === null) return;
-
-            const delta_y = touch_start_y - e.touches[0].clientY;
-
-            if (!scroll_direction && Math.abs(delta_y) > 2) {
-                scroll_direction = Math.sign(delta_y);
-            }
-
-            if (!scroll_direction || boundary_detected_this_gesture) return;
-
-            const expanded_el = current_expanded_event;
-
-            if (!expanded_el) {
-                boundary_scroll_state = null;
-                return;
-            }
-
-            const boundary = get_outward_boundary(expanded_el, scroll_direction, scroll_tolerance);
-
-            if (!boundary || e.target.closest(".media")) {
-                boundary_scroll_state = null;
-                return;
-            }
-
-            boundary_detected_this_gesture = true;
-
-            const result = process_boundary_scroll(
-                boundary_scroll_state,
-                expanded_el,
-                boundary,
-                scroll_direction,
-                event_indices.get(expanded_el),
-                events.length
-            );
-
-            boundary_scroll_state = result.state;
-
-            if (result.action === "collapse") {
-                collapse_expanded_event(expanded_el, events_container, events, timeouts);
-            }
-        }, { passive: true });
-
         events_container.addEventListener("touchend", handle_fallback_touch_end, { passive: true });
         events_container.addEventListener("touchcancel", reset_fallback_touch_gesture, { passive: true });
+
+        let fallback_focus_frame = null;
+
+        const update_fallback_focus = () => {
+            const i = find_closest_el(events, get_scroll_center());
+
+            if (i === null || i === focused_event_index) return;
+
+            focused_event_index = i;
+
+            focus_event(
+                events,
+                focused_event_index,
+                0,
+                events_container,
+                null,
+                true
+            );
+
+            update_timeline(events, 10, 50, 8, 0);
+
+            if(is_mobile) return;
+
+            const focused_el = current_focused_event;
+
+            const timeout_id = setTimeout(() => {
+                if (focused_el.classList.contains("focused")) {
+                    focused_el.classList.add("expanded");
+                    handle_click_event(
+                        focused_el,
+                        true,
+                        events_container,
+                        events
+                    );
+                }
+            }, 1000);
+
+            timeouts.push({ el: focused_el, timeout_id: timeout_id });
+            await_scroll = false;
+        };
+
+        events_container.addEventListener("scroll", () => {
+            if (fallback_focus_frame !== null) return;
+
+            fallback_focus_frame = requestAnimationFrame(() => {
+                fallback_focus_frame = null;
+                update_fallback_focus();
+            });
+        }, { passive: true });
 
         window.addEventListener("touchmove", async (e) => {
             let i = find_closest_el(events, scroll_center);
@@ -1254,6 +1233,7 @@ async function main() {
 
                 update_timeline(events, 10, 50, 8, 0);
             } finally {
+                if(is_mobile) return;
                 const focused_el = current_focused_event;
 
                 const timeout_id = setTimeout(() => {

@@ -40,8 +40,8 @@ async function generate_member(obj, biography_length, img_max_width) {
     return {member_container, par, img};
 }
 
-function focus_member(member_container, scroll_container, repeat_width) {
 
+function focus_member(member_container, scroll_container, repeat_width, pause_carousel) {
     if (!member_container || !scroll_container || !repeat_width) return;
 
     const member_index = Number(member_container.dataset.memberIndex);
@@ -110,6 +110,7 @@ function focus_member(member_container, scroll_container, repeat_width) {
             focus_member.animation_frame_id = requestAnimationFrame(animate);
         } else {
             focus_member.animation_frame_id = null;
+            pause_carousel();
         }
     }
 
@@ -275,6 +276,10 @@ async function main() {
 
     deactivate(loading);
 
+    setTimeout(() => {
+        $(".banner")[0].classList.add("minimised")
+    }, 1000);
+
     if(!is_mobile) initialise_scroll_draggable("toggle-fullscreen", false);
 
     const read_mores = interactive_container.querySelectorAll(".read-more");
@@ -283,6 +288,60 @@ async function main() {
             handle_par(e, par);
         }
     })
+
+    function collapse_unfocused_pars() {
+        const container_rect = interactive_container.getBoundingClientRect();
+        const container_centre = container_rect.left + interactive_container.clientWidth / 2;
+
+        const members = interactive_container.querySelectorAll(".band-member");
+
+        let focused_member = null;
+        let min_distance = Infinity;
+
+        members.forEach(member => {
+            const rect = member.getBoundingClientRect();
+            const distance = Math.abs(
+                rect.left + rect.width / 2 - container_centre
+            );
+
+            if (distance < min_distance) {
+                min_distance = distance;
+                focused_member = member;
+            }
+        });
+
+        interactive_container.querySelectorAll("p.read-more.expanded").forEach(par => {
+            if (par.closest(".band-member") !== focused_member) {
+                par.classList.remove("expanded");
+                update_view_switch_obstruction();
+
+                if (biography_length === "switch") {
+                    const obj = members_obj[Number(par.dataset.memberIndex)];
+                    par.textContent = obj["Shortened Biography"];
+                }
+            }
+        });
+
+    }
+
+    function update_view_switch_obstruction() {
+        const view_switch_rect = view_switch.getBoundingClientRect();
+
+        const is_obstructed = Array.from(
+            interactive_container.querySelectorAll("p.read-more.expanded")
+        ).some(par => {
+            const rect = par.getBoundingClientRect();
+
+            return (
+                rect.left < view_switch_rect.right &&
+                rect.right > view_switch_rect.left &&
+                rect.top < view_switch_rect.bottom &&
+                rect.bottom > view_switch_rect.top
+            );
+        });
+
+        view_switch.classList.toggle("obstructed", is_obstructed);
+    }
     
     const repeat_width =
     clone__band_sub_container.getBoundingClientRect().left -
@@ -309,6 +368,8 @@ async function main() {
 
     // Keep the carousel within its repeating scrollable range.
     interactive_container.addEventListener("scroll", () => {
+        collapse_unfocused_pars();
+
         const scroll_left = interactive_container.scrollLeft;
 
         const max_scroll_left =
@@ -360,6 +421,8 @@ async function main() {
         
         par.classList.toggle("expanded");
 
+        update_view_switch_obstruction();
+
         if (biography_length === "switch") {
             par.textContent = par.classList.contains("expanded")
                 ? obj["Biography"]
@@ -383,8 +446,7 @@ async function main() {
             pointer_is_inside = read_more.classList.contains("expanded");
         } else if(member_container) {
             const member_index = Number(member_container.dataset.memberIndex);
-
-            focus_member(member_container, interactive_container, repeat_width);
+            focus_member(member_container, interactive_container, repeat_width, pause_carousel);
 
             carousel_index = member_index;
         }
@@ -433,10 +495,10 @@ async function main() {
                 interactive_container.style.scrollSnapType = "var(--custom-scroll-snap-type)"
                 return;
             } else {
-                interactive_container.style.scrollSnapType = "unset"
+                interactive_container.style.scrollSnapType = "unset";
             }
 
-            start_carousel();
+            // start_carousel();
         }, timeout);
     }
 

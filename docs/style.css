@@ -17,7 +17,7 @@
     --glow-col: #182746;
     --red: #92242F;
 
-    --title-height: 5rem;
+    --title-height: 4.5rem;
     --border-height: 1rem;
     
     --subtle-shadow: 0 0.125rem 0.125rem rgba(0,0,0,0.2);
@@ -63,6 +63,8 @@ body.prevent-scroll {
     overflow-y: hidden;
 }
 
+
+
 body {
     font-family: "PT Sans", sans-serif;
     background: var(--background);
@@ -94,6 +96,10 @@ body.radial-gradient::before {
 
 /* body * {outline: red 1px solid;} */
 
+html, body {
+    overscroll-behavior-y: none;
+}
+
 html {
     overflow-x: hidden;
     scroll-behavior: smooth;
@@ -101,7 +107,6 @@ html {
     @media (prefers-reduced-motion: reduce) {
         scroll-behavior: initial;
     }
-    /* scrollbar-gutter: stable; */
 }
 
 @view-transition {
@@ -414,13 +419,22 @@ svg.defs-container {
     height: min(var(--content-width), var(--content-height));
     background: var(--glow-col);
     border-radius: 50%;
-    filter: blur(7.5rem);
     z-index: -105;
     opacity: 0;
     transition: opacity 500ms ease;
+
+    filter: blur(7.5rem);
+    -webkit-filter: blur(7.5rem);
+    transform: translate3d(0, 0, 0);
+    will-change: filter;
 }
 
 .glow:not(.pre-render) {animation: fade-in-glow 1s ease forwards}
+
+/* .bg-glow-wrapper > .glow:not(.pre-render) {
+    opacity: 0;
+    animation: none;
+} */
 
 @keyframes fade-in-glow {
     0% {opacity: 0;}
@@ -451,7 +465,7 @@ svg.defs-container {
     z-index: 1;
     opacity: 0;
 
-    transition: 500ms ease transform;
+    transition: 1s ease transform;
 
     @media (max-width: 1280px) {
         --title-height: 4rem
@@ -460,7 +474,11 @@ svg.defs-container {
 
 .banner.active {
     opacity: 1;
-    transform: translateX(-50%) translateY(0%);
+    transform: translateX(-50%) translateY(calc(0%)) scale(1);
+}
+
+.banner.minimised {
+    transform: translateX(-50%) translateY(calc(-1rem)) scale(0.75);
 }
 
 .banner.smaller {
@@ -533,9 +551,9 @@ section p {font-size: 1.25rem; line-height: 1.5em;}
 }
 
 .border > * {
-    -webkit-mask-image: var(--mask-url);
     height: 100%;
     mask-image: var(--mask-url);
+    -webkit-mask-image: var(--mask-url);
     mask-size: auto 100%;
     mask-position: bottom;
     mask-repeat: no-repeat;
@@ -591,6 +609,7 @@ header.mobile-view > nav {
     inset: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     background: var(--blue);
     transform: translateX(105%);
     z-index: 50;
@@ -706,6 +725,15 @@ nav.mobile-view:not(.open) {
 
 .fullscreen-img-container > .polaroid::after {display: none;}
 
+@media (max-width: 1200px) {
+    .banner.smaller{
+        --title-height: 2.5rem
+    }
+        .banner.smaller > .logo {
+        height: 1rem;
+    }
+}
+
 @media (max-width: 1000px) {
     .instrument-container {
         --instruments-bleed: 20vw;
@@ -725,16 +753,8 @@ nav.mobile-view:not(.open) {
         width: 100vw;
         padding: 1.5rem 1rem;
     }
-    .banner > .logo {
-        height: 1rem;
-        width: auto;
-    }
     .banner > .border {
         inset: -3px;
-    }
-
-    .banner.smaller > .title {
-        width: 100%;
     }
 
     .instrument-container > .instrument {

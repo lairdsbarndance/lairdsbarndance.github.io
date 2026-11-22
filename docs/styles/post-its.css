@@ -127,7 +127,7 @@
     .post-its > .post-it {break-inside: avoid; margin-bottom: -.5rem;}
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1200px) {
     .post-its {
         gap: .5rem;
         flex-wrap: nowrap;

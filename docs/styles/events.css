@@ -76,11 +76,6 @@ main {padding-bottom: unset; padding-top: 0}
     transition: all 1s ease;
 }
 
-.banner.minimise {
-    zoom: 70%;
-    transform: translateX(-50%) translateY(12.5%);
-}
-
 .events, .timeline {
     mask-image: radial-gradient(300% 50% at 50% 50%, white 0%, white 50%, transparent);
     mask-position: center;

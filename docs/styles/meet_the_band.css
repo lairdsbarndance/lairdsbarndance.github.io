@@ -4,7 +4,11 @@ main {
     justify-content: start;
 }
 
-main .band, main .band-grid {margin-top: 5vh}
+main .band, main .band-grid {margin-top: 5vh; transition: 1s margin-top ease;}
+
+body:has(.banner.minimised) .band {
+    margin-top: calc(var(--banner-offset) * -3)
+}
 
 .band-grid {
     display: none;
@@ -15,6 +19,11 @@ main .band, main .band-grid {margin-top: 5vh}
     max-width: 70em;
     pointer-events: none;
     padding-bottom: 3rem; /* account for view button */
+}
+
+.banner.minimised {
+    --banner-offset: 5rem;
+    --banner-scale: 1;
 }
 
 .band-grid.active:not(.measuring) {
@@ -137,6 +146,7 @@ main > .bg-glow-wrapper > .band-grid.measuring {
     font-size: 1rem;
     text-align: center;
     max-width: 20rem;
+    min-width: 15rem;
     text-wrap-style: balance;
 
     --line-height: 1.45;
@@ -156,8 +166,6 @@ main > .bg-glow-wrapper > .band-grid.measuring {
     }
 }
 
-p.expanded {margin-inline: -1rem}
-
 button.view-switch {
     --button-margin: 5vh;
     padding-inline: 1.5rem;
@@ -171,13 +179,19 @@ button.view-switch {
     left: 50%;
     transform: translateX(-50%);
     opacity: 0;
-    transition: opacity 250ms ease;
+    font-size: 1rem;
+    transition: all 250ms ease;
+}
+
+.view-switch.obstructed {
+    bottom: 90dvh;
+    z-index: 100;
 }
 
 .view-switch.active {opacity: 1;}
 
 .view-switch > img {
-    width: 80%;
+    width: 70%;
     justify-self: center;
     align-self: center;
 }
