@@ -845,20 +845,24 @@ function append_loader(container, ancestor_level = 1) {
             return;
         }
 
-        const { left, top, width, height } = container.getBoundingClientRect() ?? {
-            left: 0,
-            top: 0,
-            width: 0,
-            height: 0
-        };
+        try {
+            const { left, top, width, height } = container.getBoundingClientRect() ?? {
+                left: 0,
+                top: 0,
+                width: 0,
+                height: 0
+            };
 
-        loading.style.top = (height > 0
-            ? Math.min(top + height / 2, document_height - 200)
-            : document_height / 2) + "px";
+            loading.style.top = (height > 0
+                ? Math.min(top + height / 2, document_height - 200)
+                : document_height / 2) + "px";
 
-        loading.style.left = width > 0
-            ? left + width / 2
-            : document_width / 2 + "px";
+            loading.style.left = width > 0
+                ? left + width / 2
+                : document_width / 2 + "px";
+        } catch(err) {
+
+        }
     }, 100);
 
     if(container) Array.from({length: ancestor_level}).reduce(el => el?.parentElement, container)?.appendChild(loading);
@@ -1015,7 +1019,6 @@ function build_svg_mask(
        const parent = el.parentElement;
 
         if (parent && !el.classList.contains("no-mask")) {
-            console.log("creating subtract rect")
             if (custom_mask_els == null) {
                 const subtract_rect = create_subtract_rect(
                     parent.querySelector(".bg-glow")
@@ -1027,7 +1030,6 @@ function build_svg_mask(
         });
 
         if (custom_mask_els != null && !el.classList.contains("no-mask")) {
-            console.log("creating subtract rect")
             custom_mask_els.forEach(el => {
                 subtract_group.appendChild(create_subtract_rect(el));
             });

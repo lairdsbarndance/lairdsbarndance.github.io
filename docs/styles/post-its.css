@@ -8,7 +8,7 @@
     width: 80vw;
     max-width: 70em;
     padding-block: 2rem;
-    perspective: 3000px;
+    perspective: 4000px;
     transform-style: preserve-3d;
     transform-origin: center;
 }
@@ -111,37 +111,31 @@
     filter: drop-shadow(0 0.25rem 0.125rem rgba(0,0,0,0.25));
 }
 
-@media (max-width: 1300px) and (min-width: 800px) {
-    .post-its > .post-it:not(.pre-render, .active) {
-        max-height: unset;
-    }
-    .post-its {
-        display: inline-block;
-        --column-count: 2;
-        columns: var(--column-count);
-        column-gap: calc(var(--gap));
-        width: calc(var(--column-count) * var(--column-width));
-        margin-inline: auto;
-    }
+@supports not (-webkit-touch-callout: none) {
+    @media (max-width: 1300px) and (min-width: 800px) {
+        .post-its > .post-it:not(.pre-render, .active) {
+            max-height: unset;
+        }
+        .post-its {
+            display: inline-block;
+            --column-count: 2;
+            columns: var(--column-count);
+            column-gap: calc(var(--gap));
+            width: calc(var(--column-count) * var(--column-width));
+            margin-inline: auto;
+        }
 
-    .post-its > .post-it {
-        -webkit-transform: translateZ(0);
-        transform: translateZ(0);
-        /* Alternative if translateZ causes z-index issues: */
-        -webkit-backface-visibility: hidden;
-        backface-visibility: hidden;
-    }
-
-    .post-its > .post-it {
-        break-inside: avoid; 
-        page-break-inside: avoid;
-        -webkit-column-break-inside: avoid;
+        .post-its > .post-it {
+            margin-top: -.5rem;
+            break-inside: avoid; 
+            page-break-inside: avoid;
+        }
     }
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 600px) {
     .post-its {
-        gap: .5rem;
+        gap: 0;
         flex-wrap: nowrap;
         flex-direction: column;
         justify-content: flex-start;

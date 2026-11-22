@@ -398,7 +398,7 @@ async function main() {
     let clientX = 0;
     let direction = 0;
 
-    portrait_wrapper.ontouchmove = (e) => {
+    portrait_wrapper.ontouchmove = (e) => {    
         let x = e.touches[0].clientX;
         direction = x > clientX ? 1 : -1;
         clientX = x;
