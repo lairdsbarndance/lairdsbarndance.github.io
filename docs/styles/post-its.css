@@ -6,6 +6,7 @@
     align-content: flex-start;
     gap: .25rem 1rem;
     width: 80vw;
+    max-width: 70em;
     padding-block: 2rem;
     perspective: 3000px;
     transform-style: preserve-3d;
