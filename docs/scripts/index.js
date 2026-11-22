@@ -5,7 +5,7 @@ const banner = $(".banner")[0];
 const quotes = $(".quotes")[0];
 const mobile_quotes = $(".mobile-quotes")[0];
 const carousel_extras = ["1.jpeg"]
-const band_types = ["english", "irish"]
+const band_types = ["irish", "english"]
 
 function quote_carousel(interval, alternate = false) {
     const mobile_quotes = $(".mobile-quotes > div > .quote");
